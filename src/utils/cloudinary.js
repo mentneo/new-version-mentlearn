@@ -8,6 +8,11 @@ import { cloudinaryConfig } from '../firebase/firebase';
  */
 export const uploadToCloudinary = async (file, resourceType = 'image') => {
   try {
+    if (!file || !(file instanceof File)) {
+      console.error('Invalid file provided to uploadToCloudinary:', file);
+      throw new Error('Invalid file provided');
+    }
+
     console.log("Uploading to Cloudinary:", {
       fileName: file.name,
       fileSize: file.size,
@@ -49,8 +54,8 @@ export const uploadToCloudinary = async (file, resourceType = 'image') => {
  * @param {File} imageFile - The image file to upload
  * @returns {Promise<string>} - URL of the uploaded image
  */
-export const uploadImage = (imageFile) => {
-  return uploadToCloudinary(imageFile, 'image');
+export const uploadImage = async (imageFile) => {
+  return await uploadToCloudinary(imageFile, 'image');
 };
 
 /**
@@ -58,6 +63,6 @@ export const uploadImage = (imageFile) => {
  * @param {File} videoFile - The video file to upload
  * @returns {Promise<string>} - URL of the uploaded video
  */
-export const uploadVideo = (videoFile) => {
-  return uploadToCloudinary(videoFile, 'video');
+export const uploadVideo = async (videoFile) => {
+  return await uploadToCloudinary(videoFile, 'video');
 };

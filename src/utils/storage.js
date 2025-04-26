@@ -9,9 +9,12 @@ import { storage } from '../firebase/firebase';
  */
 export const uploadToFirebaseStorage = async (file, path) => {
   try {
-    console.log(`Uploading file to Firebase Storage at path: ${path}`);
+    console.log(`Uploading file to Firebase Storage at path: ${path || 'generated path'}`);
     
-    const storageRef = ref(storage, path);
+    // If path is not provided, generate one
+    const uploadPath = path || `images/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+    
+    const storageRef = ref(storage, uploadPath);
     const snapshot = await uploadBytes(storageRef, file);
     console.log('File uploaded successfully');
     
@@ -30,9 +33,14 @@ export const uploadToFirebaseStorage = async (file, path) => {
  * @param {File} imageFile - The image to upload
  * @returns {Promise<string>} - The download URL
  */
-export const uploadImage = (imageFile) => {
-  const path = `images/${Date.now()}_${imageFile.name}`;
-  return uploadToFirebaseStorage(imageFile, path);
+export const uploadImage = async (imageFile) => {
+  if (!imageFile || !(imageFile instanceof File)) {
+    console.error('Invalid image file provided:', imageFile);
+    return null;
+  }
+  
+  const path = `images/${Date.now()}_${imageFile.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+  return await uploadToFirebaseStorage(imageFile, path);
 };
 
 /**
@@ -41,6 +49,6 @@ export const uploadImage = (imageFile) => {
  * @returns {Promise<string>} - The download URL
  */
 export const uploadVideo = (videoFile) => {
-  const path = `videos/${Date.now()}_${videoFile.name}`;
+  const path = `videos/${Date.now()}_${videoFile.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
   return uploadToFirebaseStorage(videoFile, path);
 };

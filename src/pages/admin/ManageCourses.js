@@ -102,23 +102,15 @@ export default function ManageCourses() {
       // Upload thumbnail if available
       if (thumbnailFile) {
         try {
-          console.log("Attempting to upload thumbnail to Firebase Storage...");
-          // Use Firebase Storage directly
-          const path = `courses/thumbnails/${Date.now()}_${thumbnailFile.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
-          thumbnailUrl = await uploadToFirebase(thumbnailFile);
-          console.log("Thumbnail uploaded successfully to Firebase:", thumbnailUrl);
+          console.log("Attempting to upload thumbnail to Cloudinary...");
+          // Use Cloudinary only for uploads
+          thumbnailUrl = await uploadToCloudinary(thumbnailFile, 'image');
+          console.log("Thumbnail uploaded successfully to Cloudinary:", thumbnailUrl);
         } catch (uploadError) {
-          console.error("Firebase Storage upload failed:", uploadError);
-          // Try with Cloudinary as fallback
-          try {
-            thumbnailUrl = await uploadToCloudinary(thumbnailFile);
-            console.log("Thumbnail uploaded successfully to Cloudinary:", thumbnailUrl);
-          } catch (cloudinaryError) {
-            console.error("Cloudinary upload also failed:", cloudinaryError);
-            // Continue without thumbnail
-            thumbnailUrl = "https://via.placeholder.com/300?text=No+Image";
-            console.log("Using placeholder image instead");
-          }
+          console.error("Cloudinary upload failed:", uploadError);
+          // Continue without thumbnail rather than failing completely
+          thumbnailUrl = "https://via.placeholder.com/300?text=No+Image";
+          console.log("Using placeholder image instead");
         }
       }
       
