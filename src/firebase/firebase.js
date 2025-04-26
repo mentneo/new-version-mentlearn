@@ -23,18 +23,10 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 
 // Cloudinary configuration
-export const cloudinaryConfig = {
+const cloudinaryConfig = {
   cloudName: 'davjxvz8w',
   uploadPreset: 'cryptchat'
 };
-
-// Add validation for Cloudinary config
-if (!cloudinaryConfig.cloudName || cloudinaryConfig.cloudName === 'demo') {
-  console.warn('Warning: Cloudinary cloud name not configured or using demo account');
-}
-if (!cloudinaryConfig.uploadPreset || cloudinaryConfig.uploadPreset === 'ml_default') {
-  console.warn('Warning: Cloudinary upload preset not configured or using default');
-}
 
 console.log("Firebase initialized with project:", firebaseConfig.projectId);
 
