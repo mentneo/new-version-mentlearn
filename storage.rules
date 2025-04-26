@@ -1,0 +1,48 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Base function to verify authentication
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Role-based functions
+    function isAdmin() {
+      return isAuthenticated() && 
+        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    function isMentor() {
+      return isAuthenticated() && 
+        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'mentor';
+    }
+    
+    function isStudent() {
+      return isAuthenticated() && 
+        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'student';
+    }
+    
+    // Course thumbnails can be read by anyone, but only admins can write
+    match /courses/thumbnails/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    
+    // Course attachments can be read by anyone, but only admins can write
+    match /courses/attachments/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    
+    // User profile pictures can be read by anyone, users can upload their own pictures
+    match /users/{userId}/profile/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Generic rule - deny by default
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
