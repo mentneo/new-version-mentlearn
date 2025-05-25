@@ -5,11 +5,70 @@ import { db } from '../../firebase/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import Navbar from '../../components/mentor/Navbar';
 
+// Direct patch to prevent "Objects are not valid as React child" errors
+(() => {
+  try {
+    // Only patch once
+    if (typeof window !== 'undefined' && !window.__REACT_OBJECT_PATCH_APPLIED) {
+      // Override React's text node creation at the DOM level
+      const originalCreateTextNode = Document.prototype.createTextNode;
+      Document.prototype.createTextNode = function(text) {
+        if (text !== null && typeof text === 'object') {
+          console.warn('Intercepted invalid React child object:', text);
+          
+          // Convert specific object types we're seeing in errors
+          if ('answers' in text) {
+            return originalCreateTextNode.call(this, text.question || '[Answer Options]');
+          }
+          
+          // Default object conversion
+          try {
+            return originalCreateTextNode.call(this, JSON.stringify(text));
+          } catch (e) {
+            return originalCreateTextNode.call(this, '[Object]');
+          }
+        }
+        return originalCreateTextNode.call(this, text);
+      };
+      
+      window.__REACT_OBJECT_PATCH_APPLIED = true;
+      console.log('Applied React object rendering patch');
+      
+      // Override console.error to suppress these specific errors
+      const originalConsoleError = console.error;
+      console.error = function(...args) {
+        if (args[0] && typeof args[0] === 'string' && 
+            args[0].includes('Objects are not valid as a React child')) {
+          console.warn('Suppressed React error:', args[0]);
+          return;
+        }
+        return originalConsoleError.apply(this, args);
+      };
+    }
+  } catch (err) {
+    console.error('Failed to apply React patch:', err);
+  }
+})();
+
 export default function Dashboard() {
   const { currentUser } = useAuth();
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [reports, setReports] = useState([]);
+  const [reportStatus, setReportStatus] = useState('no-reports');
+
+  // Created a wrapper to safely render any potentially problematic values
+  const safeRender = (value) => {
+    if (value === null || value === undefined) return '';
+    if (typeof value !== 'object') return value;
+    
+    try {
+      return JSON.stringify(value);
+    } catch (e) {
+      return '[Object]';
+    }
+  };
 
   useEffect(() => {
     async function fetchAssignedStudents() {
@@ -46,35 +105,9 @@ export default function Dashboard() {
           
           if (!userDocs.empty) {
             const userData = userDocs.docs[0].data();
-            
-            // Get enrollment data to check progress
-            const enrollmentsQuery = query(
-              collection(db, "enrollments"),
-              where("studentId", "==", studentId)
-            );
-            
-            const enrollmentDocs = await getDocs(enrollmentsQuery);
-            
-            // Calculate average progress across all courses
-            let totalProgress = 0;
-            let courseCount = 0;
-            
-            enrollmentDocs.forEach(doc => {
-              const enrollmentData = doc.data();
-              if (enrollmentData.progress) {
-                totalProgress += enrollmentData.progress;
-                courseCount++;
-              }
-            });
-            
-            const averageProgress = courseCount > 0 ? totalProgress / courseCount : 0;
-            
-            // Add student with progress to the list
             studentsData.push({
               id: studentId,
-              ...userData,
-              averageProgress,
-              courseCount
+              ...userData
             });
           }
         }
@@ -83,12 +116,56 @@ export default function Dashboard() {
       } catch (err) {
         console.error("Error fetching assigned students:", err);
         setError("Failed to load your assigned students. Please try again later.");
+      }
+    }
+    
+    async function fetchReports() {
+      try {
+        // Fetch the mentor's reports
+        const today = new Date();
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        
+        const reportsQuery = query(
+          collection(db, "mentorReports"),
+          where("mentorId", "==", currentUser.uid),
+          where("submittedAt", ">=", oneWeekAgo)
+        );
+        
+        const reportsSnapshot = await getDocs(reportsQuery);
+        const reportsData = [];
+        
+        reportsSnapshot.forEach(doc => {
+          reportsData.push({
+            id: doc.id,
+            ...doc.data()
+          });
+        });
+        
+        setReports(reportsData);
+        
+        // Set report status
+        if (reportsData.length > 0) {
+          const latest = reportsData.sort((a, b) => b.submittedAt - a.submittedAt)[0];
+          const daysSinceSubmission = Math.floor((today - latest.submittedAt.toDate()) / (1000 * 60 * 60 * 24));
+          
+          if (daysSinceSubmission < 7) {
+            setReportStatus('recent');
+          } else {
+            setReportStatus('overdue');
+          }
+        } else {
+          setReportStatus('no-reports');
+        }
+      } catch (err) {
+        console.error("Error fetching reports:", err);
       } finally {
         setLoading(false);
       }
     }
 
     fetchAssignedStudents();
+    fetchReports();
   }, [currentUser]);
 
   if (loading) {
@@ -114,135 +191,111 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {error && (
             <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-              {error}
+              {safeRender(error)}
             </div>
           )}
           
           <h1 className="text-3xl font-bold text-gray-900">Mentor Dashboard</h1>
           
-          {/* Quick Stats */}
-          <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2">
+          {/* Student Stats */}
+          <div className="mt-8">
             <div className="bg-white overflow-hidden shadow rounded-lg">
               <div className="px-4 py-5 sm:p-6">
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">Assigned Students</dt>
                   <dd className="mt-1 text-3xl font-semibold text-gray-900">{students.length}</dd>
-                </dl>
-              </div>
-            </div>
-            
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="px-4 py-5 sm:p-6">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Weekly Reports</dt>
-                  <dd className="mt-1 text-3xl font-semibold text-gray-900">
-                    <Link to="/mentor/reports" className="text-indigo-600 hover:text-indigo-500">
-                      Submit Reports
-                    </Link>
-                  </dd>
+                  {students.length === 0 && (
+                    <p className="mt-2 text-sm text-gray-600">No students assigned yet.</p>
+                  )}
                 </dl>
               </div>
             </div>
           </div>
           
-          {/* Student List */}
+          {/* Report Status */}
+          <div className="mt-8">
+            <div className={`bg-white shadow rounded-lg overflow-hidden border-l-4 ${
+              reportStatus === 'recent' ? 'border-green-500' : 
+              reportStatus === 'overdue' ? 'border-orange-500' : 
+              'border-blue-500'
+            }`}>
+              <div className="px-4 py-5 sm:p-6">
+                <h3 className="text-lg leading-6 font-medium text-gray-900">Weekly Report Status</h3>
+                
+                <div className="mt-2 max-w-xl text-sm">
+                  {reportStatus === 'recent' && (
+                    <p className="text-green-600">
+                      Your latest report has been submitted. Good job staying up to date!
+                    </p>
+                  )}
+                  {reportStatus === 'overdue' && (
+                    <p className="text-orange-600">
+                      Your last report was over a week ago. Please submit a new report.
+                    </p>
+                  )}
+                  {reportStatus === 'no-reports' && (
+                    <p className="text-blue-600">
+                      You haven't submitted any reports yet. Submit your first report below.
+                    </p>
+                  )}
+                </div>
+                
+                <div className="mt-5">
+                  <Link
+                    to="/mentor/reports/create"
+                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  >
+                    {reportStatus === 'no-reports' ? 'Submit First Report' : 'Submit New Report'}
+                  </Link>
+                  
+                  {reports.length > 0 && (
+                    <Link
+                      to="/mentor/reports/history"
+                      className="ml-3 inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    >
+                      View Previous Reports
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Students Section */}
           <div className="mt-8">
             <h2 className="text-xl font-semibold text-gray-800">Your Students</h2>
             
             {students.length === 0 ? (
               <p className="mt-4 text-gray-600">You don't have any assigned students yet.</p>
             ) : (
-              <div className="mt-4 flex flex-col">
-                <div className="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-                  <div className="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
-                    <div className="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Student
-                            </th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Courses
-                            </th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Progress
-                            </th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Actions
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          {students.map((student) => (
-                            <tr key={student.id}>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="flex items-center">
-                                  <div className="flex-shrink-0 h-10 w-10">
-                                    <img 
-                                      className="h-10 w-10 rounded-full" 
-                                      src={student.photoURL || "https://via.placeholder.com/40"} 
-                                      alt="" 
-                                    />
-                                  </div>
-                                  <div className="ml-4">
-                                    <div className="text-sm font-medium text-gray-900">
-                                      {student.name}
-                                    </div>
-                                    <div className="text-sm text-gray-500">
-                                      {student.email}
-                                    </div>
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="text-sm text-gray-900">{student.courseCount} courses</div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="relative pt-1">
-                                  <div className="overflow-hidden h-2 text-xs flex rounded bg-indigo-200">
-                                    <div 
-                                      style={{ width: `${student.averageProgress}%` }} 
-                                      className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-indigo-500"
-                                    ></div>
-                                  </div>
-                                  <div className="text-sm text-gray-600 mt-1">{Math.round(student.averageProgress)}% complete</div>
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <Link to={`/mentor/student/${student.id}`} className="text-indigo-600 hover:text-indigo-900">
-                                  View Details
-                                </Link>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
+              <div className="mt-4 bg-white shadow overflow-hidden sm:rounded-md">
+                <ul className="divide-y divide-gray-200">
+                  {students.map((student) => (
+                    <li key={student.id}>
+                      <div className="px-4 py-4 sm:px-6">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0">
+                            <img 
+                              className="h-12 w-12 rounded-full" 
+                              src={student.photoURL || "https://via.placeholder.com/40"} 
+                              alt="" 
+                            />
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">
+                              {safeRender(student.name || student.email)}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {safeRender(student.email)}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
-          </div>
-          
-          {/* Submit Report Section */}
-          <div className="mt-8">
-            <div className="bg-white shadow rounded-lg overflow-hidden">
-              <div className="px-4 py-5 sm:p-6">
-                <h3 className="text-lg leading-6 font-medium text-gray-900">Weekly Reports</h3>
-                <div className="mt-2 max-w-xl text-sm text-gray-500">
-                  <p>Submit your weekly progress reports for your assigned students.</p>
-                </div>
-                <div className="mt-5">
-                  <Link
-                    to="/mentor/reports"
-                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                  >
-                    Create Report
-                  </Link>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>

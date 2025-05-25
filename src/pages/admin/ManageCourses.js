@@ -103,26 +103,35 @@ export default function ManageCourses() {
       if (thumbnailFile) {
         try {
           console.log("Attempting to upload thumbnail to Cloudinary...");
-          // Use Cloudinary only for uploads
+          
+          // Only use Cloudinary for upload - no fallback to Firebase Storage
           thumbnailUrl = await uploadToCloudinary(thumbnailFile, 'image');
-          console.log("Thumbnail uploaded successfully to Cloudinary:", thumbnailUrl);
+          console.log("Cloudinary upload result:", thumbnailUrl);
+          
+          // If no URL was returned, use a placeholder
+          if (!thumbnailUrl) {
+            console.warn("No URL returned from Cloudinary");
+            thumbnailUrl = "https://via.placeholder.com/300?text=No+Image";
+          }
         } catch (uploadError) {
-          console.error("Cloudinary upload failed:", uploadError);
-          // Continue without thumbnail rather than failing completely
-          thumbnailUrl = "https://via.placeholder.com/300?text=No+Image";
-          console.log("Using placeholder image instead");
+          console.error("Image upload failed:", uploadError);
+          thumbnailUrl = "https://via.placeholder.com/300?text=Upload+Failed";
         }
+      } else {
+        console.log("No thumbnail file selected");
+        thumbnailUrl = "https://via.placeholder.com/300?text=No+Image";
       }
       
-      // Create course document with simplified structure
+      console.log("Final thumbnail URL:", thumbnailUrl);
+      
+      // Create course document
       const newCourse = {
         title: values.title,
         description: values.description,
         price: parseFloat(values.price) || 0,
-        thumbnailUrl,
+        thumbnailUrl: thumbnailUrl,  // Make sure we're using the thumbnailUrl
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        // Add modules with safer structure
         modules: values.modules.map((module, moduleIndex) => ({
           id: `module_${Date.now()}_${moduleIndex}`,
           title: module.title,
@@ -137,21 +146,18 @@ export default function ManageCourses() {
         }))
       };
       
-      console.log("Saving course to Firestore:", newCourse);
-      
+      // Save to Firestore
       if (editingCourse) {
-        // Update existing course
         await updateDoc(doc(db, "courses", editingCourse.id), newCourse);
         console.log("Course updated successfully");
         setSuccess("Course updated successfully!");
       } else {
-        // Add new course
         const docRef = await addDoc(collection(db, "courses"), newCourse);
         console.log("Course added successfully with ID:", docRef.id);
         setSuccess("Course created successfully!");
       }
       
-      // Refresh the course list
+      // Refresh course list
       fetchCourses();
       
       // Reset form and close modal
@@ -262,7 +268,12 @@ export default function ManageCourses() {
                           <img 
                             className="h-16 w-16 rounded-md object-cover" 
                             src={course.thumbnailUrl || 'https://via.placeholder.com/150?text=No+Image'} 
-                            alt={course.title} 
+                            alt={course.title}
+                            onError={(e) => {
+                              console.error("Image failed to load:", e.target.src);
+                              e.target.src = 'https://via.placeholder.com/150?text=Error';
+                            }}
+                            style={{ minWidth: '64px', minHeight: '64px' }}
                           />
                         </div>
                         <div className="ml-4">

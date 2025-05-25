@@ -13,38 +13,48 @@ export const uploadToCloudinary = async (file, resourceType = 'image') => {
       throw new Error('Invalid file provided');
     }
 
-    console.log("Uploading to Cloudinary:", {
-      fileName: file.name,
-      fileSize: file.size,
-      resourceType: resourceType,
-      cloudName: cloudinaryConfig.cloudName
+    console.log("Cloudinary Config:", cloudinaryConfig);
+    console.log("Uploading file to Cloudinary:", {
+      name: file.name,
+      size: file.size,
+      type: file.type
     });
 
+    // Create FormData for the upload
     const formData = new FormData();
     formData.append('file', file);
     formData.append('upload_preset', cloudinaryConfig.uploadPreset);
     formData.append('resource_type', resourceType);
 
+    // Debug the form data
+    for (let [key, value] of formData.entries()) {
+      console.log(`${key}: ${value instanceof File ? value.name : value}`);
+    }
+
+    // Construct Cloudinary upload URL
     const url = `https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/${resourceType}/upload`;
-    console.log("Upload URL:", url);
-    
+    console.log("Cloudinary upload URL:", url);
+
+    // Make HTTP request to Cloudinary
     const response = await fetch(url, {
       method: 'POST',
-      body: formData,
+      body: formData
     });
 
+    // Handle response
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Cloudinary API error:", errorText);
-      throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+      console.error("Cloudinary upload failed:", errorText);
+      throw new Error(`Cloudinary upload failed: ${response.status} ${response.statusText}`);
     }
 
     const data = await response.json();
-    console.log("Cloudinary response:", data);
-    
+    console.log("Cloudinary upload successful:", data);
+
+    // Return the secure URL
     return data.secure_url;
   } catch (error) {
-    console.error('Error uploading to Cloudinary:', error);
+    console.error("Error in uploadToCloudinary:", error);
     throw error;
   }
 };
@@ -55,7 +65,8 @@ export const uploadToCloudinary = async (file, resourceType = 'image') => {
  * @returns {Promise<string>} - URL of the uploaded image
  */
 export const uploadImage = async (imageFile) => {
-  return await uploadToCloudinary(imageFile, 'image');
+  // Direct implementation, no unnecessary try-catch
+  return uploadToCloudinary(imageFile, 'image');
 };
 
 /**
@@ -64,5 +75,5 @@ export const uploadImage = async (imageFile) => {
  * @returns {Promise<string>} - URL of the uploaded video
  */
 export const uploadVideo = async (videoFile) => {
-  return await uploadToCloudinary(videoFile, 'video');
+  return uploadToCloudinary(videoFile, 'video');
 };

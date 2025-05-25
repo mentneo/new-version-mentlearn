@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { 
@@ -15,6 +15,24 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const { logout } = useAuth();
   const navigate = useNavigate();
+
+  // Add effect to check for image loading issues
+  useEffect(() => {
+    // Log available image paths to help debug
+    console.log("Base URL:", window.location.origin);
+    
+    // Check if common image paths are accessible
+    const testImageAccess = (path) => {
+      const img = new Image();
+      img.onload = () => console.log(`Image exists: ${path}`);
+      img.onerror = () => console.log(`Image not found: ${path}`);
+      img.src = path;
+    };
+    
+    // Test common image paths
+    testImageAccess(`${window.location.origin}/images/logo.png`);
+    testImageAccess(`${window.location.origin}/uploads/courses/default.png`);
+  }, []);
 
   async function handleLogout() {
     try {

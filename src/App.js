@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import ErrorBoundary from './components/ErrorBoundary';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -24,60 +25,74 @@ import CourseView from './pages/student/CourseView';
 import Progress from './pages/student/Progress';
 import InterviewPrep from './pages/student/InterviewPrep';
 import QuizAttempt from './pages/student/QuizAttempt';
+import StudentQuizzes from './pages/student/StudentQuizzes';
+import TakeQuiz from './pages/student/TakeQuiz';
+import QuizResults from './pages/student/QuizResults'; // Add this import
 
 // Mentor pages
 import MentorDashboard from './pages/mentor/Dashboard';
 import StudentView from './pages/mentor/StudentView';
 import Reports from './pages/mentor/Reports';
 import ManageQuizzes from './pages/mentor/ManageQuizzes';
+import QuizSubmissions from './pages/mentor/QuizSubmissions';
+import CreateQuiz from './pages/mentor/CreateQuiz';
+import AssignToStudents from './pages/mentor/AssignToStudents';
 
 function App() {
   return (
-    <Router>
+    <ErrorBoundary>
       <AuthProvider>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/unauthorized" element={<Unauthorized />} />
-          
-          {/* Emergency Admin Access */}
-          <Route path="/emergency-admin" element={<DirectAdminAccess />} />
-          
-          {/* DIRECT ACCESS ROUTES FOR TESTING - Remove in production */}
-          <Route path="/direct-admin" element={<AdminDashboard />} />
-          <Route path="/direct-admin/courses" element={<ManageCourses />} />
-          <Route path="/direct-admin/students" element={<ManageStudents />} />
-          <Route path="/direct-admin/mentors" element={<ManageMentors />} />
-          
-          {/* Admin Routes - simplified protection for initial setup */}
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/courses" element={<ManageCourses />} />
-          <Route path="/admin/students" element={<ManageStudents />} />
-          <Route path="/admin/mentors" element={<ManageMentors />} />
-          <Route path="/admin/enrollments" element={<ManageEnrollments />} />
-          <Route path="/admin/payments" element={<AdminDashboard />} />
-          
-          {/* Student Routes with protection */}
-          <Route path="/student/dashboard" element={<StudentDashboard />} />
-          <Route path="/student/course/:courseId" element={<CourseView />} />
-          <Route path="/student/progress" element={<Progress />} />
-          <Route path="/student/interview-prep" element={<InterviewPrep />} />
-          <Route path="/student/quiz/:quizId" element={<QuizAttempt />} />
-          
-          {/* Mentor Routes with protection */}
-          <Route path="/mentor/dashboard" element={<MentorDashboard />} />
-          <Route path="/mentor/student/:studentId" element={<StudentView />} />
-          <Route path="/mentor/reports" element={<Reports />} />
-          <Route path="/mentor/quizzes" element={<ManageQuizzes />} /> {/* New route */}
-          
-          {/* Redirect unknown routes to home */}
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
+        <Router>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/unauthorized" element={<Unauthorized />} />
+            
+            {/* Emergency Admin Access */}
+            <Route path="/emergency-admin" element={<DirectAdminAccess />} />
+            
+            {/* DIRECT ACCESS ROUTES FOR TESTING - Remove in production */}
+            <Route path="/direct-admin" element={<AdminDashboard />} />
+            <Route path="/direct-admin/courses" element={<ManageCourses />} />
+            <Route path="/direct-admin/students" element={<ManageStudents />} />
+            <Route path="/direct-admin/mentors" element={<ManageMentors />} />
+            
+            {/* Admin Routes - simplified protection for initial setup */}
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/courses" element={<ManageCourses />} />
+            <Route path="/admin/students" element={<ManageStudents />} />
+            <Route path="/admin/mentors" element={<ManageMentors />} />
+            <Route path="/admin/enrollments" element={<ManageEnrollments />} />
+            <Route path="/admin/payments" element={<AdminDashboard />} />
+            
+            {/* Student Routes with protection */}
+            <Route path="/student/dashboard" element={<StudentDashboard />} />
+            <Route path="/student/course/:courseId" element={<CourseView />} />
+            <Route path="/student/progress" element={<Progress />} />
+            <Route path="/student/interview-prep" element={<InterviewPrep />} />
+            <Route path="/student/quiz/:quizId" element={<QuizAttempt />} />
+            <Route path="/student/quizzes" element={<StudentQuizzes />} />
+            <Route path="/student/quizzes/:quizId/take/:assignmentId" element={<TakeQuiz />} />
+            <Route path="/student/quizzes/:quizId/results/:assignmentId" element={<QuizResults />} />
+            
+            {/* Mentor Routes with protection */}
+            <Route path="/mentor/dashboard" element={<MentorDashboard />} />
+            <Route path="/mentor/student/:studentId" element={<StudentView />} />
+            <Route path="/mentor/reports" element={<Reports />} />
+            <Route path="/mentor/quizzes" element={<ManageQuizzes />} />
+            <Route path="/mentor/create-quiz" element={<CreateQuiz />} />
+            <Route path="/mentor/quiz-submissions/:quizId" element={<QuizSubmissions />} />
+            <Route path="/mentor/assign-to-students" element={<AssignToStudents />} />
+            
+            {/* Redirect unknown routes to home */}
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
+        </Router>
       </AuthProvider>
-    </Router>
+    </ErrorBoundary>
   );
 }
 

@@ -15,6 +15,7 @@ export default function StudentView() {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [interviewQuizzes, setInterviewQuizzes] = useState([]);
 
   useEffect(() => {
     async function fetchStudentData() {
@@ -105,6 +106,24 @@ export default function StudentView() {
         }));
         
         setReports(reportsList);
+
+        // Fetch interview quizzes assigned to this student by this mentor
+        const interviewQuizzesQuery = query(
+          collection(db, "quizzes"),
+          where("mentorId", "==", currentUser.uid),
+          where("quizType", "==", "interview"),
+          where("assignedStudentIds", "array-contains", studentId)
+        );
+        
+        const interviewQuizDocs = await getDocs(interviewQuizzesQuery);
+        const interviewQuizzesList = interviewQuizDocs.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          timestamp: doc.data().createdAt?.toDate() || new Date()
+        }));
+        
+        setInterviewQuizzes(interviewQuizzesList);
+
       } catch (err) {
         console.error("Error fetching student data:", err);
         setError("Failed to load student data. Please try again later.");
@@ -371,6 +390,42 @@ export default function StudentView() {
               </div>
             )}
           </div>
+
+          {/* Interview Questions Section */}
+          <div className="mt-8">
+            <h2 className="text-xl font-semibold text-gray-800">Interview Questions</h2>
+            
+            {interviewQuizzes.length === 0 ? (
+              <p className="mt-4 text-gray-600">You haven't assigned any interview questions to this student yet.</p>
+            ) : (
+              <div className="mt-4 bg-white shadow overflow-hidden sm:rounded-lg">
+                <ul className="divide-y divide-gray-200">
+                  {interviewQuizzes.map(quiz => (
+                    <li key={quiz.id} className="px-4 py-5 sm:px-6">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-lg font-medium text-gray-900">{quiz.title}</h3>
+                        <p className="text-sm text-gray-500">
+                          {quiz.timestamp.toLocaleDateString()}
+                        </p>
+                      </div>
+                      <p className="text-sm text-gray-500 mb-2">{quiz.description}</p>
+                      <p className="text-sm text-gray-700">{quiz.questions?.length || 0} questions</p>
+                      
+                      <div className="mt-2 flex justify-end">
+                        <Link
+                          to="/mentor/quizzes"
+                          className="text-sm text-indigo-600 hover:text-indigo-900"
+                        >
+                          Manage in Quiz Section
+                        </Link>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+
         </div>
       </div>
     </div>

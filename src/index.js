@@ -3,11 +3,21 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import { applyGlobalFix } from './utils/fixReactRendering';
+import SafeRenderer from './components/SafeRenderer';
+import ErrorBoundary from './components/ErrorBoundary';
+
+// Apply our global fix immediately before any rendering happens
+applyGlobalFix();
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <App />
+    <ErrorBoundary>
+      <SafeRenderer>
+        <App />
+      </SafeRenderer>
+    </ErrorBoundary>
   </React.StrictMode>
 );
 
