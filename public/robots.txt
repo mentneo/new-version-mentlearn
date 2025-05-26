@@ -1,0 +1,43 @@
+# MentLearn Website Robots.txt
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /private/
+Disallow: /api/
+Disallow: /temp/
+Disallow: /checkout/
+Disallow: /cart/
+Disallow: /user/account/
+Disallow: /*?search=*
+Disallow: /*?sort=*
+Disallow: /*?filter=*
+Disallow: /*?page=*
+
+# Allow important directories to be crawled
+Allow: /images/
+Allow: /css/
+Allow: /js/
+Allow: /assets/
+Allow: /blog/
+Allow: /courses/
+
+# Optimize crawl budget
+Crawl-delay: 1
+
+# Block specific crawlers that might overload the server
+User-agent: AhrefsBot
+Crawl-delay: 10
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: Baiduspider
+Crawl-delay: 5
+
+# Host directive (for canonical domain)
+Host: yourdomain.com
+
+# Sitemap locations
+Sitemap: https://yourdomain.com/sitemap.xml
+Sitemap: https://yourdomain.com/sitemap-blog.xml
+Sitemap: https://yourdomain.com/sitemap-courses.xml

@@ -1,0 +1,6 @@
+Contact: mailto:security@yourdomain.com
+Expires: 2025-12-31T23:59:59.000Z
+Encryption: https://yourdomain.com/pgp-key.txt
+Acknowledgments: https://yourdomain.com/security/hall-of-fame
+Policy: https://yourdomain.com/security/policy
+Hiring: https://yourdomain.com/jobs
