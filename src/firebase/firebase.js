@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
@@ -22,13 +22,20 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
+// Initialize Google Auth Provider
+const googleProvider = new GoogleAuthProvider();
+// Configure Google Auth Provider (optional customizations)
+googleProvider.setCustomParameters({
+  prompt: 'select_account'  // Forces account selection even if only one account is available
+});
+
 // Cloudinary configuration
 const cloudinaryConfig = {
-  cloudName: 'davjxvz8w',
+  cloudName: 'dp8bfdbab',
   uploadPreset: 'cryptchat'
 };
 
 console.log("Firebase initialized with project:", firebaseConfig.projectId);
 
 // Export everything in a single export statement
-export { auth, db, storage, cloudinaryConfig };
+export { auth, db, storage, cloudinaryConfig, googleProvider };
