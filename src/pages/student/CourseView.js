@@ -4,7 +4,7 @@ import { doc, getDoc, collection, query, where, getDocs, updateDoc } from 'fireb
 import { db } from '../../firebase/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import Navbar from '../../components/student/Navbar';
-import { FaArrowLeft, FaListUl, FaVideo, FaFileAlt, FaPencilAlt, FaLock, FaCheck } from 'react-icons/fa';
+import { FaArrowLeft, FaListUl, FaVideo, FaFileAlt, FaPencilAlt, FaCheck } from 'react-icons/fa';
 
 export default function CourseView() {
   const { courseId } = useParams();
@@ -17,16 +17,10 @@ export default function CourseView() {
   const [progress, setProgress] = useState(0);
   const [enrollmentId, setEnrollmentId] = useState(null);
   const [completedTopics, setCompletedTopics] = useState({});
-  const [topicProgress, setTopicProgress] = useState({});
-  const [currentVideoTime, setCurrentVideoTime] = useState(0);
-  const [videoDuration, setVideoDuration] = useState(0);
   const videoRef = useRef(null);
-  const [blockedTopics, setBlockedTopics] = useState({});
   const youtubeIframeRef = useRef(null);
   const youtubePlayerRef = useRef(null);
-  const lastTimeUpdateRef = useRef(0);
   const [youtubeApiReady, setYoutubeApiReady] = useState(false);
-  const progressIntervalRef = useRef(null);
 
   useEffect(() => {
     async function fetchCourseData() {
@@ -71,28 +65,6 @@ export default function CourseView() {
           if (enrollmentData.data().completedTopics) {
             setCompletedTopics(enrollmentData.data().completedTopics);
           }
-          
-          // Get topic progress from enrollment document
-          if (enrollmentData.data().topicProgress) {
-            setTopicProgress(enrollmentData.data().topicProgress);
-          }
-          
-          // Initialize blocked topics
-          const blocked = {};
-          if (courseData.modules) {
-            courseData.modules.forEach(module => {
-              if (module.topics && module.topics.length > 0) {
-                // First topic in each module is never blocked
-                module.topics.forEach((topic, index) => {
-                  if (index > 0) {
-                    const prevTopic = module.topics[index - 1];
-                    blocked[topic.id] = !enrollmentData.data().completedTopics?.[prevTopic.id];
-                  }
-                });
-              }
-            });
-          }
-          setBlockedTopics(blocked);
         }
       } catch (err) {
         console.error("Error fetching course data:", err);
@@ -143,33 +115,11 @@ export default function CourseView() {
     // Cleanup
     return () => {
       window.onYouTubeIframeAPIReady = null;
-      
-      // Clear any existing interval
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-        progressIntervalRef.current = null;
-      }
-      
-      // Destroy YouTube player if it exists
-      if (youtubePlayerRef.current) {
-        try {
-          youtubePlayerRef.current.destroy();
-        } catch (e) {
-          console.error("Error destroying YouTube player:", e);
-        }
-        youtubePlayerRef.current = null;
-      }
     };
   }, []);
 
-  // Create YouTube player when topic changes or API becomes ready
+  // Create YouTube player when topic changes or API becomes ready - simplified version without progress tracking
   useEffect(() => {
-    // Clear any existing interval
-    if (progressIntervalRef.current) {
-      clearInterval(progressIntervalRef.current);
-      progressIntervalRef.current = null;
-    }
-    
     // Destroy previous player if it exists
     if (youtubePlayerRef.current) {
       try {
@@ -217,181 +167,46 @@ export default function CourseView() {
       return;
     }
     
-    // Initialize player
+    // Initialize player - simplified version without tracking events
     try {
       youtubePlayerRef.current = new window.YT.Player('youtube-player', {
         videoId: videoId,
         playerVars: {
           'playsinline': 1,
           'rel': 0,
-          'modestbranding': 1
+          'modestbranding': 1,
+          'autoplay': 0,
+          'controls': 1
         },
         events: {
-          'onReady': onPlayerReady,
-          'onStateChange': onPlayerStateChange
+          'onReady': (event) => console.log("YouTube player ready")
         }
       });
     } catch (error) {
       console.error("Error creating YouTube player:", error);
     }
     
-    function onPlayerReady(event) {
-      console.log("YouTube player is ready");
-      
-      // Set duration
-      if (event.target && typeof event.target.getDuration === 'function') {
-        const duration = event.target.getDuration();
-        console.log("Video duration:", duration);
-        setVideoDuration(duration);
-        
-        // Set initial time if we have progress data
-        if (topicProgress[currentTopic.id]?.currentTime && 
-            typeof event.target.seekTo === 'function') {
-          event.target.seekTo(topicProgress[currentTopic.id].currentTime, true);
-        }
-      }
-    }
-    
-    function onPlayerStateChange(event) {
-      // Clear any existing interval
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-        progressIntervalRef.current = null;
-      }
-      
-      // Start tracking progress if playing (state 1)
-      if (event.data === window.YT.PlayerState.PLAYING) {
-        progressIntervalRef.current = setInterval(() => {
-          // Safely access player methods
-          if (youtubePlayerRef.current && 
-              typeof youtubePlayerRef.current.getCurrentTime === 'function' &&
-              typeof youtubePlayerRef.current.getDuration === 'function') {
-            
-            try {
-              const currentTime = youtubePlayerRef.current.getCurrentTime();
-              const duration = youtubePlayerRef.current.getDuration();
-              
-              setCurrentVideoTime(currentTime);
-              
-              // Save progress every 5 seconds
-              if (Math.abs(currentTime - lastTimeUpdateRef.current) >= 5) {
-                lastTimeUpdateRef.current = currentTime;
-                saveVideoProgress(currentTime, duration);
-                
-                // Mark as completed if watched 80% or more
-                const percentWatched = (currentTime / duration) * 100;
-                if (percentWatched >= 80 && !completedTopics[currentTopic.id]) {
-                  markTopicAsCompleted(currentTopic.id);
-                }
-              }
-            } catch (error) {
-              console.error("Error tracking YouTube progress:", error);
-            }
-          }
-        }, 1000);
-      }
-    }
-    
-    // Cleanup function
-    return () => {
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-        progressIntervalRef.current = null;
-      }
-    };
-  }, [currentTopic, youtubeApiReady, topicProgress, completedTopics]);
+  }, [currentTopic, youtubeApiReady]);
 
   const handleModuleClick = (module) => {
     setCurrentModule(module);
     if (module.topics && module.topics.length > 0) {
-      // Select the first incomplete topic or the first topic
-      const incompleteTopic = module.topics.find(topic => !completedTopics[topic.id]);
-      setCurrentTopic(incompleteTopic || module.topics[0]);
+      setCurrentTopic(module.topics[0]);
     } else {
       setCurrentTopic(null);
     }
   };
 
   const handleTopicClick = (topic) => {
-    // Check if topic is blocked
-    if (blockedTopics[topic.id]) {
-      alert("You need to complete the previous topic first (watch at least 80% of the video).");
-      return;
-    }
-    
     setCurrentTopic(topic);
-    
-    // YouTube player will be initialized in useEffect
-    
-    // For direct video files, we'll set the current time in the next render
-    if (topic.type === 'video' && 
-        topic.videoUrl && 
-        !topic.videoUrl.includes('youtube.com') && 
-        !topic.videoUrl.includes('youtu.be') && 
-        videoRef.current && 
-        topicProgress[topic.id]?.currentTime) {
-      setTimeout(() => {
-        if (videoRef.current) {
-          videoRef.current.currentTime = topicProgress[topic.id].currentTime || 0;
-        }
-      }, 500);
-    }
   };
 
-  const handleVideoTimeUpdate = (e) => {
-    if (!currentTopic || !videoRef.current) return;
-    
-    const video = e.target;
-    setCurrentVideoTime(video.currentTime);
-    setVideoDuration(video.duration);
-    
-    // Save progress every 5 seconds
-    if (Math.abs(video.currentTime - lastTimeUpdateRef.current) >= 5) {
-      lastTimeUpdateRef.current = video.currentTime;
-      saveVideoProgress(video.currentTime, video.duration);
-      
-      // Mark as completed if watched 80% or more
-      const percentWatched = (video.currentTime / video.duration) * 100;
-      if (percentWatched >= 80 && !completedTopics[currentTopic.id]) {
-        markTopicAsCompleted(currentTopic.id);
-      }
-    }
-  };
-  
-  const saveVideoProgress = async (currentTime, duration) => {
-    if (!enrollmentId || !currentTopic) return;
-    
-    try {
-      // Update the topic progress in state
-      const updatedProgress = {
-        ...topicProgress,
-        [currentTopic.id]: {
-          currentTime,
-          duration,
-          percent: Math.round((currentTime / duration) * 100)
-        }
-      };
-      
-      setTopicProgress(updatedProgress);
-      
-      // Update the topic progress in Firestore
-      const enrollmentRef = doc(db, "enrollments", enrollmentId);
-      await updateDoc(enrollmentRef, {
-        topicProgress: updatedProgress
-      });
-    } catch (err) {
-      console.error("Error saving video progress:", err);
-    }
-  };
-
+  // Remove video progress tracking functions and simplify the markTopicAsCompleted function
   const markTopicAsCompleted = async (topicId) => {
     if (!enrollmentId) return;
     
     try {
-      // Check if course has modules and topics
-      if (!course || !course.modules) return;
-      
-      // Update in state
+      // Simply mark the topic as completed
       const updatedCompletedTopics = {
         ...completedTopics,
         [topicId]: true
@@ -399,7 +214,7 @@ export default function CourseView() {
       
       setCompletedTopics(updatedCompletedTopics);
       
-      // Calculate total number of topics
+      // Calculate new progress percentage
       let totalTopics = 0;
       let completedCount = 0;
       
@@ -414,31 +229,13 @@ export default function CourseView() {
         }
       });
       
-      // Calculate new overall progress
       const newProgress = Math.round((completedCount / totalTopics) * 100);
       
-      // Update blocked topics
-      const updatedBlockedTopics = { ...blockedTopics };
-      course.modules.forEach(module => {
-        if (module.topics && module.topics.length > 1) {
-          for (let i = 1; i < module.topics.length; i++) {
-            const currentTopic = module.topics[i];
-            const prevTopic = module.topics[i - 1];
-            
-            if (prevTopic.id === topicId) {
-              updatedBlockedTopics[currentTopic.id] = false;
-            }
-          }
-        }
-      });
-      
-      setBlockedTopics(updatedBlockedTopics);
-      
-      // Update progress and completed topics in Firestore
+      // Update in Firestore
       const enrollmentRef = doc(db, "enrollments", enrollmentId);
       await updateDoc(enrollmentRef, {
-        progress: newProgress,
-        completedTopics: updatedCompletedTopics
+        completedTopics: updatedCompletedTopics,
+        progress: newProgress
       });
       
       setProgress(newProgress);
@@ -449,7 +246,6 @@ export default function CourseView() {
 
   const getTopicProgressPercent = (topicId) => {
     if (completedTopics[topicId]) return 100;
-    if (topicProgress[topicId]) return topicProgress[topicId].percent || 0;
     return 0;
   };
 
@@ -574,15 +370,12 @@ export default function CourseView() {
                         <button
                           key={topic.id || index}
                           onClick={() => handleTopicClick(topic)}
-                          disabled={blockedTopics[topic.id]}
                           className={`w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center ${
                             currentTopic && currentTopic.id === topic.id ? 'bg-indigo-50' : ''
-                          } ${blockedTopics[topic.id] ? 'opacity-60 cursor-not-allowed' : ''}`}
+                          }`}
                         >
                           <div className="flex-shrink-0 mr-3">
-                            {blockedTopics[topic.id] ? (
-                              <FaLock className="text-gray-400" />
-                            ) : completedTopics[topic.id] ? (
+                            {completedTopics[topic.id] ? (
                               <FaCheck className="text-green-500" />
                             ) : topic.type === 'video' ? (
                               <FaVideo className="text-indigo-500" />
@@ -594,18 +387,7 @@ export default function CourseView() {
                           </div>
                           <div className="flex-1">
                             <span className="text-gray-900">{topic.title}</span>
-                            <div className="mt-1 w-full bg-gray-200 rounded-full h-1.5">
-                              <div 
-                                className={`h-1.5 rounded-full ${completedTopics[topic.id] ? 'bg-green-500' : 'bg-indigo-500'}`}
-                                style={{ width: `${getTopicProgressPercent(topic.id)}%` }}
-                              ></div>
-                            </div>
                           </div>
-                          {blockedTopics[topic.id] && (
-                            <div className="ml-2 text-xs text-gray-500">
-                              Complete previous topic first
-                            </div>
-                          )}
                         </button>
                       ))}
                     </div>
@@ -618,33 +400,7 @@ export default function CourseView() {
                       
                       {currentTopic.type === 'video' && currentTopic.videoUrl && (
                         <div className="mb-4">
-                          {/* Video progress indicator */}
-                          {videoDuration > 0 && (
-                            <div className="mb-3">
-                              <div className="flex items-center justify-between text-xs mb-1">
-                                <span className="text-gray-500">
-                                  {Math.floor(currentVideoTime / 60)}:{Math.floor(currentVideoTime % 60).toString().padStart(2, '0')} / 
-                                  {Math.floor(videoDuration / 60)}:{Math.floor(videoDuration % 60).toString().padStart(2, '0')}
-                                </span>
-                                <span className={`font-medium ${completedTopics[currentTopic.id] ? 'text-green-600' : 'text-indigo-600'}`}>
-                                  {Math.round((currentVideoTime / videoDuration) * 100)}%
-                                </span>
-                              </div>
-                              <div className="w-full bg-gray-200 rounded-full h-1.5">
-                                <div 
-                                  className={`h-1.5 rounded-full ${completedTopics[currentTopic.id] ? 'bg-green-500' : 'bg-indigo-500'}`}
-                                  style={{ width: `${(currentVideoTime / videoDuration) * 100}%` }}
-                                ></div>
-                              </div>
-                              {!completedTopics[currentTopic.id] && (
-                                <p className="mt-1 text-xs text-gray-500">
-                                  Watch at least 80% of the video to unlock the next topic
-                                </p>
-                              )}
-                            </div>
-                          )}
-                          
-                          {/* Video player */}
+                          {/* Video player - simplified */}
                           {(currentTopic.videoUrl.includes('youtube.com') || currentTopic.videoUrl.includes('youtu.be')) ? (
                             <div className="aspect-w-16 aspect-h-9 rounded-lg overflow-hidden">
                               <div id="youtube-player" ref={youtubeIframeRef}></div>
@@ -653,7 +409,6 @@ export default function CourseView() {
                             <video 
                               ref={videoRef}
                               controls
-                              onTimeUpdate={handleVideoTimeUpdate}
                               className="w-full h-auto max-h-96 rounded-lg"
                               poster={currentTopic.thumbnailUrl}
                             >
@@ -708,6 +463,22 @@ export default function CourseView() {
                           </ul>
                         </div>
                       )}
+                      
+                      {/* Add a manual completion button */}
+                      <div className="mt-4 flex justify-end">
+                        <button
+                          onClick={() => markTopicAsCompleted(currentTopic.id)}
+                          className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium 
+                            ${completedTopics[currentTopic.id] 
+                              ? 'bg-green-50 text-green-700 border-green-200' 
+                              : 'text-white bg-indigo-600 hover:bg-indigo-700'}`}
+                          disabled={completedTopics[currentTopic.id]}
+                        >
+                          {completedTopics[currentTopic.id] 
+                            ? 'Marked as Completed' 
+                            : 'Mark as Completed'}
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
