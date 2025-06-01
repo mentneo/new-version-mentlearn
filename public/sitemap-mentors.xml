@@ -3,43 +3,43 @@
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
             http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
-  <!-- Course Category Pages -->
+  <!-- Mentor Profiles -->
   <url>
-    <loc>https://mentlearn.in/courses/web-development</loc>
+    <loc>https://mentlearn.in/mentor/john-doe</loc>
     <lastmod>2023-11-15T08:00:00+00:00</lastmod>
-    <priority>0.8</priority>
+    <priority>0.7</priority>
     <changefreq>weekly</changefreq>
   </url>
   <url>
-    <loc>https://mentlearn.in/courses/mobile-development</loc>
+    <loc>https://mentlearn.in/mentor/jane-smith</loc>
     <lastmod>2023-11-15T08:00:00+00:00</lastmod>
-    <priority>0.8</priority>
+    <priority>0.7</priority>
     <changefreq>weekly</changefreq>
   </url>
   <url>
-    <loc>https://mentlearn.in/courses/data-science</loc>
+    <loc>https://mentlearn.in/mentor/alex-johnson</loc>
     <lastmod>2023-11-15T08:00:00+00:00</lastmod>
-    <priority>0.8</priority>
+    <priority>0.7</priority>
     <changefreq>weekly</changefreq>
   </url>
   
-  <!-- Individual Courses -->
+  <!-- Mentor Category Pages -->
   <url>
-    <loc>https://mentlearn.in/course/full-stack-web-development</loc>
+    <loc>https://mentlearn.in/mentors/web-development</loc>
     <lastmod>2023-11-15T08:00:00+00:00</lastmod>
-    <priority>0.7</priority>
-    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <changefreq>weekly</changefreq>
   </url>
   <url>
-    <loc>https://mentlearn.in/course/react-native-fundamentals</loc>
+    <loc>https://mentlearn.in/mentors/mobile-development</loc>
     <lastmod>2023-11-15T08:00:00+00:00</lastmod>
-    <priority>0.7</priority>
-    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <changefreq>weekly</changefreq>
   </url>
   <url>
-    <loc>https://mentlearn.in/course/machine-learning-for-beginners</loc>
+    <loc>https://mentlearn.in/mentors/data-science</loc>
     <lastmod>2023-11-15T08:00:00+00:00</lastmod>
-    <priority>0.7</priority>
-    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <changefreq>weekly</changefreq>
   </url>
 </urlset>

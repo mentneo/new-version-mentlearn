@@ -35,9 +35,11 @@ User-agent: Baiduspider
 Crawl-delay: 5
 
 # Host directive (for canonical domain)
-Host: yourdomain.com
+Host: mentlearn.in
 
 # Sitemap locations
-Sitemap: https://yourdomain.com/sitemap.xml
-Sitemap: https://yourdomain.com/sitemap-blog.xml
-Sitemap: https://yourdomain.com/sitemap-courses.xml
+Sitemap: https://mentlearn.in/sitemap.xml
+Sitemap: https://mentlearn.in/sitemap-blog.xml
+Sitemap: https://mentlearn.in/sitemap-courses.xml
+Sitemap: https://mentlearn.in/sitemap-mentors.xml
+Sitemap: https://mentlearn.in/sitemap-categories.xml
