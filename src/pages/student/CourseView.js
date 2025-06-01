@@ -4,7 +4,10 @@ import { doc, getDoc, collection, query, where, getDocs, updateDoc } from 'fireb
 import { db } from '../../firebase/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import Navbar from '../../components/student/Navbar';
-import { FaArrowLeft, FaListUl, FaVideo, FaFileAlt, FaPencilAlt, FaCheck } from 'react-icons/fa';
+import { FaArrowLeft, FaListUl, FaVideo, FaFileAlt, FaPencilAlt, FaCheck, FaEnvelope } from 'react-icons/fa';
+
+// Official email for support and contact
+const OFFICIAL_EMAIL = 'official@mentneo.com';
 
 export default function CourseView() {
   const { courseId } = useParams();
@@ -487,6 +490,28 @@ export default function CourseView() {
                   <p className="text-gray-500">Select a module to view content</p>
                 </div>
               )}
+            </div>
+          </div>
+          
+          {/* Add support information with official email */}
+          <div className="mt-8 bg-white shadow sm:rounded-lg overflow-hidden">
+            <div className="px-4 py-5 sm:px-6 flex items-center justify-between border-b border-gray-200">
+              <div>
+                <h3 className="text-lg font-medium text-gray-900">Need Help?</h3>
+                <p className="text-sm text-gray-500">Contact our support team for assistance with this course</p>
+              </div>
+              <a 
+                href={`mailto:${OFFICIAL_EMAIL}?subject=Help with course: ${course?.title || courseId}`}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200"
+              >
+                <FaEnvelope className="mr-2" /> Contact Support
+              </a>
+            </div>
+            <div className="px-4 py-4 sm:px-6 bg-gray-50">
+              <div className="flex items-center">
+                <FaEnvelope className="h-5 w-5 text-gray-400" />
+                <span className="ml-2 text-sm text-gray-500">{OFFICIAL_EMAIL}</span>
+              </div>
             </div>
           </div>
         </div>
