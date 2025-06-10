@@ -3,9 +3,9 @@
   "short_name": "Mentneo",
   "icons": [
     {
-      "src": "mentneo-logo.png",
+      "src": "favicon.ico",
       "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/png"
+      "type": "image/x-icon"
     },
     {
       "src": "mentneo-logo.png",
@@ -20,7 +20,7 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#4C6EF5",
+  "theme_color": "#5D67E9",
   "background_color": "#ffffff",
   "orientation": "portrait"
 }

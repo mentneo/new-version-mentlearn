@@ -1,9 +1,9 @@
 import React from 'react';
-// ...other imports
+// ...existing imports...
 import Logo from '../common/Logo';
 
-const Navbar = ({ /* ...existing props */ }) => {
-  // ...existing code
+const Navbar = ({ /* ...existing props... */ }) => {
+  // ...existing code...
 
   return (
     <nav className="bg-white shadow">
@@ -11,11 +11,11 @@ const Navbar = ({ /* ...existing props */ }) => {
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <Logo size="lg" />
+              <Logo size="md" />
             </div>
-            {/* ...existing navbar content */}
+            {/* ...existing navbar content... */}
           </div>
-          {/* ...existing navbar content */}
+          {/* ...existing navbar content... */}
         </div>
       </div>
     </nav>

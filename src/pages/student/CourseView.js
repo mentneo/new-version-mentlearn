@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { doc, getDoc, collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, updateDoc, addDoc } from 'firebase/firestore';
 import { db } from '../../firebase/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import Navbar from '../../components/student/Navbar';
@@ -20,6 +20,7 @@ export default function CourseView() {
   const [progress, setProgress] = useState(0);
   const [enrollmentId, setEnrollmentId] = useState(null);
   const [completedTopics, setCompletedTopics] = useState({});
+  const [isEnrolled, setIsEnrolled] = useState(false);
   const videoRef = useRef(null);
   const youtubeIframeRef = useRef(null);
   const youtubePlayerRef = useRef(null);
@@ -50,7 +51,7 @@ export default function CourseView() {
           }
         }
         
-        // Fetch enrollment to get progress
+        // Check if student is enrolled
         const enrollmentQuery = query(
           collection(db, "enrollments"),
           where("studentId", "==", currentUser.uid),
@@ -60,6 +61,7 @@ export default function CourseView() {
         const enrollmentDocs = await getDocs(enrollmentQuery);
         
         if (!enrollmentDocs.empty) {
+          setIsEnrolled(true);
           const enrollmentData = enrollmentDocs.docs[0];
           setEnrollmentId(enrollmentData.id);
           setProgress(enrollmentData.data().progress || 0);
@@ -68,6 +70,8 @@ export default function CourseView() {
           if (enrollmentData.data().completedTopics) {
             setCompletedTopics(enrollmentData.data().completedTopics);
           }
+        } else {
+          setIsEnrolled(false);
         }
       } catch (err) {
         console.error("Error fetching course data:", err);
@@ -289,6 +293,80 @@ export default function CourseView() {
     );
   }
 
+  // Render access denied view if not enrolled
+  if (!isEnrolled && !loading) {
+    return (
+      <div className="min-h-screen bg-gray-100">
+        <Navbar />
+        <div className="py-10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col md:flex-row mb-6">
+              <Link
+                to="/student/dashboard"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200"
+              >
+                <FaArrowLeft className="mr-2" /> Back to Dashboard
+              </Link>
+            </div>
+
+            <div className="bg-white shadow sm:rounded-lg">
+              <div className="px-4 py-5 sm:p-6">
+                <div className="text-center">
+                  <svg
+                    className="mx-auto h-12 w-12 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                    />
+                  </svg>
+                  <h3 className="mt-2 text-xl font-medium text-gray-900">Course Access Required</h3>
+                  <p className="mt-1 text-gray-500 text-sm">
+                    You need to be enrolled in this course to access the content.
+                  </p>
+                  <div className="mt-6">
+                    <button
+                      onClick={() => handleRequestAccess(courseId)}
+                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    >
+                      Request Access
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Add the request access function
+  const handleRequestAccess = async () => {
+    try {
+      // Create a request document in Firestore
+      await addDoc(collection(db, 'courseRequests'), {
+        courseId,
+        userId: currentUser.uid,
+        userName: currentUser.displayName || currentUser.email,
+        status: 'pending',
+        requestedAt: new Date()
+      });
+      
+      // Show success message
+      alert('Your request has been submitted. You will be notified when access is granted.');
+    } catch (error) {
+      console.error('Error requesting course access:', error);
+      alert('Failed to submit request. Please try again later.');
+    }
+  };
+  
   return (
     <div className="min-h-screen bg-gray-100">
       <Navbar />

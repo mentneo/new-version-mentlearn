@@ -28,6 +28,8 @@ import QuizAttempt from './pages/student/QuizAttempt';
 import StudentQuizzes from './pages/student/StudentQuizzes';
 import TakeQuiz from './pages/student/TakeQuiz';
 import QuizResults from './pages/student/QuizResults'; // Add this import
+import StudentCourses from './pages/student/StudentCourses';
+import ProfileSettings from './pages/student/ProfileSettings'; // Import the new ProfileSettings component
 
 // Mentor pages
 import MentorDashboard from './pages/mentor/Dashboard';
@@ -37,6 +39,9 @@ import ManageQuizzes from './pages/mentor/ManageQuizzes';
 import QuizSubmissions from './pages/mentor/QuizSubmissions';
 import CreateQuiz from './pages/mentor/CreateQuiz';
 import AssignToStudents from './pages/mentor/AssignToStudents';
+
+// Course selection page
+import CourseSelectionPage from './pages/auth/CourseSelectionPage';
 
 function App() {
   return (
@@ -69,14 +74,18 @@ function App() {
             <Route path="/admin/payments" element={<AdminDashboard />} />
             
             {/* Student Routes with protection */}
-            <Route path="/student/dashboard" element={<StudentDashboard />} />
-            <Route path="/student/course/:courseId" element={<CourseView />} />
-            <Route path="/student/progress" element={<Progress />} />
-            <Route path="/student/interview-prep" element={<InterviewPrep />} />
-            <Route path="/student/quiz/:quizId" element={<QuizAttempt />} />
-            <Route path="/student/quizzes" element={<StudentQuizzes />} />
-            <Route path="/student/quizzes/:quizId/take/:assignmentId" element={<TakeQuiz />} />
-            <Route path="/student/quizzes/:quizId/results/:assignmentId" element={<QuizResults />} />
+            <Route path="/student/dashboard" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />
+            <Route path="/student/courses" element={<ProtectedRoute><StudentCourses /></ProtectedRoute>} />
+            <Route path="/student/course/:courseId" element={<ProtectedRoute><CourseView /></ProtectedRoute>} />
+            <Route path="/student/progress" element={<ProtectedRoute><Progress /></ProtectedRoute>} />
+            <Route path="/student/interview-prep" element={<ProtectedRoute><InterviewPrep /></ProtectedRoute>} />
+            <Route path="/student/quiz/:quizId" element={<ProtectedRoute><QuizAttempt /></ProtectedRoute>} />
+            <Route path="/student/quizzes" element={<ProtectedRoute><StudentQuizzes /></ProtectedRoute>} />
+            <Route path="/student/quizzes/:quizId/take/:assignmentId" element={<ProtectedRoute><TakeQuiz /></ProtectedRoute>} />
+            <Route path="/student/quizzes/:quizId/results/:assignmentId" element={<ProtectedRoute><QuizResults /></ProtectedRoute>} />
+            
+            {/* Add the new profile settings route */}
+            <Route path="/student/profile" element={<ProtectedRoute><ProfileSettings /></ProtectedRoute>} />
             
             {/* Mentor Routes with protection */}
             <Route path="/mentor/dashboard" element={<MentorDashboard />} />
@@ -86,6 +95,21 @@ function App() {
             <Route path="/mentor/create-quiz" element={<CreateQuiz />} />
             <Route path="/mentor/quiz-submissions/:quizId" element={<QuizSubmissions />} />
             <Route path="/mentor/assign-to-students" element={<AssignToStudents />} />
+            
+            {/* Auth Routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            
+            {/* Protected Course Selection Route */}
+            <Route 
+              path="/course-selection" 
+              element={
+                <ProtectedRoute>
+                  <CourseSelectionPage />
+                </ProtectedRoute>
+              } 
+            />
             
             {/* Redirect unknown routes to home */}
             <Route path="*" element={<Navigate to="/" />} />

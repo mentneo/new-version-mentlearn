@@ -47,6 +47,12 @@ export default function Navbar() {
                 >
                   <FaBriefcase className="inline-block mr-1" /> Interview Prep
                 </Link>
+                <Link
+                  to="/student/profile"
+                  className="text-white hover:bg-indigo-500 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  <FaUser className="inline-block mr-1" /> Profile
+                </Link>
               </div>
             </div>
           </div>
@@ -109,6 +115,13 @@ export default function Navbar() {
               onClick={() => setIsOpen(false)}
             >
               <FaBriefcase className="inline-block mr-1" /> Interview Prep
+            </Link>
+            <Link
+              to="/student/profile"
+              className="text-white hover:bg-indigo-500 block px-3 py-2 rounded-md text-base font-medium"
+              onClick={() => setIsOpen(false)}
+            >
+              <FaUser className="inline-block mr-1" /> Profile
             </Link>
             <button
               onClick={() => {

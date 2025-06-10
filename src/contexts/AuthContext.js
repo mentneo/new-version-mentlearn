@@ -19,6 +19,7 @@ export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [userRole, setUserRole] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [onboardingComplete, setOnboardingComplete] = useState(null);
 
   // Check if this is the first user to sign up (for admin assignment)
   async function isFirstUser() {
@@ -115,15 +116,41 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      console.log("Auth state changed. User:", user?.uid);
+      setLoading(true);
       
       if (user) {
-        setCurrentUser(user);
-        const role = await getUserRole(user.uid);
-        console.log("User role:", role);
+        try {
+          // Get user data from Firestore
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            setCurrentUser({
+              uid: user.uid,
+              email: user.email,
+              ...userData
+            });
+            
+            // Set onboarding status
+            setOnboardingComplete(userData.onboardingComplete || false);
+          } else {
+            setCurrentUser({
+              uid: user.uid,
+              email: user.email
+            });
+            setOnboardingComplete(false);
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+          setCurrentUser({
+            uid: user.uid,
+            email: user.email
+          });
+          setOnboardingComplete(false);
+        }
       } else {
         setCurrentUser(null);
-        setUserRole(null);
+        setOnboardingComplete(null);
       }
       
       setLoading(false);
@@ -131,12 +158,14 @@ export function AuthProvider({ children }) {
 
     return unsubscribe;
   }, []);
-
+  
   const value = {
     currentUser,
     userRole,
-    login,
+    onboardingComplete,
+    loading,
     signup,
+    login,
     logout,
     resetPassword,
     getUserRole
