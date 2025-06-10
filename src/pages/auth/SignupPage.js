@@ -118,7 +118,17 @@ const SignupPage = () => {
     }
   };
 
-  // ...existing code...
+  return (
+    <div className="sm:mx-auto sm:w-full sm:max-w-md">
+      <div className="flex justify-center">
+        <img className="h-16 w-auto" src="/mentneo-logo.png" alt="Mentneo" />
+      </div>
+      <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+        Create your account
+      </h2>
+      {/* ...existing signup form... */}
+    </div>
+  );
 };
 
 export default SignupPage;

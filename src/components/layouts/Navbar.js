@@ -1,6 +1,7 @@
 import React from 'react';
 // ...existing imports...
 import Logo from '../common/Logo';
+import { Link } from 'react-router-dom';
 
 const Navbar = ({ /* ...existing props... */ }) => {
   // ...existing code...
@@ -11,7 +12,9 @@ const Navbar = ({ /* ...existing props... */ }) => {
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <Logo size="md" />
+              <Link to="/">
+                <img className="h-10 w-auto" src="/mentneo-logo.png" alt="Mentneo" />
+              </Link>
             </div>
             {/* ...existing navbar content... */}
           </div>

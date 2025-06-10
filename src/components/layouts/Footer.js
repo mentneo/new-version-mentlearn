@@ -5,6 +5,9 @@ const Footer = () => {
   return (
     <footer className="bg-white">
       <div className="max-w-7xl mx-auto py-6 px-4 overflow-hidden sm:px-6 lg:px-8">
+        <div className="flex items-center justify-center">
+          <img src="/mentneo-logo.png" alt="Mentneo" className="h-10 w-auto" />
+        </div>
         <div className="mt-4 flex justify-center space-x-6">
           <Link to="/" className="text-gray-400 hover:text-gray-500">
             <span className="sr-only">Home</span>
