@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/firebase';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { auth } from '../firebase/firebase';
 
 export default function Signup() {
   const [email, setEmail] = useState('');
@@ -15,29 +17,48 @@ export default function Signup() {
   const { signup } = useAuth();
   const navigate = useNavigate();
 
-  async function handleSubmit(e) {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (password !== confirmPassword) {
-      return setError('Passwords do not match');
+      return setError("Passwords do not match");
     }
     
     try {
-      setError('');
+      setError("");
       setLoading(true);
       
-      // Create user in Firebase Authentication and Firestore
-      const userCredential = await signup(email, password, {
-        name,
-        phone,
-        role: 'student'  // Default role for signup
+      // Create user with Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      
+      // Add additional user info to Firestore
+      await setDoc(doc(db, "users", user.uid), {
+        name: name,
+        email: email,
+        role: "student",
+        createdAt: serverTimestamp(),
+        phone: phone || "",
+        hasPaid: false, // Initialize payment status
+        accessGranted: false
       });
       
-      console.log("Signup successful");
-      navigate('/student/dashboard');
+      // Update display name
+      await updateProfile(user, {
+        displayName: name
+      });
+      
+      // Redirect immediately to payment flow with flag to auto-open payment
+      navigate('/payment-flow', { 
+        state: { 
+          fromSignup: true,  // This flag indicates user just signed up
+          autoInitiate: true // This flag will trigger auto-payment
+        } 
+      });
+      
     } catch (error) {
-      console.error("Error during signup:", error);
-      setError('Failed to create an account: ' + error.message);
+      console.error("Error in signup:", error);
+      setError("Failed to create an account: " + error.message);
     } finally {
       setLoading(false);
     }

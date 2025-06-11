@@ -1,0 +1,225 @@
+/* Razorpay Payment Page Styling */
+
+/* Main container styling */
+.payment-container {
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: none;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.payment-container:hover {
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.12);
+}
+
+/* Header styling */
+.payment-header {
+  background: linear-gradient(135deg, #4568dc 0%, #3f51b5 100%);
+  padding: 1.5rem;
+  color: white;
+  border-bottom: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.payment-header:before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 100%;
+  height: 200%;
+  background: rgba(255, 255, 255, 0.1);
+  transform: rotate(30deg);
+  pointer-events: none;
+}
+
+.payment-header h2 {
+  font-weight: 600;
+  font-size: 1.75rem;
+  margin-bottom: 0;
+}
+
+/* Pricing plan styling */
+.pricing-plan {
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  position: relative;
+  border: 1px solid #e0e0e0;
+  height: 100%;
+  padding: 1.5rem !important;
+}
+
+.pricing-plan:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+.plan-selected {
+  border: 2px solid #4568dc !important;
+  background-color: rgba(69, 104, 220, 0.03);
+}
+
+/* Feature list styling */
+.feature-list {
+  list-style-type: none;
+  padding-left: 0;
+  margin-bottom: 0;
+}
+
+.feature-list li {
+  display: flex;
+  align-items: flex-start;
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.4;
+}
+
+.feature-list li i {
+  color: #4caf50;
+  margin-right: 8px;
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+/* Price section styling */
+.price-section {
+  margin: 15px 0;
+}
+
+.price-section .h4 {
+  font-weight: 700;
+  color: #333;
+}
+
+.text-decoration-line-through {
+  font-size: 0.9rem;
+  color: #888 !important;
+}
+
+/* Course list styling */
+.course-list-item {
+  border-left: 4px solid transparent;
+  transition: all 0.2s ease;
+  padding: 0.75rem 1rem;
+}
+
+.course-list-item:hover {
+  border-left-color: #4568dc;
+  background-color: #f8f9fa;
+}
+
+.course-list-item.premium {
+  border-left-color: #ffc107;
+}
+
+/* Discount badge styling */
+.discount-badge {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  z-index: 2;
+  font-size: 0.75rem;
+  font-weight: bold;
+  padding: 5px 10px;
+  border-radius: 20px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12);
+  background-color: #ff3547 !important;
+}
+
+/* Loading styling */
+.payment-loader {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+}
+
+.payment-loader .spinner-border {
+  width: 3rem;
+  height: 3rem;
+  color: #4568dc;
+}
+
+/* Animation for loading states */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.payment-pulse {
+  animation: pulse 2s infinite;
+}
+
+/* Enhanced styling for the payment button */
+.payment-btn {
+  background: linear-gradient(135deg, #4568dc 0%, #3f51b5 100%);
+  border: none;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s ease;
+  font-weight: 600;
+  font-size: 1.1rem;
+  letter-spacing: 0.5px;
+  padding: 1rem 1.5rem;
+  box-shadow: 0 4px 15px rgba(69, 104, 220, 0.3);
+}
+
+.payment-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(69, 104, 220, 0.4);
+  background: linear-gradient(135deg, #3f51b5 0%, #303f9f 100%);
+}
+
+.payment-btn:active {
+  transform: translateY(1px);
+}
+
+.payment-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: all 0.6s ease;
+}
+
+.payment-btn:hover::before {
+  left: 100%;
+}
+
+.payment-btn:disabled {
+  background: #a1a1a1;
+  box-shadow: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .payment-header h2 {
+    font-size: 1.5rem;
+  }
+  
+  .payment-btn {
+    font-size: 1rem;
+    padding: 0.75rem 1rem;
+  }
+  
+  .pricing-plan {
+    margin-bottom: 1.5rem;
+    padding: 1.25rem !important;
+  }
+}

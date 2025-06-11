@@ -2,7 +2,9 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import ErrorBoundary from './components/ErrorBoundary';
 import { AuthProvider } from './contexts/AuthContext';
-import ProtectedRoute from './components/ProtectedRoute';
+// Import our new protected route components
+import { ProtectedRoute, PaymentProtectedRoute } from './components/ProtectedRoutes';
+import SignupPaymentFlow from './components/SignupPaymentFlow';
 
 // Public pages
 import Home from './pages/Home';
@@ -18,6 +20,7 @@ import ManageCourses from './pages/admin/ManageCourses';
 import ManageStudents from './pages/admin/ManageStudents';
 import ManageMentors from './pages/admin/ManageMentors';
 import ManageEnrollments from './pages/admin/ManageEnrollments';
+import VerifyPayments from './pages/admin/VerifyPayments';
 
 // Student pages
 import StudentDashboard from './pages/student/Dashboard';
@@ -27,9 +30,12 @@ import InterviewPrep from './pages/student/InterviewPrep';
 import QuizAttempt from './pages/student/QuizAttempt';
 import StudentQuizzes from './pages/student/StudentQuizzes';
 import TakeQuiz from './pages/student/TakeQuiz';
-import QuizResults from './pages/student/QuizResults'; // Add this import
+import QuizResults from './pages/student/QuizResults';
 import StudentCourses from './pages/student/StudentCourses';
-import ProfileSettings from './pages/student/ProfileSettings'; // Import the new ProfileSettings component
+import ProfileSettings from './pages/student/ProfileSettings';
+import CourseContent from './pages/student/CourseContent'; // Add missing import
+import PaymentSuccess from './pages/payment/PaymentSuccess'; // Add missing import
+import PaymentVerification from './pages/payment/PaymentVerification';
 
 // Mentor pages
 import MentorDashboard from './pages/mentor/Dashboard';
@@ -42,6 +48,9 @@ import AssignToStudents from './pages/mentor/AssignToStudents';
 
 // Course selection page
 import CourseSelectionPage from './pages/auth/CourseSelectionPage';
+
+// Add new import
+import RazorpayDebug from './pages/payment/RazorpayDebug';
 
 function App() {
   return (
@@ -72,6 +81,7 @@ function App() {
             <Route path="/admin/mentors" element={<ManageMentors />} />
             <Route path="/admin/enrollments" element={<ManageEnrollments />} />
             <Route path="/admin/payments" element={<AdminDashboard />} />
+            <Route path="/admin/verify-payments" element={<VerifyPayments />} />
             
             {/* Student Routes with protection */}
             <Route path="/student/dashboard" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />
@@ -101,15 +111,25 @@ function App() {
             <Route path="/signup" element={<Signup />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             
-            {/* Protected Course Selection Route */}
-            <Route 
-              path="/course-selection" 
-              element={
-                <ProtectedRoute>
-                  <CourseSelectionPage />
-                </ProtectedRoute>
-              } 
-            />
+            {/* Payment flow */}
+            <Route path="/payment-flow" element={<SignupPaymentFlow />} />
+            
+            {/* Protected routes that require payment */}
+            <Route path="/dashboard" element={
+              <PaymentProtectedRoute requiresPayment={true}>
+                <StudentDashboard />
+              </PaymentProtectedRoute>
+            } />
+            <Route path="/course/:courseId" element={
+              <PaymentProtectedRoute requiresPayment={true}>
+                <CourseView />
+              </PaymentProtectedRoute>
+            } />
+            <Route path="/course/:courseId/learn" element={
+              <PaymentProtectedRoute requiresPayment={true}>
+                <CourseContent />
+              </PaymentProtectedRoute>
+            } />
             
             {/* Redirect unknown routes to home */}
             <Route path="*" element={<Navigate to="/" />} />

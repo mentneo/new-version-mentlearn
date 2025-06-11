@@ -34,9 +34,13 @@
     <!-- Preconnect to essential domains -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://js.stripe.com" crossorigin />
     
     <!-- Canonical URL -->
     <link rel="canonical" href="https://mentneo.com/" />
+
+    <!-- Stripe.js Integration -->
+    <script async src="https://js.stripe.com/v3/"></script>
 
     <title>Mentneo - Learn. Build. Dominate.</title>
   </head>
@@ -53,5 +57,11 @@
       To begin the development, run `npm start` or `yarn start`.
       To create a production bundle, use `npm run build` or `yarn build`.
     -->
+    <script>
+      // Initialize Stripe configuration
+      window.initStripe = function(publishableKey) {
+        window.stripe = Stripe(publishableKey);
+      }
+    </script>
   </body>
 </html>

@@ -20,6 +20,9 @@ export function AuthProvider({ children }) {
   const [userRole, setUserRole] = useState(null);
   const [loading, setLoading] = useState(true);
   const [onboardingComplete, setOnboardingComplete] = useState(null);
+  const [userDetails, setUserDetails] = useState(null);
+  const [paymentStatus, setPaymentStatus] = useState(null);
+  const [subscriptionPlan, setSubscriptionPlan] = useState(null);
 
   // Check if this is the first user to sign up (for admin assignment)
   async function isFirstUser() {
@@ -114,6 +117,40 @@ export function AuthProvider({ children }) {
     }
   }
 
+  // Add payment status and subscription plan check to user data fetching
+  useEffect(() => {
+    if (currentUser) {
+      const fetchUserDetails = async () => {
+        try {
+          const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            setUserDetails(userData);
+            
+            // Set payment status with verification status
+            setPaymentStatus({
+              hasPaid: userData.hasPaid || false,
+              accessGranted: userData.accessGranted || false,
+              accessLevel: userData.accessLevel || 'free',
+              verificationStatus: userData.verificationStatus || null
+            });
+            
+            // Set subscription plan
+            setSubscriptionPlan(userData.planId || null);
+          }
+        } catch (error) {
+          console.error("Error fetching user details:", error);
+        }
+      };
+      
+      fetchUserDetails();
+    } else {
+      setUserDetails(null);
+      setPaymentStatus(null);
+      setSubscriptionPlan(null);
+    }
+  }, [currentUser]);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setLoading(true);
@@ -168,7 +205,10 @@ export function AuthProvider({ children }) {
     login,
     logout,
     resetPassword,
-    getUserRole
+    getUserRole,
+    userDetails,
+    paymentStatus,
+    subscriptionPlan
   };
 
   return (
