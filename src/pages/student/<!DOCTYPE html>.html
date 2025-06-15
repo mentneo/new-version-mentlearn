@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ...existing head code... -->
+</head>
+<body>
+    <!-- ...existing body code... -->
+
+    <div class="row mt-4">
+      <!-- ...existing code... -->
+
+      <!-- Add this new section for recent notifications -->
+      <div class="col-md-6 mb-4">
+        <div class="card h-100">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5>Recent Notifications</h5>
+            <a href="/student/notifications" class="btn btn-sm btn-outline-primary">View All</a>
+          </div>
+          <div class="card-body">
+            <div id="dashboard-notifications">
+              <div class="text-center" id="notifications-loading">
+                <div class="spinner-border spinner-border-sm" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+              </div>
+              <div id="recent-notifications"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ...existing code... -->
+    </div>
+
+    <!-- Add this script at the end of the file -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // ...existing code...
+        
+        // Fetch recent notifications
+        fetchRecentNotifications();
+      });
+      
+      function fetchRecentNotifications() {
+        fetch('/api/v1/notifications/user')
+          .then(response => response.json())
+          .then(data => {
+            document.getElementById('notifications-loading').style.display = 'none';
+            const notificationsContainer = document.getElementById('recent-notifications');
+            
+            if (data.success && data.notifications.length > 0) {
+              // Display only 3 most recent notifications
+              const recentNotifications = data.notifications.slice(0, 3);
+              
+              let notificationsHtml = '<ul class="list-group">';
+              
+              recentNotifications.forEach(notification => {
+                const typeClass = notification.type === 'urgent' ? 'text-danger' : 
+                                notification.type === 'warning' ? 'text-warning' : 'text-info';
+                
+                notificationsHtml += `
+                  <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                      <span class="${typeClass} ${!notification.isRead ? 'fw-bold' : ''}">
+                        ${notification.title}
+                      </span>
+                      <small class="d-block text-muted">${new Date(notification.createdAt).toLocaleDateString()}</small>
+                    </div>
+                    ${!notification.isRead ? '<span class="badge bg-primary rounded-pill">New</span>' : ''}
+                  </li>
+                `;
+              });
+              
+              notificationsHtml += '</ul>';
+              notificationsContainer.innerHTML = notificationsHtml;
+            } else {
+              notificationsContainer.innerHTML = '<p class="text-muted">No new notifications</p>';
+            }
+          })
+          .catch(error => {
+            console.error('Error fetching notifications:', error);
+            document.getElementById('notifications-loading').style.display = 'none';
+            document.getElementById('recent-notifications').innerHTML = 
+              '<div class="alert alert-danger">Failed to load notifications</div>';
+          });
+      }
+    </script>
+
+    <!-- ...existing code... -->
+</body>
+</html>

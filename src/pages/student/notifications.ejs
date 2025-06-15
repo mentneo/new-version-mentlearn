@@ -1,0 +1,106 @@
+<%- include('../layout/header') %>
+<%- include('../layout/navbar') %>
+
+<div class="container mt-5">
+  <div class="row">
+    <div class="col-md-4">
+      <%- include('./sidebar') %>
+    </div>
+    <div class="col-md-8">
+      <h2>Notifications</h2>
+      <div id="notifications-container">
+        <div class="text-center" id="loading">
+          <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+        <div id="notification-list" class="list-group mt-4">
+          <!-- Notifications will be loaded here -->
+        </div>
+        <div class="text-center mt-3" id="no-notifications" style="display: none;">
+          <p>No new notifications</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    fetchNotifications();
+  });
+
+  function fetchNotifications() {
+    fetch('/api/v1/notifications/user')
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById('loading').style.display = 'none';
+        
+        if (data.success && data.notifications.length > 0) {
+          const notificationList = document.getElementById('notification-list');
+          notificationList.innerHTML = '';
+          
+          data.notifications.forEach(notification => {
+            const notificationEl = document.createElement('div');
+            notificationEl.className = `list-group-item list-group-item-action ${notification.isRead ? '' : 'fw-bold'}`;
+            
+            // Set different background based on notification type
+            if (notification.type === 'urgent') {
+              notificationEl.classList.add('list-group-item-danger');
+            } else if (notification.type === 'warning') {
+              notificationEl.classList.add('list-group-item-warning');
+            } else {
+              notificationEl.classList.add('list-group-item-info');
+            }
+            
+            const date = new Date(notification.createdAt);
+            const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+            
+            notificationEl.innerHTML = `
+              <div class="d-flex w-100 justify-content-between">
+                <h5 class="mb-1">${notification.title}</h5>
+                <small>${formattedDate}</small>
+              </div>
+              <p class="mb-1">${notification.message}</p>
+            `;
+            
+            // Mark as read when clicked
+            notificationEl.addEventListener('click', () => {
+              if (!notification.isRead) {
+                markAsRead(notification._id, notificationEl);
+              }
+            });
+            
+            notificationList.appendChild(notificationEl);
+          });
+        } else {
+          document.getElementById('no-notifications').style.display = 'block';
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching notifications:', error);
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('notification-list').innerHTML = '<div class="alert alert-danger">Failed to load notifications</div>';
+      });
+  }
+
+  function markAsRead(notificationId, element) {
+    fetch(`/api/v1/notifications/read/${notificationId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        element.classList.remove('fw-bold');
+      }
+    })
+    .catch(error => {
+      console.error('Error marking notification as read:', error);
+    });
+  }
+</script>
+
+<%- include('../layout/footer') %>
