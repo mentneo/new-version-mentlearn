@@ -9,7 +9,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyD5TM1O1F1T49UKMbUG0nI7k19FHk6Cvr0",
   authDomain: "mentor-app-238c6.firebaseapp.com",
   projectId: "mentor-app-238c6",
-  storageBucket: "mentor-app-238c6.firebasestorage.app",
+  storageBucket: "mentor-app-238c6.appspot.com", // Make sure this is the correct format
   messagingSenderId: "943754909900",
   appId: "1:943754909900:web:cef25346ffae73d2e20a69",
   measurementId: "G-8T3CMHE740"
@@ -25,7 +25,7 @@ const storage = getStorage(app);
 // Cloudinary configuration
 const cloudinaryConfig = {
   cloudName: 'dp8bfdbab',
-  uploadPreset: 'cryptchat'
+  uploadPreset: 'mentneo_uploads' // Make sure this upload preset exists in your Cloudinary account
 };
 
 console.log("Firebase initialized with project:", firebaseConfig.projectId);

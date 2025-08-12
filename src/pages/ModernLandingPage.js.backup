@@ -1,0 +1,709 @@
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import '../styles/LandingPage.css';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  FaGraduationCap, 
+  FaLaptopCode, 
+  FaComments, 
+  FaProjectDiagram, 
+  FaChartLine, 
+  FaGithub, 
+  FaTwitter, 
+  FaLinkedin, 
+  FaYoutube, 
+  FaInstagram,
+  FaMoon, 
+  FaSun,
+  FaBars,
+  FaTimes,
+  FaHome,
+  FaBook,
+  FaUserFriends,
+  FaDollarSign,
+  FaSignInAlt,
+  FaUserPlus
+} from 'react-icons/fa';
+
+const ModernLandingPage = () => {
+  const [darkMode, setDarkMode] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userType, setUserType] = useState('student');
+
+  // Toggle dark mode
+  const toggleDarkMode = () => {
+    setDarkMode(!darkMode);
+  };
+
+  // Toggle mobile menu
+  const toggleMobileMenu = () => {
+    setMobileMenuOpen(!mobileMenuOpen);
+  };
+
+  // Apply dark mode class to body
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
+
+  // Decorative elements - shapes for background
+  const Shapes = () => (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {/* Circles */}
+      <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-blue-100 dark:bg-blue-900/20 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
+      <div className="absolute top-1/3 right-1/4 w-72 h-72 bg-purple-100 dark:bg-purple-900/20 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
+      <div className="absolute bottom-1/4 right-1/3 w-80 h-80 bg-pink-100 dark:bg-pink-900/20 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000"></div>
+      
+      {/* Stars and doodles */}
+      <div className="absolute top-20 right-20 text-blue-200 dark:text-blue-700 text-3xl">★</div>
+      <div className="absolute bottom-40 left-20 text-purple-200 dark:text-purple-700 text-4xl">✷</div>
+      <div className="absolute top-1/2 right-40 text-indigo-200 dark:text-indigo-700 text-5xl">✹</div>
+      
+      {/* Diagonal stripes for hero section */}
+      <div className="absolute inset-0 bg-stripes bg-opacity-20 z-0"></div>
+    </div>
+  );
+
+  return (
+    <div className={`min-h-screen ${darkMode ? 'dark' : ''}`}>
+      <div className="bg-gradient-to-b from-blue-50 to-white dark:from-slate-900 dark:to-slate-800 min-h-screen relative overflow-hidden">
+        <Shapes />
+        
+        {/* Header / Navigation */}
+        <header className="relative z-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center py-4 md:py-6">
+              {/* Logo */}
+              <div className="flex justify-start lg:w-0 lg:flex-1">
+                <Link to="/" className="flex items-center">
+                  <img src="/logo.png" alt="Mentneo" className="h-10 w-auto mr-2" />
+                  <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Mentneo</span>
+                </Link>
+              </div>
+              
+              {/* Desktop Navigation Links */}
+              <nav className="hidden md:flex items-center space-x-8">
+                <Link to="/" className="flex items-center text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400">
+                  <FaHome className="mr-2" />
+                  Home
+                </Link>
+                <Link to="/courses" className="flex items-center text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400">
+                  <FaBook className="mr-2" />
+                  Courses
+                </Link>
+                <Link to="/mentors" className="flex items-center text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400">
+                  <FaUserFriends className="mr-2" />
+                  Mentors
+                </Link>
+                <Link to="/pricing" className="flex items-center text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400">
+                  <FaDollarSign className="mr-2" />
+                  Pricing
+                </Link>
+              </nav>
+              
+              {/* Login & Dark Mode Buttons */}
+              <div className="hidden md:flex items-center justify-end space-x-4">
+                <button
+                  onClick={toggleDarkMode}
+                  className="p-2 rounded-full text-gray-700 dark:text-gray-200 hover:bg-blue-100 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+                >
+                  {darkMode ? <FaSun className="h-5 w-5" /> : <FaMoon className="h-5 w-5" />}
+                </button>
+                
+                <Link to="/login" className="flex items-center whitespace-nowrap text-base font-medium text-gray-700 dark:text-gray-200 border border-blue-500 dark:border-blue-400 px-4 py-2 rounded-full hover:bg-blue-50 dark:hover:bg-slate-700 transition-colors">
+                  <FaSignInAlt className="mr-2" />
+                  Log In
+                </Link>
+                
+                <Link to="/signup" className="flex items-center whitespace-nowrap text-base font-medium text-white bg-blue-600 px-4 py-2 rounded-full hover:bg-blue-700 transition-colors">
+                  <FaUserPlus className="mr-2" />
+                  Sign Up
+                </Link>
+              </div>
+              
+              {/* Mobile menu button */}
+              <div className="md:hidden">
+                <button
+                  type="button"
+                  className="bg-blue-50 dark:bg-blue-900/30 rounded-full p-2 inline-flex items-center justify-center text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-800/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  onClick={toggleMobileMenu}
+                  aria-expanded={mobileMenuOpen}
+                  aria-label="Toggle menu"
+                >
+                  <FaBars className="h-6 w-6" />
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          {/* Mobile Menu - Slide in from right */}
+          <AnimatePresence>
+            {mobileMenuOpen && (
+              <>
+                {/* Backdrop */}
+                <motion.div 
+                  className="fixed inset-0 bg-black bg-opacity-25 backdrop-blur-sm z-40"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={toggleMobileMenu}
+                />
+                
+                {/* Slide-in menu */}
+                <motion.div 
+                  className="fixed top-0 right-0 h-full w-80 max-w-full bg-white dark:bg-slate-900 shadow-xl z-50 overflow-y-auto"
+                  initial={{ x: "100%" }}
+                  animate={{ x: 0 }}
+                  exit={{ x: "100%" }}
+                  transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                >
+                  <div className="p-5">
+                    {/* Menu header with logo and close button */}
+                    <div className="flex items-center justify-between mb-8">
+                      <Link to="/" className="flex items-center" onClick={toggleMobileMenu}>
+                        <img src="/logo.png" alt="Mentneo" className="h-8 w-auto mr-2" />
+                        <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Mentneo</span>
+                      </Link>
+                      <button
+                        type="button"
+                        className="rounded-full p-2 inline-flex items-center justify-center text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        onClick={toggleMobileMenu}
+                        aria-label="Close menu"
+                      >
+                        <FaTimes className="h-6 w-6" />
+                      </button>
+                    </div>
+                    
+                    {/* Navigation links */}
+                    <nav className="space-y-1">
+                      <Link 
+                        to="/" 
+                        className="flex items-center px-4 py-3 text-base font-medium text-gray-900 dark:text-white rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                        onClick={toggleMobileMenu}
+                      >
+                        <FaHome className="mr-4 h-5 w-5 text-blue-600 dark:text-blue-400" />
+                        Home
+                      </Link>
+                      <Link 
+                        to="/courses" 
+                        className="flex items-center px-4 py-3 text-base font-medium text-gray-900 dark:text-white rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                        onClick={toggleMobileMenu}
+                      >
+                        <FaBook className="mr-4 h-5 w-5 text-blue-600 dark:text-blue-400" />
+                        Courses
+                      </Link>
+                      <Link 
+                        to="/mentors" 
+                        className="flex items-center px-4 py-3 text-base font-medium text-gray-900 dark:text-white rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                        onClick={toggleMobileMenu}
+                      >
+                        <FaUserFriends className="mr-4 h-5 w-5 text-blue-600 dark:text-blue-400" />
+                        Mentors
+                      </Link>
+                      <Link 
+                        to="/pricing" 
+                        className="flex items-center px-4 py-3 text-base font-medium text-gray-900 dark:text-white rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                        onClick={toggleMobileMenu}
+                      >
+                        <FaDollarSign className="mr-4 h-5 w-5 text-blue-600 dark:text-blue-400" />
+                        Pricing
+                      </Link>
+                    </nav>
+                    
+                    {/* Action buttons */}
+                    <div className="mt-8 space-y-4">
+                      <Link 
+                        to="/login" 
+                        className="flex items-center justify-center w-full px-4 py-3 text-base font-medium text-blue-600 dark:text-blue-400 border border-blue-600 dark:border-blue-400 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                        onClick={toggleMobileMenu}
+                      >
+                        <FaSignInAlt className="mr-2" />
+                        Log In
+                      </Link>
+                      <Link 
+                        to="/signup" 
+                        className="flex items-center justify-center w-full px-4 py-3 text-base font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                        onClick={toggleMobileMenu}
+                      >
+                        <FaUserPlus className="mr-2" />
+                        Sign Up
+                      </Link>
+                      
+                      {/* Dark mode toggle */}
+                      <button
+                        onClick={() => {
+                          toggleDarkMode();
+                        }}
+                        className="flex items-center justify-center w-full px-4 py-3 text-base font-medium text-gray-900 dark:text-white rounded-lg bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors"
+                        aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+                      >
+                        {darkMode ? (
+                          <>
+                            <FaSun className="mr-2" />
+                            Switch to Light Mode
+                          </>
+                        ) : (
+                          <>
+                            <FaMoon className="mr-2" />
+                            Switch to Dark Mode
+                          </>
+                        )}
+                      </button>
+                    </div>
+                    
+                    {/* Social links */}
+                    <div className="mt-8 pt-8 border-t border-gray-200 dark:border-slate-700">
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Connect with us</p>
+                      <div className="flex space-x-4">
+                        <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400">
+                          <FaTwitter className="h-5 w-5" />
+                        </a>
+                        <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400">
+                          <FaLinkedin className="h-5 w-5" />
+                        </a>
+                        <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400">
+                          <FaYoutube className="h-5 w-5" />
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
+        </header>
+                        Home
+                    
+                      <Link 
+                        to="/courses" 
+                        className="flex items-center py-3 text-lg font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 border-b border-gray-100 dark:border-gray-700"
+                        onClick={toggleMobileMenu}
+                      >
+                        <span className="mr-3"><FaLaptopCode /></span>
+                        Courses
+                      </Link>
+                      <Link 
+                        to="/mentors" 
+                        className="flex items-center py-3 text-lg font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 border-b border-gray-100 dark:border-gray-700"
+                        onClick={toggleMobileMenu}
+                      >
+                        <span className="mr-3"><FaComments /></span>
+                        Mentors
+                      </Link>
+                      <Link 
+                        to="/resources" 
+                        className="flex items-center py-3 text-lg font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 border-b border-gray-100 dark:border-gray-700"
+                        onClick={toggleMobileMenu}
+                      >
+                        <span className="mr-3"><FaProjectDiagram /></span>
+                        Resources
+                      </Link>
+                      <Link 
+                        to="/community" 
+                        className="flex items-center py-3 text-lg font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 border-b border-gray-100 dark:border-gray-700"
+                        onClick={toggleMobileMenu}
+                      >
+                        <span className="mr-3"><FaChartLine /></span>
+                        Community
+                      </Link>
+                    </nav>
+                  </div>
+                </div>
+                <div className="py-6 px-5 space-y-6">
+                  <div className="flex flex-col space-y-4">
+                    <Link 
+                      to="/login" 
+                      className="w-full flex items-center justify-center px-4 py-3 rounded-full text-base font-medium text-white bg-blue-600 hover:bg-blue-700"
+                      onClick={toggleMobileMenu}
+                    >
+                      Log In
+                    </Link>
+                    <Link 
+                      to="/signup" 
+                      className="w-full flex items-center justify-center px-4 py-3 border border-blue-600 rounded-full text-base font-medium text-blue-600 dark:text-blue-400 bg-transparent hover:bg-blue-50 dark:hover:bg-slate-800"
+                      onClick={toggleMobileMenu}
+                    >
+                      Sign Up
+                    </Link>
+                    <div className="flex justify-center mt-4">
+                      <button
+                        onClick={toggleDarkMode}
+                        className="p-3 rounded-full text-gray-700 dark:text-gray-200 hover:bg-blue-100 dark:hover:bg-slate-700 flex items-center"
+                      >
+                        {darkMode ? <><FaSun className="h-5 w-5 mr-2" /> <span>Light Mode</span></> : <><FaMoon className="h-5 w-5 mr-2" /> <span>Dark Mode</span></>}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </header>
+        
+        {/* Hero Section */}
+        <section className="relative z-10 pt-8 sm:pt-16 lg:pt-24 pb-12 lg:pb-20 fade-in">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="lg:grid lg:grid-cols-12 lg:gap-8">
+              {/* Hero Content */}
+              <div className="sm:text-center md:max-w-2xl md:mx-auto lg:col-span-6 lg:text-left">
+                <h1 className="text-4xl tracking-tight font-extrabold text-gray-900 dark:text-white sm:text-5xl md:text-6xl fade-in-element">
+                  <span className="block">Turn your skills into success</span>
+                  <span className="block text-blue-600 dark:text-blue-400">with Mentneo</span>
+                </h1>
+                <p className="mt-6 text-xl text-gray-600 dark:text-gray-300 fade-in-element animation-delay-200">
+                  Join thousands of students learning real-world tech skills with mentors who care.
+                </p>
+                
+                {/* Sign-up Form */}
+                <div className="mt-8 max-w-lg mx-auto lg:mx-0 fade-in-element animation-delay-400">
+                  <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-lg">
+                    <div className="mb-4">
+                      <label className="block text-gray-700 dark:text-gray-300 font-medium mb-2">Sign up as:</label>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => setUserType('student')}
+                          className={`px-4 py-2 rounded-full text-sm font-medium flex-1 transition ${
+                            userType === 'student'
+                              ? 'bg-blue-600 text-white' 
+                              : 'bg-gray-100 dark:bg-slate-700 text-gray-800 dark:text-gray-200'
+                          }`}
+                        >
+                          Student
+                        </button>
+                        <button
+                          onClick={() => setUserType('mentor')}
+                          className={`px-4 py-2 rounded-full text-sm font-medium flex-1 transition ${
+                            userType === 'mentor'
+                              ? 'bg-blue-600 text-white' 
+                              : 'bg-gray-100 dark:bg-slate-700 text-gray-800 dark:text-gray-200'
+                          }`}
+                        >
+                          Mentor
+                        </button>
+                      </div>
+                    </div>
+                    <Link
+                      to={userType === 'student' ? '/signup' : '/mentor-signup'}
+                      className="w-full flex items-center justify-center px-5 py-3 text-base font-medium rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700"
+                    >
+                      Continue
+                    </Link>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Hero Image */}
+              <div className="mt-12 relative sm:max-w-lg sm:mx-auto lg:mt-0 lg:max-w-none lg:mx-0 lg:col-span-6 lg:flex lg:items-center fade-in-element animation-delay-600">
+                <div className="relative mx-auto w-full rounded-lg shadow-lg lg:max-w-md">
+                  <div className="relative block w-full bg-white dark:bg-slate-800 rounded-lg overflow-hidden">
+                    <img
+                      className="w-full"
+                      src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1471&q=80"
+                      alt="Students collaborating"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/30 to-indigo-600/30 mix-blend-multiply"></div>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="text-white text-center">
+                        <div className="text-2xl font-bold mb-2">Learn. Build. Grow.</div>
+                        <div className="text-sm">Hands-on projects with real-world applications</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        
+        {/* About Mentneo Section */}
+        <section className="py-16 bg-white dark:bg-slate-800 sm:py-24 relative z-10 fade-in">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center">
+              <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white sm:text-4xl">
+                We connect students with expert mentors to build amazing tech careers
+              </h2>
+              <p className="mt-4 max-w-2xl text-xl text-gray-600 dark:text-gray-300 lg:mx-auto">
+                Our platform combines hands-on learning, personalized guidance, and industry-relevant projects.
+              </p>
+            </div>
+            
+            <div className="mt-16">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {/* Feature 1 */}
+                <div className="relative p-6 bg-blue-50 dark:bg-slate-700 rounded-xl fade-in-element">
+                  <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 bg-blue-600 dark:bg-blue-500 rounded-full p-3 shadow-lg">
+                    <FaLaptopCode className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="mt-6 text-xl font-bold text-gray-900 dark:text-white text-center">Learn by Doing</h3>
+                  <p className="mt-4 text-gray-600 dark:text-gray-300 text-center">Project-based learning from day one. Build real applications that solve real problems.</p>
+                </div>
+                
+                {/* Feature 2 */}
+                <div className="relative p-6 bg-indigo-50 dark:bg-slate-700 rounded-xl fade-in-element animation-delay-200">
+                  <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 bg-indigo-600 dark:bg-indigo-500 rounded-full p-3 shadow-lg">
+                    <FaGraduationCap className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="mt-6 text-xl font-bold text-gray-900 dark:text-white text-center">Get Mentored</h3>
+                  <p className="mt-4 text-gray-600 dark:text-gray-300 text-center">1:1 sessions with industry professionals who guide your learning journey and career growth.</p>
+                </div>
+                
+                {/* Feature 3 */}
+                <div className="relative p-6 bg-purple-50 dark:bg-slate-700 rounded-xl fade-in-element animation-delay-400">
+                  <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 bg-purple-600 dark:bg-purple-500 rounded-full p-3 shadow-lg">
+                    <FaProjectDiagram className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="mt-6 text-xl font-bold text-gray-900 dark:text-white text-center">Build Your Portfolio</h3>
+                  <p className="mt-4 text-gray-600 dark:text-gray-300 text-center">Showcase projects that land you jobs. Create a portfolio that demonstrates your real-world skills.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        
+        {/* Interactive Features Section */}
+        <section className="py-16 bg-gradient-to-b from-blue-50 to-white dark:from-slate-900 dark:to-slate-800 sm:py-24 relative z-10 fade-in">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="lg:grid lg:grid-cols-2 lg:gap-12">
+              {/* Text Content */}
+              <div className="lg:col-span-1">
+                <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white">
+                  Interactive learning that keeps you engaged
+                </h2>
+                <p className="mt-4 text-lg text-gray-600 dark:text-gray-300">
+                  Our platform is designed to make learning collaborative, interactive, and effective.
+                </p>
+                
+                <div className="mt-8 space-y-6">
+                  {/* Feature 1 */}
+                  <div className="flex fade-in-element">
+                    <div className="flex-shrink-0">
+                      <div className="flex items-center justify-center h-12 w-12 rounded-md bg-blue-600 dark:bg-blue-500 text-white">
+                        <FaComments className="h-6 w-6" />
+                      </div>
+                    </div>
+                    <div className="ml-4">
+                      <h3 className="text-lg font-medium text-gray-900 dark:text-white">Stay connected instantly</h3>
+                      <p className="mt-2 text-base text-gray-600 dark:text-gray-300">Chat with mentors and peers to get help when you need it most.</p>
+                    </div>
+                  </div>
+                  
+                  {/* Feature 2 */}
+                  <div className="flex fade-in-element animation-delay-200">
+                    <div className="flex-shrink-0">
+                      <div className="flex items-center justify-center h-12 w-12 rounded-md bg-blue-600 dark:bg-blue-500 text-white">
+                        <FaProjectDiagram className="h-6 w-6" />
+                      </div>
+                    </div>
+                    <div className="ml-4">
+                      <h3 className="text-lg font-medium text-gray-900 dark:text-white">Showcase Your Work</h3>
+                      <p className="mt-2 text-base text-gray-600 dark:text-gray-300">Post projects and get feedback from the community and industry experts.</p>
+                    </div>
+                  </div>
+                  
+                  {/* Feature 3 */}
+                  <div className="flex fade-in-element animation-delay-400">
+                    <div className="flex-shrink-0">
+                      <div className="flex items-center justify-center h-12 w-12 rounded-md bg-blue-600 dark:bg-blue-500 text-white">
+                        <FaChartLine className="h-6 w-6" />
+                      </div>
+                    </div>
+                    <div className="ml-4">
+                      <h3 className="text-lg font-medium text-gray-900 dark:text-white">Grow Your Own Way</h3>
+                      <p className="mt-2 text-base text-gray-600 dark:text-gray-300">Flexible courses that match your pace and learning style.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Image */}
+              <div className="mt-10 lg:mt-0 lg:col-span-1 flex justify-center fade-in-element animation-delay-600">
+                <img 
+                  className="max-h-96 rounded-xl shadow-lg object-cover" 
+                  src="https://images.unsplash.com/photo-1531482615713-2afd69097998?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80" 
+                  alt="Interactive learning"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+        
+        {/* Student Success Stories */}
+        <section className="py-16 bg-white dark:bg-slate-800 sm:py-24 relative z-10 fade-in">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center">
+              <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white sm:text-4xl">
+                Success stories from our students
+              </h2>
+              <p className="mt-4 max-w-2xl text-xl text-gray-600 dark:text-gray-300 lg:mx-auto">
+                See how Mentneo has transformed careers and opened new opportunities.
+              </p>
+            </div>
+            
+            <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
+              {/* Testimonial 1 */}
+              <div className="bg-blue-50 dark:bg-slate-700 rounded-2xl p-6 shadow-md fade-in-element">
+                <div className="flex items-center mb-4">
+                  <img 
+                    className="h-12 w-12 rounded-full" 
+                    src="https://randomuser.me/api/portraits/women/32.jpg" 
+                    alt="Student" 
+                  />
+                  <div className="ml-4">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">Sarah Johnson</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">Frontend Developer</p>
+                  </div>
+                </div>
+                <p className="text-gray-700 dark:text-gray-300">
+                  "The mentorship I received at Mentneo was invaluable. Within 6 months, I went from knowing basic HTML to landing a job as a React developer."
+                </p>
+              </div>
+              
+              {/* Testimonial 2 */}
+              <div className="bg-indigo-50 dark:bg-slate-700 rounded-2xl p-6 shadow-md fade-in-element animation-delay-200">
+                <div className="flex items-center mb-4">
+                  <img 
+                    className="h-12 w-12 rounded-full" 
+                    src="https://randomuser.me/api/portraits/men/46.jpg" 
+                    alt="Student" 
+                  />
+                  <div className="ml-4">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">Michael Chen</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">Full Stack Developer</p>
+                  </div>
+                </div>
+                <p className="text-gray-700 dark:text-gray-300">
+                  "The projects I built at Mentneo became the portfolio that got me hired. My mentor's guidance was crucial for my success."
+                </p>
+              </div>
+              
+              {/* Testimonial 3 */}
+              <div className="bg-purple-50 dark:bg-slate-700 rounded-2xl p-6 shadow-md fade-in-element animation-delay-400">
+                <div className="flex items-center mb-4">
+                  <img 
+                    className="h-12 w-12 rounded-full" 
+                    src="https://randomuser.me/api/portraits/women/65.jpg" 
+                    alt="Student" 
+                  />
+                  <div className="ml-4">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">Jessica Rodriguez</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">Data Engineer</p>
+                  </div>
+                </div>
+                <p className="text-gray-700 dark:text-gray-300">
+                  "Mentneo's project-based approach helped me master complex concepts that I was struggling with. Now I'm working at my dream company."
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+        
+        {/* Call-to-Action */}
+        <section className="py-16 bg-gradient-to-r from-blue-600 to-indigo-600 sm:py-20 relative z-10 fade-in">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center">
+              <h2 className="text-3xl font-extrabold text-white sm:text-4xl">
+                Join the Mentneo Community
+              </h2>
+              <p className="mt-4 max-w-2xl text-xl text-blue-100 lg:mx-auto">
+                Start your learning journey today and transform your career.
+              </p>
+              <div className="mt-8 flex justify-center">
+                <Link
+                  to="/signup"
+                  className="px-8 py-3 text-base font-medium rounded-lg bg-white text-blue-600 hover:bg-blue-50 md:py-4 md:text-lg"
+                >
+                  Sign Up Now
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+        
+        {/* Footer */}
+        <footer className="bg-white dark:bg-slate-900">
+          <div className="max-w-7xl mx-auto py-12 px-4 overflow-hidden sm:px-6 lg:px-8">
+            <div className="flex flex-col md:flex-row justify-between items-center mb-8">
+              <div className="flex items-center mb-4 md:mb-0">
+                <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Mentneo</span>
+                <p className="ml-3 text-gray-600 dark:text-gray-400">Building the next generation of tech talent</p>
+              </div>
+              <div className="flex space-x-6">
+                <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400">
+                  <FaTwitter className="h-6 w-6" />
+                </a>
+                <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400">
+                  <FaLinkedin className="h-6 w-6" />
+                </a>
+                <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400">
+                  <FaGithub className="h-6 w-6" />
+                </a>
+                <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400">
+                  <FaYoutube className="h-6 w-6" />
+                </a>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+              <div>
+                <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 tracking-wider uppercase">Courses</h3>
+                <ul className="mt-4 space-y-4">
+                  <li><Link to="/courses/frontend" className="text-base text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400">Frontend Development</Link></li>
+                  <li><Link to="/courses/backend" className="text-base text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400">Backend Development</Link></li>
+                  <li><Link to="/courses/fullstack" className="text-base text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400">Full Stack Development</Link></li>
+                  <li><Link to="/courses/datascience" className="text-base text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400">Data Science</Link></li>
+                </ul>
+              </div>
+              
+              <div>
+                <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 tracking-wider uppercase">Mentors</h3>
+                <ul className="mt-4 space-y-4">
+                  <li><Link to="/mentor-signup" className="text-base text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400">Become a Mentor</Link></li>
+                  <li><Link to="/mentors" className="text-base text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400">Mentor Directory</Link></li>
+                  <li><Link to="/how-it-works" className="text-base text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400">How Mentorship Works</Link></li>
+                  <li><Link to="/success-stories" className="text-base text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400">Success Stories</Link></li>
+                </ul>
+              </div>
+              
+              <div>
+                <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 tracking-wider uppercase">About</h3>
+                <ul className="mt-4 space-y-4">
+                  <li><Link to="/mission" className="text-base text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400">Our Mission</Link></li>
+                  <li><Link to="/team" className="text-base text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400">Team</Link></li>
+                  <li><Link to="/careers" className="text-base text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400">Careers</Link></li>
+                  <li><Link to="/press" className="text-base text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400">Press</Link></li>
+                </ul>
+              </div>
+              
+              <div>
+                <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 tracking-wider uppercase">Contact</h3>
+                <ul className="mt-4 space-y-4">
+                  <li><Link to="/support" className="text-base text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400">Support</Link></li>
+                  <li><Link to="/partnerships" className="text-base text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400">Partnerships</Link></li>
+                  <li><Link to="/contact" className="text-base text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400">Contact Us</Link></li>
+                  <li><Link to="/faq" className="text-base text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400">FAQ</Link></li>
+                </ul>
+              </div>
+            </div>
+            
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-8">
+              <p className="text-base text-center text-gray-600 dark:text-gray-400">
+                &copy; 2025 Mentneo. All rights reserved.
+              </p>
+              <div className="mt-4 flex justify-center space-x-6">
+                <Link to="/privacy" className="text-sm text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400">Privacy Policy</Link>
+                <Link to="/terms" className="text-sm text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400">Terms of Service</Link>
+                <Link to="/cookies" className="text-sm text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400">Cookie Policy</Link>
+              </div>
+            </div>
+          </div>
+        </footer>
+      </div>
+    </div>
+  );
+};
+
+export default ModernLandingPage;

@@ -9,17 +9,29 @@ import { storage } from '../firebase/firebase';
  */
 export const uploadToFirebaseStorage = async (file, path) => {
   try {
+    if (!file || !(file instanceof File)) {
+      console.error('Invalid file provided to uploadToFirebaseStorage:', file);
+      throw new Error('Invalid file provided');
+    }
+
     console.log(`Uploading file to Firebase Storage at path: ${path || 'generated path'}`);
     
     // If path is not provided, generate one
     const uploadPath = path || `images/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
     
+    // Create storage reference
     const storageRef = ref(storage, uploadPath);
-    const snapshot = await uploadBytes(storageRef, file);
-    console.log('File uploaded successfully');
     
+    // Log additional details
+    console.log('Firebase Storage Reference:', storageRef.fullPath);
+    
+    // Upload file
+    const snapshot = await uploadBytes(storageRef, file);
+    console.log('File uploaded successfully to Firebase:', snapshot.ref.fullPath);
+    
+    // Get download URL
     const downloadURL = await getDownloadURL(snapshot.ref);
-    console.log('Download URL:', downloadURL);
+    console.log('Firebase Download URL:', downloadURL);
     
     return downloadURL;
   } catch (error) {

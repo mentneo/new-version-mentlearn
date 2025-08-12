@@ -23,6 +23,9 @@ export default function Home() {
             <Link to="/login" className="inline-flex items-center justify-center px-5 py-3 border border-white text-base font-medium rounded-md text-white hover:bg-indigo-500">
               Sign in
             </Link>
+            <Link to="/modern-login" className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md bg-orange-500 text-white hover:bg-orange-600">
+              Modern Sign in
+            </Link>
           </div>
         </div>
       </div>

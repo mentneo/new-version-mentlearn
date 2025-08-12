@@ -10,6 +10,29 @@ import ErrorBoundary from './components/ErrorBoundary';
 // Apply our global fix immediately before any rendering happens
 applyGlobalFix();
 
+// Initialize theme before app renders
+const initializeTheme = () => {
+  // Check for saved theme preference
+  const savedTheme = localStorage.getItem('theme');
+  const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  
+  // Apply theme class based on saved preference or system preference
+  const shouldUseDarkMode = savedTheme === 'dark' || (!savedTheme && systemPrefersDark);
+  
+  if (shouldUseDarkMode) {
+    document.documentElement.classList.add('dark');
+    document.body.classList.add('dark-mode');
+    console.log('[Theme Init] Dark mode applied at startup');
+  } else {
+    document.documentElement.classList.remove('dark');
+    document.body.classList.remove('dark-mode');
+    console.log('[Theme Init] Light mode applied at startup');
+  }
+};
+
+// Run theme initialization
+initializeTheme();
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>

@@ -4,10 +4,12 @@ import { updatePassword, updateEmail, EmailAuthProvider, reauthenticateWithCrede
 import { db, auth } from '../../firebase/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import StudentLayout from '../../components/layouts/StudentLayout';
-import { uploadImage } from '../../utils/cloudinary';
+import ProfileImageUpload from '../../components/student/ProfileImageUpload';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const ProfileSettings = () => {
   const { currentUser, updateProfile } = useAuth();
+  const { darkMode } = useTheme();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -32,7 +34,7 @@ const ProfileSettings = () => {
   // Profile image upload state
   const [profileImage, setProfileImage] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
-  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState({ loading: false, error: null });
   
   // Active tab state
   const [activeTab, setActiveTab] = useState('general');
@@ -107,24 +109,16 @@ const ProfileSettings = () => {
     }
   };
   
-  const handleImageUpload = async () => {
-    if (!profileImage) return;
+  const handleProfileImageUpdate = (imageUrl) => {
+    console.log("ProfileSettings received new image URL:", imageUrl);
+    setProfileData(prevData => ({
+      ...prevData,
+      profileImageUrl: imageUrl
+    }));
     
-    try {
-      setUploadingImage(true);
-      const imageUrl = await uploadImage(profileImage);
-      setProfileData(prevData => ({
-        ...prevData,
-        profileImageUrl: imageUrl
-      }));
-      setUploadingImage(false);
-      setSuccess("Profile image updated successfully");
-      setTimeout(() => setSuccess(""), 3000);
-    } catch (err) {
-      console.error("Error uploading image:", err);
-      setError("Failed to upload profile image. Please try again.");
-      setUploadingImage(false);
-    }
+    // Show success message
+    setSuccess("Profile image updated successfully!");
+    setTimeout(() => setSuccess(''), 3000);
   };
   
   const handleProfileUpdate = async (e) => {
@@ -214,20 +208,20 @@ const ProfileSettings = () => {
     <StudentLayout>
       <div className="py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-          <h1 className="text-2xl font-semibold text-gray-900">Profile Settings</h1>
+          <h1 className={`text-2xl font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Profile Settings</h1>
         </div>
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
           <div className="py-4">
             {/* Tabs */}
-            <div className="border-b border-gray-200 mb-6">
+            <div className={`border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'} mb-6`}>
               <nav className="-mb-px flex space-x-8">
                 <button
                   onClick={() => setActiveTab('general')}
                   className={`${
                     activeTab === 'general'
-                      ? 'border-indigo-500 text-indigo-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      ? `border-blue-500 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`
+                      : `border-transparent ${darkMode ? 'text-gray-400 hover:text-gray-300 hover:border-gray-700' : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'}`
                   } whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm`}
                 >
                   General Information
@@ -236,8 +230,8 @@ const ProfileSettings = () => {
                   onClick={() => setActiveTab('security')}
                   className={`${
                     activeTab === 'security'
-                      ? 'border-indigo-500 text-indigo-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      ? `border-blue-500 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`
+                      : `border-transparent ${darkMode ? 'text-gray-400 hover:text-gray-300 hover:border-gray-700' : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'}`
                   } whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm`}
                 >
                   Security
@@ -278,60 +272,22 @@ const ProfileSettings = () => {
             
             {/* General Information Tab */}
             {activeTab === 'general' && (
-              <div className="bg-white shadow rounded-lg">
+              <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} shadow rounded-lg`}>
                 <div className="px-4 py-5 sm:p-6">
-                  <h3 className="text-lg leading-6 font-medium text-gray-900">Profile Information</h3>
-                  <p className="mt-1 text-sm text-gray-500">Update your personal information and preferences.</p>
+                  <h3 className={`text-lg leading-6 font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>Profile Information</h3>
+                  <p className={`mt-1 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Update your personal information and preferences.</p>
                   
                   <form className="mt-6 space-y-6" onSubmit={handleProfileUpdate}>
                     {/* Profile Image */}
-                    <div className="flex items-center space-x-6">
-                      <div className="flex-shrink-0 h-24 w-24 rounded-full overflow-hidden bg-gray-100">
-                        {imagePreview ? (
-                          <img src={imagePreview} alt="Profile" className="h-full w-full object-cover" />
-                        ) : (
-                          <svg className="h-full w-full text-gray-300" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
-                          </svg>
-                        )}
-                      </div>
-                      <div>
-                        <label htmlFor="profile-photo" className="block text-sm font-medium text-gray-700">
-                          Profile photo
-                        </label>
-                        <div className="mt-1 flex items-center">
-                          <input
-                            type="file"
-                            id="profile-photo"
-                            name="profile-photo"
-                            accept="image/*"
-                            onChange={handleImageChange}
-                            className="sr-only"
-                          />
-                          <label
-                            htmlFor="profile-photo"
-                            className="relative cursor-pointer bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                          >
-                            <span>Change</span>
-                          </label>
-                          {profileImage && (
-                            <button
-                              type="button"
-                              onClick={handleImageUpload}
-                              disabled={uploadingImage}
-                              className="ml-3 inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-                            >
-                              {uploadingImage ? 'Uploading...' : 'Upload'}
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+                    <ProfileImageUpload 
+                      currentImageUrl={profileData.profileImageUrl} 
+                      onImageUpdate={handleProfileImageUpdate} 
+                    />
                     
                     {/* Name Fields */}
                     <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                       <div className="sm:col-span-3">
-                        <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="firstName" className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                           First name
                         </label>
                         <div className="mt-1">
@@ -342,13 +298,13 @@ const ProfileSettings = () => {
                             required
                             value={profileData.firstName}
                             onChange={handleInputChange}
-                            className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                            className={`shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300 text-gray-900'} rounded-md`}
                           />
                         </div>
                       </div>
 
                       <div className="sm:col-span-3">
-                        <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="lastName" className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                           Last name
                         </label>
                         <div className="mt-1">
@@ -359,13 +315,13 @@ const ProfileSettings = () => {
                             required
                             value={profileData.lastName}
                             onChange={handleInputChange}
-                            className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                            className={`shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300 text-gray-900'} rounded-md`}
                           />
                         </div>
                       </div>
                       
                       <div className="sm:col-span-3">
-                        <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="email" className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                           Email address
                         </label>
                         <div className="mt-1">
@@ -376,13 +332,13 @@ const ProfileSettings = () => {
                             required
                             value={profileData.email}
                             onChange={handleInputChange}
-                            className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                            className={`shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300 text-gray-900'} rounded-md`}
                           />
                         </div>
                       </div>
 
                       <div className="sm:col-span-3">
-                        <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="phone" className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                           Phone number (optional)
                         </label>
                         <div className="mt-1">
@@ -392,13 +348,13 @@ const ProfileSettings = () => {
                             id="phone"
                             value={profileData.phone}
                             onChange={handleInputChange}
-                            className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                            className={`shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300 text-gray-900'} rounded-md`}
                           />
                         </div>
                       </div>
 
                       <div className="sm:col-span-6">
-                        <label htmlFor="bio" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="bio" className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                           Bio (optional)
                         </label>
                         <div className="mt-1">
@@ -408,14 +364,14 @@ const ProfileSettings = () => {
                             rows={3}
                             value={profileData.bio}
                             onChange={handleInputChange}
-                            className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                            className={`shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300 text-gray-900'} rounded-md`}
                           />
                         </div>
-                        <p className="mt-2 text-sm text-gray-500">Brief description for your profile.</p>
+                        <p className={`mt-2 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Brief description for your profile.</p>
                       </div>
 
                       <div className="sm:col-span-3">
-                        <label htmlFor="skills" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="skills" className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                           Skills (comma separated, optional)
                         </label>
                         <div className="mt-1">
@@ -425,13 +381,13 @@ const ProfileSettings = () => {
                             id="skills"
                             value={profileData.skills.join(', ')}
                             onChange={handleSkillsChange}
-                            className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                            className={`shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300 text-gray-900'} rounded-md`}
                           />
                         </div>
                       </div>
 
                       <div className="sm:col-span-3">
-                        <label htmlFor="interests" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="interests" className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                           Interests (comma separated, optional)
                         </label>
                         <div className="mt-1">
@@ -441,7 +397,7 @@ const ProfileSettings = () => {
                             id="interests"
                             value={profileData.interests.join(', ')}
                             onChange={handleInterestsChange}
-                            className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                            className={`shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300 text-gray-900'} rounded-md`}
                           />
                         </div>
                       </div>
@@ -450,8 +406,8 @@ const ProfileSettings = () => {
                     <div className="flex justify-end">
                       <button
                         type="submit"
-                        disabled={loading || uploadingImage}
-                        className="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                        disabled={loading}
+                        className="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
                       >
                         {loading ? 'Saving...' : 'Save'}
                       </button>
@@ -463,15 +419,15 @@ const ProfileSettings = () => {
             
             {/* Security Tab */}
             {activeTab === 'security' && (
-              <div className="bg-white shadow rounded-lg">
+              <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} shadow rounded-lg`}>
                 <div className="px-4 py-5 sm:p-6">
-                  <h3 className="text-lg leading-6 font-medium text-gray-900">Change Password</h3>
-                  <p className="mt-1 text-sm text-gray-500">Update your password to keep your account secure.</p>
+                  <h3 className={`text-lg leading-6 font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>Change Password</h3>
+                  <p className={`mt-1 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Update your password to keep your account secure.</p>
                   
                   <form className="mt-6 space-y-6" onSubmit={handlePasswordUpdate}>
                     <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                       <div className="sm:col-span-4">
-                        <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="currentPassword" className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                           Current Password
                         </label>
                         <div className="mt-1">
@@ -482,13 +438,13 @@ const ProfileSettings = () => {
                             required
                             value={passwordData.currentPassword}
                             onChange={handlePasswordChange}
-                            className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                            className={`shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300 text-gray-900'} rounded-md`}
                           />
                         </div>
                       </div>
                       
                       <div className="sm:col-span-4">
-                        <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="newPassword" className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                           New Password
                         </label>
                         <div className="mt-1">
@@ -500,13 +456,13 @@ const ProfileSettings = () => {
                             value={passwordData.newPassword}
                             onChange={handlePasswordChange}
                             minLength={6}
-                            className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                            className={`shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300 text-gray-900'} rounded-md`}
                           />
                         </div>
                       </div>
                       
                       <div className="sm:col-span-4">
-                        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="confirmPassword" className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                           Confirm New Password
                         </label>
                         <div className="mt-1">
@@ -518,7 +474,7 @@ const ProfileSettings = () => {
                             value={passwordData.confirmPassword}
                             onChange={handlePasswordChange}
                             minLength={6}
-                            className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                            className={`shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300 text-gray-900'} rounded-md`}
                           />
                         </div>
                       </div>
@@ -528,7 +484,7 @@ const ProfileSettings = () => {
                       <button
                         type="submit"
                         disabled={loading}
-                        className="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                        className="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
                       >
                         {loading ? 'Updating...' : 'Update Password'}
                       </button>
@@ -536,9 +492,9 @@ const ProfileSettings = () => {
                   </form>
                 </div>
                 
-                <div className="px-4 py-5 sm:p-6 border-t border-gray-200 mt-4">
-                  <h3 className="text-lg leading-6 font-medium text-gray-900">Delete Account</h3>
-                  <div className="mt-2 max-w-xl text-sm text-gray-500">
+                <div className={`px-4 py-5 sm:p-6 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'} mt-4`}>
+                  <h3 className={`text-lg leading-6 font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>Delete Account</h3>
+                  <div className={`mt-2 max-w-xl text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                     <p>
                       Once you delete your account, you will lose all data associated with it. This action cannot be undone.
                     </p>
@@ -546,7 +502,7 @@ const ProfileSettings = () => {
                   <div className="mt-5">
                     <button
                       type="button"
-                      className="inline-flex items-center justify-center px-4 py-2 border border-transparent font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:text-sm"
+                      className="inline-flex items-center justify-center px-4 py-2 border border-transparent font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:text-sm dark:text-red-100 dark:bg-red-900 dark:hover:bg-red-800"
                       onClick={() => window.confirm('Are you sure you want to delete your account? This action cannot be undone.') && console.log('Account deletion requested')}
                     >
                       Delete Account

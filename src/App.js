@@ -2,20 +2,37 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import ErrorBoundary from './components/ErrorBoundary';
 import { AuthProvider } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 // Import our new protected route components
 import { ProtectedRoute, PaymentProtectedRoute } from './components/ProtectedRoutes';
 import SignupPaymentFlow from './components/SignupPaymentFlow';
+import AdminLayout from './components/layouts/AdminLayout';
 
 // Public pages
 import Home from './pages/Home';
+import LandingPage from './pages/LandingPage'; // Import the existing landing page
+import ModernLandingPage from './pages/ModernLandingPage'; // Import our new modern landing page
+import AboutUs from './pages/AboutUs'; // Import the new About Us page
+import ContactUs from './pages/ContactUs'; // Import the new Contact Us page
+import CookiesPage from './pages/CookiesPage'; // Import our cookies page
 import Login from './pages/Login';
+import ModernLogin from './pages/ModernLogin';
+import NewLoginPage from './pages/NewLoginPage'; // Import our new login page
 import Signup from './pages/Signup';
+import NewSignupPage from './pages/NewSignupPage'; // Import our new signup page
 import ForgotPassword from './pages/ForgotPassword';
 import Unauthorized from './pages/Unauthorized';
 import DirectAdminAccess from './pages/DirectAdminAccess';
+import DebugPage from './pages/DebugPage';
+import DebugAdvanced from './pages/DebugAdvanced';
+import SimpleDashboard from './pages/SimpleDashboard';
+import ThemeTestPage from './pages/ThemeTestPage';
+import TermsAndConditions from './pages/TermsAndConditions';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 
 // Admin pages
 import AdminDashboard from './pages/admin/Dashboard';
+import NewDashboard from './pages/admin/NewDashboard';
 import ManageCourses from './pages/admin/ManageCourses';
 import ManageStudents from './pages/admin/ManageStudents';
 import ManageMentors from './pages/admin/ManageMentors';
@@ -24,6 +41,8 @@ import VerifyPayments from './pages/admin/VerifyPayments';
 
 // Student pages
 import StudentDashboard from './pages/student/Dashboard';
+import StudentNewDashboard from './pages/student/NewDashboard';
+import SimplifiedDashboard from './pages/student/SimplifiedDashboard';
 import CourseView from './pages/student/CourseView';
 import Progress from './pages/student/Progress';
 import InterviewPrep from './pages/student/InterviewPrep';
@@ -56,35 +75,65 @@ function App() {
   return (
     <ErrorBoundary>
       <AuthProvider>
-        <Router>
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/unauthorized" element={<Unauthorized />} />
-            
-            {/* Emergency Admin Access */}
-            <Route path="/emergency-admin" element={<DirectAdminAccess />} />
-            
-            {/* DIRECT ACCESS ROUTES FOR TESTING - Remove in production */}
-            <Route path="/direct-admin" element={<AdminDashboard />} />
-            <Route path="/direct-admin/courses" element={<ManageCourses />} />
-            <Route path="/direct-admin/students" element={<ManageStudents />} />
-            <Route path="/direct-admin/mentors" element={<ManageMentors />} />
-            
-            {/* Admin Routes - simplified protection for initial setup */}
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/admin/courses" element={<ManageCourses />} />
-            <Route path="/admin/students" element={<ManageStudents />} />
-            <Route path="/admin/mentors" element={<ManageMentors />} />
-            <Route path="/admin/enrollments" element={<ManageEnrollments />} />
-            <Route path="/admin/payments" element={<AdminDashboard />} />
-            <Route path="/admin/verify-payments" element={<VerifyPayments />} />
+        <ThemeProvider>
+          <Router>
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<ModernLandingPage />} />
+              <Route path="/home-classic" element={<LandingPage />} />
+              <Route path="/home-old" element={<Home />} />
+              <Route path="/about" element={<AboutUs />} />
+              <Route path="/contact" element={<ContactUs />} />
+              <Route path="/login" element={<NewLoginPage />} />
+              <Route path="/login-old" element={<Login />} />
+              <Route path="/modern-login" element={<ModernLogin />} />
+              <Route path="/signup" element={<NewSignupPage />} />
+              <Route path="/signup-old" element={<Signup />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/unauthorized" element={<Unauthorized />} />
+              <Route path="/debug" element={<DebugPage />} />
+              <Route path="/debug-advanced" element={<DebugAdvanced />} />
+              <Route path="/simple" element={<SimpleDashboard />} />
+              <Route path="/theme-test" element={<ThemeTestPage />} />
+              <Route path="/terms" element={<TermsAndConditions />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/cookies" element={<CookiesPage />} />
+              
+              {/* Emergency Admin Access */}
+              <Route path="/emergency-admin" element={<DirectAdminAccess />} />
+              
+              {/* DIRECT ACCESS ROUTES FOR TESTING - Remove in production */}
+              <Route path="/direct-admin" element={<AdminDashboard />} />
+              <Route path="/direct-admin/courses" element={<ManageCourses />} />
+              <Route path="/direct-admin/students" element={<ManageStudents />} />
+              <Route path="/direct-admin/mentors" element={<ManageMentors />} />
+              
+              {/* Admin Routes with new layout */}
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route path="dashboard" element={<NewDashboard />} />
+                <Route path="courses" element={<ManageCourses />} />
+                <Route path="students" element={<ManageStudents />} />
+                <Route path="mentors" element={<ManageMentors />} />
+                <Route path="enrollments" element={<ManageEnrollments />} />
+                <Route path="payments" element={<VerifyPayments />} />
+                <Route path="verify-payments" element={<VerifyPayments />} />
+                <Route path="reports" element={<NewDashboard />} />
+                <Route path="settings" element={<NewDashboard />} />
+              </Route>
+              
+              {/* Legacy Admin Routes */}
+              <Route path="/admin-old/dashboard" element={<AdminDashboard />} />
+              <Route path="/admin-old/courses" element={<ManageCourses />} />
+              <Route path="/admin-old/students" element={<ManageStudents />} />
+              <Route path="/admin-old/mentors" element={<ManageMentors />} />
+              <Route path="/admin-old/enrollments" element={<ManageEnrollments />} />
+              <Route path="/admin-old/payments" element={<AdminDashboard />} />
+              <Route path="/admin-old/verify-payments" element={<VerifyPayments />} />
             
             {/* Student Routes with protection */}
             <Route path="/student/dashboard" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />
+            <Route path="/student/new-dashboard" element={<ProtectedRoute><StudentNewDashboard /></ProtectedRoute>} />
+            <Route path="/student/simple-dashboard" element={<ProtectedRoute><SimplifiedDashboard /></ProtectedRoute>} />
             <Route path="/student/courses" element={<ProtectedRoute><StudentCourses /></ProtectedRoute>} />
             <Route path="/student/course/:courseId" element={<ProtectedRoute><CourseView /></ProtectedRoute>} />
             <Route path="/student/progress" element={<ProtectedRoute><Progress /></ProtectedRoute>} />
@@ -111,22 +160,22 @@ function App() {
             <Route path="/signup" element={<Signup />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             
-            {/* Payment flow */}
-            <Route path="/payment-flow" element={<SignupPaymentFlow />} />
+            {/* Payment flow - Now redirects to dashboard */}
+            <Route path="/payment-flow" element={<Navigate to="/dashboard" replace />} />
             
-            {/* Protected routes that require payment */}
+            {/* Protected routes - No longer require payment */}
             <Route path="/dashboard" element={
-              <PaymentProtectedRoute requiresPayment={true}>
+              <PaymentProtectedRoute>
                 <StudentDashboard />
               </PaymentProtectedRoute>
             } />
             <Route path="/course/:courseId" element={
-              <PaymentProtectedRoute requiresPayment={true}>
+              <PaymentProtectedRoute>
                 <CourseView />
               </PaymentProtectedRoute>
             } />
             <Route path="/course/:courseId/learn" element={
-              <PaymentProtectedRoute requiresPayment={true}>
+              <PaymentProtectedRoute>
                 <CourseContent />
               </PaymentProtectedRoute>
             } />
@@ -135,6 +184,7 @@ function App() {
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </Router>
+        </ThemeProvider>
       </AuthProvider>
     </ErrorBoundary>
   );

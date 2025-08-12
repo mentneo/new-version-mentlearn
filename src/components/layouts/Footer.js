@@ -1,15 +1,18 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const Footer = () => {
+  const { darkMode } = useTheme();
+  
   return (
-    <footer className="bg-white">
+    <footer className={`${darkMode ? 'bg-gray-800 text-gray-300' : 'bg-white text-gray-500'}`}>
       <div className="max-w-7xl mx-auto py-6 px-4 overflow-hidden sm:px-6 lg:px-8">
         <div className="flex items-center justify-center">
-          <img src="/mentneo-logo.png" alt="Mentneo" className="h-10 w-auto" />
+          <img src="/logo.png" alt="Mentneo" className="h-10 w-auto" />
         </div>
         <div className="mt-4 flex justify-center space-x-6">
-          <Link to="/" className="text-gray-400 hover:text-gray-500">
+          <Link to="/" className={`${darkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-400 hover:text-gray-500'}`}>
             <span className="sr-only">Home</span>
             <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path 
@@ -20,9 +23,18 @@ const Footer = () => {
             </svg>
           </Link>
         </div>
-        <p className="mt-4 text-center text-base text-gray-500">
+        <p className={`mt-4 text-center text-base ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
           &copy; {new Date().getFullYear()} Mentneo Learning Platform. All rights reserved.
         </p>
+        
+        <div className="mt-4 flex justify-center space-x-6">
+          <Link to="/terms" className={`${darkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'} text-sm`}>
+            Terms and Conditions
+          </Link>
+          <Link to="/privacy" className={`${darkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'} text-sm`}>
+            Privacy Policy
+          </Link>
+        </div>
       </div>
     </footer>
   );

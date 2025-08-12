@@ -23,17 +23,7 @@ export const PaymentProtectedRoute = ({ children, requiresPayment = false }) => 
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
   
-  if (requiresPayment && (!paymentStatus || !paymentStatus.hasPaid)) {
-    return <Navigate 
-      to="/payment-flow" 
-      state={{ 
-        fromProtectedRoute: true,
-        returnTo: location.pathname,
-        ...location.state
-      }} 
-      replace 
-    />;
-  }
+  // Removed payment requirement check to allow direct access to dashboard
   
   return children;
 };
