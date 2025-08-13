@@ -18,8 +18,11 @@ import CookiesPage from './pages/CookiesPage'; // Import our cookies page
 import Login from './pages/Login';
 import ModernLogin from './pages/ModernLogin';
 import NewLoginPage from './pages/NewLoginPage'; // Import our new login page
+import GradientLogin from './pages/GradientLogin'; // Import our gradient login page
 import Signup from './pages/Signup';
 import NewSignupPage from './pages/NewSignupPage'; // Import our new signup page
+import GradientSignup from './pages/GradientSignup'; // Import our gradient signup page
+import FullStackCoursePage from './pages/FullStackCoursePage'; // Import our new course landing page
 import ForgotPassword from './pages/ForgotPassword';
 import Unauthorized from './pages/Unauthorized';
 import DirectAdminAccess from './pages/DirectAdminAccess';
@@ -64,6 +67,8 @@ import ManageQuizzes from './pages/mentor/ManageQuizzes';
 import QuizSubmissions from './pages/mentor/QuizSubmissions';
 import CreateQuiz from './pages/mentor/CreateQuiz';
 import AssignToStudents from './pages/mentor/AssignToStudents';
+import InterviewPreparation from './pages/mentor/InterviewPreparation';
+import Interviews from './pages/mentor/Interviews';
 
 // Course selection page
 import CourseSelectionPage from './pages/auth/CourseSelectionPage';
@@ -84,11 +89,14 @@ function App() {
               <Route path="/home-old" element={<Home />} />
               <Route path="/about" element={<AboutUs />} />
               <Route path="/contact" element={<ContactUs />} />
-              <Route path="/login" element={<NewLoginPage />} />
+              <Route path="/courses/full-stack-development" element={<FullStackCoursePage />} />
+              <Route path="/login" element={<GradientLogin />} />
               <Route path="/login-old" element={<Login />} />
               <Route path="/modern-login" element={<ModernLogin />} />
-              <Route path="/signup" element={<NewSignupPage />} />
+              <Route path="/new-login" element={<NewLoginPage />} />
+              <Route path="/signup" element={<GradientSignup />} />
               <Route path="/signup-old" element={<Signup />} />
+              <Route path="/new-signup" element={<NewSignupPage />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/unauthorized" element={<Unauthorized />} />
               <Route path="/debug" element={<DebugPage />} />
@@ -154,6 +162,8 @@ function App() {
             <Route path="/mentor/create-quiz" element={<CreateQuiz />} />
             <Route path="/mentor/quiz-submissions/:quizId" element={<QuizSubmissions />} />
             <Route path="/mentor/assign-to-students" element={<AssignToStudents />} />
+            <Route path="/mentor/interviews" element={<Interviews />} />
+            <Route path="/mentor/interviews/create" element={<InterviewPreparation />} />
             
             {/* Auth Routes */}
             <Route path="/login" element={<Login />} />

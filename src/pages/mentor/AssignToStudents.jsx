@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase/firebase';
@@ -14,8 +14,9 @@ export default function AssignToStudents() {
   const [successMessage, setSuccessMessage] = useState('');
   const [students, setStudents] = useState([]);
   const [assigningToAll, setAssigningToAll] = useState(false);
-  const [quizTitle, setQuizTitle] = useState('');
-  const [quizId, setQuizId] = useState('');
+  const [itemTitle, setItemTitle] = useState('');
+  const [itemId, setItemId] = useState('');
+  const [itemType, setItemType] = useState('quiz'); // 'quiz' or 'interview'
 
   // Check URL params for the quiz and automatically assign to students
   useEffect(() => {
@@ -25,22 +26,24 @@ export default function AssignToStudents() {
         
         const urlParams = new URLSearchParams(window.location.search);
         const idParam = urlParams.get('id');
+        const typeParam = urlParams.get('type') || 'quiz';
         
-        // If no quiz ID provided, redirect to dashboard
+        // If no ID provided, redirect to dashboard
         if (!idParam) {
-          console.log("No quiz ID provided, redirecting to dashboard");
+          console.log("No item ID provided, redirecting to dashboard");
           navigate('/mentor/dashboard');
           return;
         }
         
-        setQuizId(idParam);
+        setItemId(idParam);
+        setItemType(typeParam);
         
-        // Check if we have quiz information in session storage
-        const storedQuizTitle = window.sessionStorage.getItem('quizTitle');
-        if (storedQuizTitle) {
-          setQuizTitle(storedQuizTitle);
-          window.sessionStorage.removeItem('quizTitle');
-          window.sessionStorage.removeItem('quizCreated');
+        // Check if we have title information in session storage
+        const storedTitle = window.sessionStorage.getItem(typeParam === 'interview' ? 'interviewTitle' : 'quizTitle');
+        if (storedTitle) {
+          setItemTitle(storedTitle);
+          window.sessionStorage.removeItem(typeParam === 'interview' ? 'interviewTitle' : 'quizTitle');
+          window.sessionStorage.removeItem(typeParam === 'interview' ? 'interviewCreated' : 'quizCreated');
         }
         
         // Fetch all students assigned to this mentor
@@ -86,12 +89,13 @@ export default function AssignToStudents() {
         // Auto-assign to all students
         if (studentsData.length > 0) {
           setAssigningToAll(true);
-          await assignQuizToAllStudents(idParam, studentsData, storedQuizTitle);
+          const type = urlParams.get('type') || 'quiz';
+          await assignItemToAllStudents(idParam, studentsData, storedTitle, type);
         }
         
       } catch (err) {
         console.error("Error fetching and assigning:", err);
-        setError("Failed to assign quiz to students: " + err.message);
+        setError(`Failed to assign ${itemType} to students: ${err.message}`);
       } finally {
         setLoading(false);
       }
@@ -100,38 +104,55 @@ export default function AssignToStudents() {
     fetchAndAssign();
   }, [currentUser, navigate]);
   
-  // Function to assign quiz to all students
-  const assignQuizToAllStudents = async (quizId, students, title) => {
+  // Function to assign quiz or interview to all students
+  const assignItemToAllStudents = useCallback(async (itemId, students, title, type) => {
     try {
-      const assignments = students.map(student => {
-        return addDoc(collection(db, "studentQuizzes"), {
-          quizId: quizId,
-          quizTitle: title || "Quiz",
-          studentId: student.id,
-          studentName: student.name,
-          assignedBy: currentUser.uid,
-          assignedAt: serverTimestamp(),
-          dueDate: null, // No specific due date
-          status: 'assigned',
-          completed: false
+      if (type === 'interview') {
+        const assignments = students.map(student => {
+          return addDoc(collection(db, "studentInterviews"), {
+            interviewId: itemId,
+            interviewTitle: title || "Interview",
+            studentId: student.id,
+            studentName: student.name,
+            assignedBy: currentUser.uid,
+            assignedAt: serverTimestamp(),
+            status: 'assigned',
+            completed: false
+          });
         });
-      });
+        
+        await Promise.all(assignments);
+      } else {
+        const assignments = students.map(student => {
+          return addDoc(collection(db, "studentQuizzes"), {
+            quizId: itemId,
+            quizTitle: title || "Quiz",
+            studentId: student.id,
+            studentName: student.name,
+            assignedBy: currentUser.uid,
+            assignedAt: serverTimestamp(),
+            dueDate: null, // No specific due date
+            status: 'assigned',
+            completed: false
+          });
+        });
+        
+        await Promise.all(assignments);
+      }
       
-      await Promise.all(assignments);
-      
-      setSuccessMessage(`Quiz has been automatically assigned to ${students.length} student(s).`);
+      setSuccessMessage(`${type === 'interview' ? 'Interview' : 'Quiz'} has been automatically assigned to ${students.length} student(s).`);
       setAssigningToAll(false);
       
     } catch (err) {
       console.error("Error assigning to students:", err);
-      setError("Failed to assign quiz to students: " + err.message);
+      setError("Failed to assign to students: " + err.message);
       setAssigningToAll(false);
     }
-  };
+  }, [currentUser]);
 
-  // Function to return to quizzes page
+  // Function to return to the appropriate page
   const handleReturn = () => {
-    navigate('/mentor/quizzes');
+    navigate(itemType === 'interview' ? '/mentor/interviews' : '/mentor/quizzes');
   };
 
   if (loading) {
@@ -144,7 +165,7 @@ export default function AssignToStudents() {
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
             </div>
             <p className="text-center mt-4">
-              {assigningToAll ? 'Assigning quiz to students...' : 'Loading...'}
+              {assigningToAll ? `Assigning ${itemType} to students...` : 'Loading...'}
             </p>
           </div>
         </div>
@@ -160,10 +181,10 @@ export default function AssignToStudents() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                Quiz Assignment
+                {itemType === 'interview' ? 'Interview' : 'Quiz'} Assignment
               </h1>
-              {quizTitle && (
-                <p className="text-gray-500 mt-1">Quiz: {quizTitle}</p>
+              {itemTitle && (
+                <p className="text-gray-500 mt-1">{itemType === 'interview' ? 'Interview' : 'Quiz'}: {itemTitle}</p>
               )}
             </div>
           </div>
@@ -199,7 +220,7 @@ export default function AssignToStudents() {
           {!error && !successMessage && students.length > 0 && (
             <div className="mt-6 bg-white shadow overflow-hidden sm:rounded-lg p-6">
               <p className="text-gray-700">
-                Your quiz is being automatically assigned to your students.
+                Your {itemType === 'interview' ? 'interview' : 'quiz'} is being automatically assigned to your students.
               </p>
               <div className="mt-4">
                 <div className="flex items-center">

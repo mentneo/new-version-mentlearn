@@ -57,6 +57,7 @@ export default function Dashboard() {
   const [error, setError] = useState(null);
   const [reports, setReports] = useState([]);
   const [reportStatus, setReportStatus] = useState('no-reports');
+  const [interviews, setInterviews] = useState([]);
 
   // Created a wrapper to safely render any potentially problematic values
   const safeRender = (value) => {
@@ -159,6 +160,36 @@ export default function Dashboard() {
         }
       } catch (err) {
         console.error("Error fetching reports:", err);
+      }
+    }
+
+    async function fetchInterviews() {
+      try {
+        // Fetch recent interviews created by this mentor
+        const interviewsQuery = query(
+          collection(db, "interviewPreparations"),
+          where("creatorId", "==", currentUser.uid)
+        );
+        
+        const interviewsSnapshot = await getDocs(interviewsQuery);
+        const interviewsData = [];
+        
+        interviewsSnapshot.forEach(doc => {
+          interviewsData.push({
+            id: doc.id,
+            ...doc.data()
+          });
+        });
+        
+        // Sort by creation date (newest first)
+        interviewsData.sort((a, b) => {
+          return b.createdAt?.toDate() - a.createdAt?.toDate() || 0;
+        });
+        
+        // Take only the 3 most recent
+        setInterviews(interviewsData.slice(0, 3));
+      } catch (err) {
+        console.error("Error fetching interviews:", err);
       } finally {
         setLoading(false);
       }
@@ -166,6 +197,7 @@ export default function Dashboard() {
 
     fetchAssignedStudents();
     fetchReports();
+    fetchInterviews();
   }, [currentUser]);
 
   if (loading) {
@@ -294,6 +326,70 @@ export default function Dashboard() {
                     </li>
                   ))}
                 </ul>
+              </div>
+            )}
+          </div>
+          
+          {/* Interview Preparations Section */}
+          <div className="mt-8">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold text-gray-800">Recent Interview Preparations</h2>
+              <Link
+                to="/mentor/interviews"
+                className="text-indigo-600 hover:text-indigo-900 text-sm font-medium"
+              >
+                View all
+              </Link>
+            </div>
+            
+            {interviews.length === 0 ? (
+              <div className="mt-4 bg-white shadow overflow-hidden sm:rounded-md p-6">
+                <p className="text-gray-600">You haven't created any interview preparations yet.</p>
+                <div className="mt-4">
+                  <Link
+                    to="/mentor/interviews/create"
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
+                  >
+                    Create Interview Preparation
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-4 bg-white shadow overflow-hidden sm:rounded-md">
+                <ul className="divide-y divide-gray-200">
+                  {interviews.map((interview) => (
+                    <li key={interview.id}>
+                      <div className="px-4 py-4 sm:px-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {safeRender(interview.title)}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              Created: {interview.createdAt ? new Date(interview.createdAt.toDate()).toLocaleDateString() : 'Unknown date'}
+                            </div>
+                          </div>
+                          <div>
+                            <Link
+                              to={`/mentor/interviews/${interview.id}`}
+                              className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200"
+                            >
+                              View
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+                <div className="px-4 py-3 bg-gray-50 text-right sm:px-6">
+                  <Link
+                    to="/mentor/interviews/create"
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
+                  >
+                    Create New
+                  </Link>
+                </div>
               </div>
             )}
           </div>

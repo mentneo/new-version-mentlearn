@@ -79,7 +79,7 @@ const ModernLandingPage = () => {
                   <FaEnvelope className="mr-2" />
                   Contact
                 </Link>
-                <Link to="/courses" className="flex items-center text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400">
+                <Link to="/courses/full-stack-development" className="flex items-center text-base font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400">
                   <FaBook className="mr-2" />
                   Courses
                 </Link>
@@ -170,7 +170,7 @@ const ModernLandingPage = () => {
                       Contact
                     </Link>
                     <Link 
-                      to="/courses" 
+                      to="/courses/full-stack-development" 
                       className="flex items-center px-4 py-3 text-base font-medium text-gray-900 dark:text-white rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
                       onClick={toggleMobileMenu}
                     >
@@ -236,7 +236,7 @@ const ModernLandingPage = () => {
                     <Link to="/signup" className="w-full sm:w-auto flex items-center justify-center px-8 py-3 text-base font-medium rounded-full text-white bg-blue-600 hover:bg-blue-700 md:py-4 md:text-lg md:px-10 transition-colors">
                       Get Started
                     </Link>
-                    <Link to="/courses" className="w-full sm:w-auto flex items-center justify-center px-8 py-3 text-base font-medium rounded-full text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 md:py-4 md:text-lg md:px-10 transition-colors">
+                    <Link to="/courses/full-stack-development" className="w-full sm:w-auto flex items-center justify-center px-8 py-3 text-base font-medium rounded-full text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 md:py-4 md:text-lg md:px-10 transition-colors">
                       Browse Courses
                     </Link>
                   </div>

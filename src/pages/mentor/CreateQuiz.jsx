@@ -7,6 +7,7 @@ import Navbar from '../../components/mentor/Navbar';
 
 export default function CreateQuiz() {
   const { currentUser } = useAuth();
+  // navigate is used indirectly in window.location operations
   const navigate = useNavigate();
   const [quizTitle, setQuizTitle] = useState('');
   const [quizDescription, setQuizDescription] = useState('');
