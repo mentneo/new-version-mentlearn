@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import '../styles/LandingPage.css';
 import { 
   FaGraduationCap, 
@@ -23,12 +23,15 @@ import {
   FaSignInAlt,
   FaUserPlus,
   FaInfoCircle,
-  FaEnvelope
+  FaEnvelope,
+  FaCreditCard
 } from 'react-icons/fa';
 
 const ModernLandingPage = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const location = useLocation();
+  const showPaymentButton = location.pathname.includes('/abhi');
 
   // Toggle dark mode
   const toggleDarkMode = () => {
@@ -98,6 +101,18 @@ const ModernLandingPage = () => {
                 >
                   {darkMode ? <FaSun className="h-5 w-5" /> : <FaMoon className="h-5 w-5" />}
                 </button>
+                
+                {showPaymentButton && (
+                  <a 
+                    href="https://mentneodashboard.vercel.app/login" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="flex items-center whitespace-nowrap text-base font-medium text-white bg-green-600 px-4 py-2 rounded-full hover:bg-green-700 transition-colors"
+                  >
+                    <FaCreditCard className="mr-2" />
+                    Payments
+                  </a>
+                )}
                 
                 <Link to="/login" className="flex items-center whitespace-nowrap text-base font-medium text-gray-700 dark:text-gray-200 border border-blue-500 dark:border-blue-400 px-4 py-2 rounded-full hover:bg-blue-50 dark:hover:bg-slate-700 transition-colors">
                   <FaSignInAlt className="mr-2" />
@@ -190,6 +205,18 @@ const ModernLandingPage = () => {
                 
                 <div className="py-6 px-5 space-y-6">
                   <div className="flex flex-col space-y-4">
+                    {showPaymentButton && (
+                      <a 
+                        href="https://mentneodashboard.vercel.app/login" 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="w-full flex items-center justify-center px-4 py-3 rounded-full text-base font-medium text-white bg-green-600 hover:bg-green-700"
+                        onClick={toggleMobileMenu}
+                      >
+                        <FaCreditCard className="mr-2" />
+                        Payments Dashboard
+                      </a>
+                    )}
                     <Link 
                       to="/login" 
                       className="w-full flex items-center justify-center px-4 py-3 rounded-full text-base font-medium text-white bg-blue-600 hover:bg-blue-700"

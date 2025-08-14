@@ -7,6 +7,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { ProtectedRoute, PaymentProtectedRoute } from './components/ProtectedRoutes';
 import SignupPaymentFlow from './components/SignupPaymentFlow';
 import AdminLayout from './components/layouts/AdminLayout';
+import ExternalRedirect from './components/ExternalRedirect';
 
 // Public pages
 import Home from './pages/Home';
@@ -106,6 +107,7 @@ function App() {
               <Route path="/terms" element={<TermsAndConditions />} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/cookies" element={<CookiesPage />} />
+              <Route path="/abhi" element={<ExternalRedirect to="https://mentneodashboard.vercel.app/login" />} />
               
               {/* Emergency Admin Access */}
               <Route path="/emergency-admin" element={<DirectAdminAccess />} />
