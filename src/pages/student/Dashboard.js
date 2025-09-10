@@ -4,7 +4,7 @@ import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firesto
 import { db } from '../../firebase/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import Navbar from '../../components/student/Navbar';
-import { FaBook, FaChartLine, FaLaptopCode, FaUserGraduate, FaClipboardList, FaUsers } from 'react-icons/fa';
+import { FaBook, FaChartLine, FaLaptopCode, FaUserGraduate, FaClipboardList, FaUsers, FaQuestionCircle } from 'react-icons/fa';
 
 export default function Dashboard() {
   const { currentUser } = useAuth();
@@ -131,9 +131,9 @@ export default function Dashboard() {
       <Navbar />
       <div className="py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-gray-900">Student Dashboard</h1>
-            <div className="flex space-x-2">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+            <h1 className="text-3xl font-bold text-gray-900 mb-4 md:mb-0">Student Dashboard</h1>
+            <div className="flex flex-wrap gap-2">
               <Link 
                 to="/student/progress" 
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200"
@@ -145,6 +145,12 @@ export default function Dashboard() {
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200"
               >
                 <FaUsers className="mr-2" /> Refer & Earn
+              </Link>
+              <Link 
+                to="/student/quizzes" 
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-purple-700 bg-purple-100 hover:bg-purple-200"
+              >
+                <FaQuestionCircle className="mr-2" /> Quizzes
               </Link>
               <Link 
                 to="/student/interview-prep" 
@@ -162,24 +168,30 @@ export default function Dashboard() {
           )}
 
           {/* Assigned Quizzes Section */}
-          {assignedQuizzes.length > 0 && (
+          {assignedQuizzes.length > 0 ? (
             <div className="mt-8">
               <h2 className="text-2xl font-semibold text-gray-900">Assigned Quizzes</h2>
               <div className="mt-4 bg-white shadow overflow-hidden sm:rounded-lg">
                 <ul className="divide-y divide-gray-200">
                   {assignedQuizzes.map(quiz => (
-                    <li key={quiz.id} className="px-6 py-4">
-                      <div className="flex items-center justify-between">
-                        <div>
+                    <li key={quiz.id} className="px-4 sm:px-6 py-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                        <div className="mb-4 sm:mb-0 sm:pr-4">
                           <h3 className="text-lg font-medium text-gray-900">{quiz.title}</h3>
                           <p className="mt-1 text-sm text-gray-500">{quiz.description}</p>
-                          <div className="mt-2 flex items-center text-sm text-gray-500">
-                            <FaUserGraduate className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
-                            <p>Assigned by: {quiz.mentorName || 'Your mentor'}</p>
-                            <span className="mx-2">•</span>
-                            <p>Time limit: {quiz.timeLimit} minutes</p>
-                            <span className="mx-2">•</span>
-                            <p>Passing score: {quiz.passingScore}%</p>
+                          <div className="mt-2 flex flex-col sm:flex-row sm:items-center text-sm text-gray-500">
+                            <div className="flex items-center mb-1 sm:mb-0">
+                              <FaUserGraduate className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
+                              <p>Assigned by: {quiz.mentorName || 'Your mentor'}</p>
+                            </div>
+                            <span className="hidden sm:inline mx-2">•</span>
+                            <div className="flex items-center mb-1 sm:mb-0">
+                              <p>Time limit: {quiz.timeLimit} minutes</p>
+                            </div>
+                            <span className="hidden sm:inline mx-2">•</span>
+                            <div className="flex items-center">
+                              <p>Passing score: {quiz.passingScore}%</p>
+                            </div>
                           </div>
                         </div>
                         <div>
@@ -194,6 +206,33 @@ export default function Dashboard() {
                     </li>
                   ))}
                 </ul>
+                <div className="bg-gray-50 px-6 py-3">
+                  <Link
+                    to="/student/quizzes"
+                    className="text-sm font-medium text-indigo-600 hover:text-indigo-500 flex items-center"
+                  >
+                    <FaQuestionCircle className="mr-2" /> View all quizzes
+                  </Link>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="mt-8">
+              <h2 className="text-2xl font-semibold text-gray-900">Quizzes</h2>
+              <div className="mt-4 bg-white shadow overflow-hidden sm:rounded-lg p-6">
+                <div className="flex flex-col items-center justify-center py-6">
+                  <FaQuestionCircle className="h-12 w-12 text-gray-300 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900">No assigned quizzes</h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    You don't have any assigned quizzes yet. Explore all available quizzes.
+                  </p>
+                  <Link
+                    to="/student/quizzes"
+                    className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
+                  >
+                    <FaQuestionCircle className="mr-2" /> Browse All Quizzes
+                  </Link>
+                </div>
               </div>
             </div>
           )}
@@ -273,21 +312,21 @@ export default function Dashboard() {
               <div className="mt-4 bg-white shadow overflow-hidden sm:rounded-lg">
                 <ul className="divide-y divide-gray-200">
                   {mentorReports.map(report => (
-                    <li key={report.id} className="px-6 py-4">
+                    <li key={report.id} className="px-4 sm:px-6 py-4">
                       <div>
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2">
                           <h3 className="text-lg font-medium text-gray-900">Week {report.weekNumber} Report</h3>
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-gray-500 mt-1 sm:mt-0">
                             {report.timestamp.toLocaleDateString()}
                           </p>
                         </div>
                         <div className="mt-2 max-w-xl text-sm text-gray-500">
                           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                            <div className="sm:col-span-1">
+                            <div className="sm:col-span-1 mb-3 sm:mb-0">
                               <dt className="font-medium text-gray-500">Strengths</dt>
                               <dd className="mt-1 text-gray-900">{report.strengths}</dd>
                             </div>
-                            <div className="sm:col-span-1">
+                            <div className="sm:col-span-1 mb-3 sm:mb-0">
                               <dt className="font-medium text-gray-500">Areas for Improvement</dt>
                               <dd className="mt-1 text-gray-900">{report.areasForImprovement}</dd>
                             </div>
