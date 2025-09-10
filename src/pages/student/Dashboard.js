@@ -56,9 +56,10 @@ export default function Dashboard() {
           setEnrolledCourses([]);
         }
         
-        // Fetch all available courses
+        // Fetch all published available courses
         const coursesCollection = collection(db, "courses");
-        const coursesSnapshot = await getDocs(coursesCollection);
+        const coursesQuery = query(coursesCollection, where('status', '==', 'published'));
+        const coursesSnapshot = await getDocs(coursesQuery);
         const allCoursesData = coursesSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),

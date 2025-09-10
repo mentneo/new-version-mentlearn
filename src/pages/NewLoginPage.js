@@ -26,13 +26,27 @@ export default function NewLoginPage() {
       setLoading(true);
       const userCredential = await login(email, password);
       
-      // Get the user role from Firebase
-      const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
-      const userRole = userDoc.exists() ? userDoc.data().role : 'student';
+      // Get the user role from Firebase - check both users and creators collections
+      let userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
+      let userRole = 'student'; // default role
+      let isCreator = false;
+      
+      if (userDoc.exists()) {
+        userRole = userDoc.data().role || 'student';
+      } else {
+        // Check creators collection
+        const creatorDoc = await getDoc(doc(db, "creators", userCredential.user.uid));
+        if (creatorDoc.exists()) {
+          userRole = 'creator';
+          isCreator = true;
+        }
+      }
       
       // Redirect based on user role
       if (userRole === 'admin') {
         navigate('/admin/dashboard');
+      } else if (userRole === 'creator') {
+        navigate('/creator/dashboard');
       } else if (userRole === 'mentor') {
         navigate('/mentor/dashboard');
       } else {

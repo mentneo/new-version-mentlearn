@@ -146,29 +146,38 @@ export function AuthProvider({ children }) {
         return 'admin';
       }
 
+      // First check users collection
       const userDoc = await getDoc(doc(db, "users", uid));
       if (userDoc.exists()) {
         const role = userDoc.data().role;
         setUserRole(role);
         return role;
-      } else {
-        // Create a user document if it doesn't exist yet
-        console.log("Creating missing user document with default role");
-        const user = auth.currentUser;
-        if (user) {
-          const userData = {
-            uid: user.uid,
-            email: user.email,
-            role: 'admin', // Default to admin during initial setup
-            name: user.email?.split('@')[0] || 'User',
-            createdAt: new Date().toISOString()
-          };
-          await setDoc(doc(db, "users", user.uid), userData);
-          setUserRole('admin');
-          return 'admin';
-        }
       }
-      
+
+      // If not found in users, check creators collection
+      const creatorDoc = await getDoc(doc(db, "creators", uid));
+      if (creatorDoc.exists()) {
+        const role = 'creator';
+        setUserRole(role);
+        return role;
+      }
+
+      // Create a user document if it doesn't exist yet
+      console.log("Creating missing user document with default role");
+      const user = auth.currentUser;
+      if (user) {
+        const userData = {
+          uid: user.uid,
+          email: user.email,
+          role: 'admin', // Default to admin during initial setup
+          name: user.email?.split('@')[0] || 'User',
+          createdAt: new Date().toISOString()
+        };
+        await setDoc(doc(db, "users", user.uid), userData);
+        setUserRole('admin');
+        return 'admin';
+      }
+
       return null;
     } catch (error) {
       console.error("Error getting user role:", error);
@@ -181,9 +190,21 @@ export function AuthProvider({ children }) {
     if (currentUser) {
       const fetchUserDetails = async () => {
         try {
-          const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+          // First check users collection
+          let userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+          let userData = null;
+          
           if (userDoc.exists()) {
-            const userData = userDoc.data();
+            userData = userDoc.data();
+          } else {
+            // Check creators collection
+            const creatorDoc = await getDoc(doc(db, 'creators', currentUser.uid));
+            if (creatorDoc.exists()) {
+              userData = creatorDoc.data();
+            }
+          }
+          
+          if (userData) {
             setUserDetails(userData);
             
             // Set payment status with verification status
@@ -216,14 +237,27 @@ export function AuthProvider({ children }) {
       
       if (user) {
         try {
-          // Get user data from Firestore
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          // First check users collection
+          let userDoc = await getDoc(doc(db, 'users', user.uid));
+          let userData = null;
+          let isCreator = false;
           
           if (userDoc.exists()) {
-            const userData = userDoc.data();
+            userData = userDoc.data();
+          } else {
+            // Check creators collection
+            const creatorDoc = await getDoc(doc(db, 'creators', user.uid));
+            if (creatorDoc.exists()) {
+              userData = creatorDoc.data();
+              isCreator = true;
+            }
+          }
+          
+          if (userData) {
             setCurrentUser({
               uid: user.uid,
               email: user.email,
+              role: isCreator ? 'creator' : (userData.role || 'student'),
               ...userData
             });
             
@@ -232,7 +266,8 @@ export function AuthProvider({ children }) {
           } else {
             setCurrentUser({
               uid: user.uid,
-              email: user.email
+              email: user.email,
+              role: 'student' // Default role
             });
             setOnboardingComplete(false);
           }
@@ -240,7 +275,8 @@ export function AuthProvider({ children }) {
           console.error("Error fetching user data:", error);
           setCurrentUser({
             uid: user.uid,
-            email: user.email
+            email: user.email,
+            role: 'student' // Default role
           });
           setOnboardingComplete(false);
         }
@@ -272,7 +308,16 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {loading ? (
+        <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading...</p>
+          </div>
+        </div>
+      ) : (
+        children
+      )}
     </AuthContext.Provider>
   );
 }

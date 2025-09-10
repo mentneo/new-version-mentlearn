@@ -63,6 +63,7 @@ export default function SideNav() {
     { path: '/admin/dashboard', icon: <FaTachometerAlt />, label: 'Dashboard' },
     { path: '/admin/students', icon: <FaUserGraduate />, label: 'Students' },
     { path: '/admin/mentors', icon: <FaChalkboardTeacher />, label: 'Mentors' },
+    { path: '/admin/creators', icon: <FaUserPlus />, label: 'Creators' },
     { path: '/admin/courses', icon: <FaBook />, label: 'Courses' },
     { path: '/admin/enrollments', icon: <FaUserPlus />, label: 'Enrollments' },
     { path: '/admin/payments', icon: <FaMoneyBillWave />, label: 'Payments' },

@@ -39,28 +39,43 @@ export default function GradientLogin() {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       
-      // Check if user document exists
+      // Check if user document exists in users collection
       const userDocRef = doc(db, "users", user.uid);
-      const userSnap = await getDoc(userDocRef);
+      let userSnap = await getDoc(userDocRef);
+      let userData = null;
+      let isCreator = false;
       
-      if (!userSnap.exists()) {
+      if (userSnap.exists()) {
+        userData = userSnap.data();
+      } else {
+        // Check creators collection
+        const creatorDocRef = doc(db, "creators", user.uid);
+        const creatorSnap = await getDoc(creatorDocRef);
+        
+        if (creatorSnap.exists()) {
+          userData = creatorSnap.data();
+          isCreator = true;
+        }
+      }
+      
+      if (!userData) {
         // Create user document if it doesn't exist (fallback)
         await setDoc(userDocRef, {
           email: user.email,
           createdAt: new Date(),
         });
+        navigate('/student/dashboard');
+        return;
       }
       
       // Redirect based on user role
-      if (userSnap.exists()) {
-        const userData = userSnap.data();
-        if (userData.role === 'admin') {
-          navigate('/admin/dashboard');
-        } else if (userData.role === 'mentor') {
-          navigate('/mentor/dashboard');
-        } else {
-          navigate('/student/dashboard');
-        }
+      const userRole = isCreator ? 'creator' : (userData.role || 'student');
+      if (userRole === 'admin') {
+        navigate('/admin/dashboard');
+      } else if (userRole === 'creator') {
+        navigate('/creator/dashboard');
+      } else if (userRole === 'mentor') {
+        navigate('/mentor/dashboard');
       } else {
         navigate('/student/dashboard');
       }

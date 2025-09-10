@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, getDocs, doc, updateDoc, addDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, addDoc, query, where } from 'firebase/firestore';
 import { db } from '../../firebase/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
@@ -19,7 +19,8 @@ const CourseSelectionPage = () => {
       try {
         setLoading(true);
         const coursesCollection = collection(db, 'courses');
-        const coursesSnapshot = await getDocs(coursesCollection);
+        const coursesQuery = query(coursesCollection, where('status', '==', 'published'));
+        const coursesSnapshot = await getDocs(coursesQuery);
         const coursesList = coursesSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()

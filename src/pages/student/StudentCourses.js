@@ -18,9 +18,10 @@ const StudentCourses = () => {
       try {
         setLoading(true);
         
-        // Fetch all courses
+        // Fetch all published courses
         const coursesCollection = collection(db, 'courses');
-        const coursesSnapshot = await getDocs(coursesCollection);
+        const coursesQuery = query(coursesCollection, where('status', '==', 'published'));
+        const coursesSnapshot = await getDocs(coursesQuery);
         const allCourses = coursesSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()

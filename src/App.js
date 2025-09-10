@@ -5,8 +5,10 @@ import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 // Import our new protected route components
 import { ProtectedRoute, PaymentProtectedRoute } from './components/ProtectedRoutes';
+import CreatorRoute from './components/CreatorRoute';
 import SignupPaymentFlow from './components/SignupPaymentFlow';
 import AdminLayout from './components/layouts/AdminLayout';
+import CreatorLayout from './components/layouts/CreatorLayout';
 import ExternalRedirect from './components/ExternalRedirect';
 
 // Public pages
@@ -39,6 +41,7 @@ import Shipping from './pages/Shipping';
 // Admin pages
 import AdminDashboard from './pages/admin/Dashboard';
 import NewDashboard from './pages/admin/NewDashboard';
+import ManageCreators from './pages/admin/ManageCreators';
 import ManageCourses from './pages/admin/ManageCourses';
 import ManageStudents from './pages/admin/ManageStudents';
 import ManageMentors from './pages/admin/ManageMentors';
@@ -77,10 +80,12 @@ import AssignToStudents from './pages/mentor/AssignToStudents';
 import InterviewPreparation from './pages/mentor/InterviewPreparation';
 import Interviews from './pages/mentor/Interviews';
 
+// Creator pages
+import CreatorDashboard from './pages/creator/Dashboard';
+import CreatorCourses from './pages/creator/Courses';
+
 // Course selection page
 import CourseSelectionPage from './pages/auth/CourseSelectionPage';
-
-// Add new import
 import RazorpayDebug from './pages/payment/RazorpayDebug';
 
 function App() {
@@ -132,6 +137,7 @@ function App() {
                 <Route path="courses" element={<ManageCourses />} />
                 <Route path="students" element={<ManageStudents />} />
                 <Route path="mentors" element={<ManageMentors />} />
+                <Route path="creators" element={<ManageCreators />} />
                 <Route path="enrollments" element={<ManageEnrollments />} />
                 <Route path="payments" element={<VerifyPayments />} />
                 <Route path="verify-payments" element={<VerifyPayments />} />
@@ -147,6 +153,14 @@ function App() {
               <Route path="/admin-old/enrollments" element={<ManageEnrollments />} />
               <Route path="/admin-old/payments" element={<AdminDashboard />} />
               <Route path="/admin-old/verify-payments" element={<VerifyPayments />} />
+
+              {/* Creator Routes */}
+              <Route path="/creator" element={<CreatorRoute><CreatorLayout /></CreatorRoute>}>
+                <Route path="dashboard" element={<CreatorDashboard />} />
+                <Route path="courses" element={<CreatorCourses />} />
+                <Route path="enrollments" element={<CreatorDashboard />} />
+                <Route path="profile" element={<CreatorDashboard />} />
+              </Route>
             
             {/* Student Routes with protection */}
             <Route path="/student/dashboard" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />

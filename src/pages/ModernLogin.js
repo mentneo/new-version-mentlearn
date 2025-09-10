@@ -30,11 +30,26 @@ export default function ModernLogin() {
       const user = userCredential.user;
       console.log("Login successful for UID:", user.uid);
       
-      // Check if user document exists
+      // Check if user document exists in users collection
       const userDocRef = doc(db, "users", user.uid);
-      const userDoc = await getDoc(userDocRef);
+      let userDoc = await getDoc(userDocRef);
+      let userData = null;
+      let isCreator = false;
       
-      if (!userDoc.exists()) {
+      if (userDoc.exists()) {
+        userData = userDoc.data();
+      } else {
+        // Check creators collection
+        const creatorDocRef = doc(db, "creators", user.uid);
+        const creatorDoc = await getDoc(creatorDocRef);
+        
+        if (creatorDoc.exists()) {
+          userData = creatorDoc.data();
+          isCreator = true;
+        }
+      }
+      
+      if (!userData) {
         console.log("Creating new user document with admin role");
         // First user gets admin role - this is for initial setup
         await setDoc(userDocRef, {
@@ -50,21 +65,22 @@ export default function ModernLogin() {
         return;
       }
       
-      const userData = userDoc.data();
-      console.log("User role from Firestore:", userData.role);
+      const userRole = isCreator ? 'creator' : (userData.role || 'student');
+      console.log("User role from Firestore:", userRole);
       
       // Redirect based on role
-      if (userData.role === 'admin') {
+      if (userRole === 'admin') {
         navigate('/admin/dashboard');
-      } else if (userData.role === 'mentor') {
+      } else if (userRole === 'creator') {
+        navigate('/creator/dashboard');
+      } else if (userRole === 'mentor') {
         navigate('/mentor/dashboard');
-      } else if (userData.role === 'student') {
+      } else if (userRole === 'student') {
         navigate('/student/dashboard');
       } else {
-        // For safety, if role is undefined, treat as admin during initial setup
-        console.log("Unknown or missing role, treating as admin for setup purposes");
-        await setDoc(userDocRef, { role: 'admin' }, { merge: true });
-        navigate('/admin/dashboard');
+        // For safety, if role is undefined, treat as student
+        console.log("Unknown or missing role, treating as student");
+        navigate('/student/dashboard');
       }
     } catch (error) {
       console.error('Error signing in:', error);
