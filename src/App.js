@@ -42,7 +42,6 @@ import ManageStudents from './pages/admin/ManageStudents';
 import ManageMentors from './pages/admin/ManageMentors';
 import ManageEnrollments from './pages/admin/ManageEnrollments';
 import VerifyPayments from './pages/admin/VerifyPayments';
-import AccessRequests from './pages/admin/AccessRequests';
 
 // Student pages
 import StudentDashboard from './pages/student/Dashboard';
@@ -129,7 +128,6 @@ function App() {
                 <Route path="enrollments" element={<ManageEnrollments />} />
                 <Route path="payments" element={<VerifyPayments />} />
                 <Route path="verify-payments" element={<VerifyPayments />} />
-                <Route path="access-requests" element={<AccessRequests />} />
                 <Route path="reports" element={<NewDashboard />} />
                 <Route path="settings" element={<NewDashboard />} />
               </Route>

@@ -13,7 +13,6 @@ import {
   FaTimes, 
   FaUserPlus,
   FaChartPie,
-  FaUserShield,
   FaCog,
   FaMoon,
   FaSun
@@ -67,7 +66,6 @@ export default function SideNav() {
     { path: '/admin/courses', icon: <FaBook />, label: 'Courses' },
     { path: '/admin/enrollments', icon: <FaUserPlus />, label: 'Enrollments' },
     { path: '/admin/payments', icon: <FaMoneyBillWave />, label: 'Payments' },
-    { path: '/admin/access-requests', icon: <FaUserShield />, label: 'Access Requests' },
     { path: '/admin/reports', icon: <FaChartPie />, label: 'Reports' },
     { path: '/admin/settings', icon: <FaCog />, label: 'Settings' }
   ];
