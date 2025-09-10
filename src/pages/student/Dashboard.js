@@ -4,11 +4,12 @@ import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firesto
 import { db } from '../../firebase/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import Navbar from '../../components/student/Navbar';
-import { FaBook, FaChartLine, FaLaptopCode, FaUserGraduate, FaClipboardList, FaUsers, FaQuestionCircle } from 'react-icons/fa';
+import { FaBook, FaChartLine, FaLaptopCode, FaUserGraduate, FaClipboardList, FaUsers, FaQuestionCircle, FaGraduationCap } from 'react-icons/fa';
 
 export default function Dashboard() {
   const { currentUser } = useAuth();
   const [enrolledCourses, setEnrolledCourses] = useState([]);
+  const [allCourses, setAllCourses] = useState([]);
   const [mentorReports, setMentorReports] = useState([]);
   const [assignedQuizzes, setAssignedQuizzes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,31 +28,46 @@ export default function Dashboard() {
         
         const enrollmentDocs = await getDocs(enrollmentsQuery);
         
-        if (enrollmentDocs.empty) {
-          setLoading(false);
-          return;
+        let enrolledCourseIds = [];
+        
+        if (!enrollmentDocs.empty) {
+          // Fetch course details for each enrollment
+          const coursePromises = enrollmentDocs.docs.map(async (enrollDoc) => {
+            const enrollData = enrollDoc.data();
+            enrolledCourseIds.push(enrollData.courseId);
+            const courseRef = doc(db, "courses", enrollData.courseId);
+            const courseDoc = await getDoc(courseRef);
+            
+            if (courseDoc.exists()) {
+              return {
+                id: enrollData.courseId,
+                enrollmentId: enrollDoc.id,
+                progress: enrollData.progress || 0,
+                enrolledAt: enrollData.enrolledAt,
+                ...courseDoc.data()
+              };
+            }
+            return null;
+          });
+          
+          const coursesData = (await Promise.all(coursePromises)).filter(Boolean);
+          setEnrolledCourses(coursesData);
+        } else {
+          setEnrolledCourses([]);
         }
         
-        // Fetch course details for each enrollment
-        const coursePromises = enrollmentDocs.docs.map(async (enrollDoc) => {
-          const enrollData = enrollDoc.data();
-          const courseRef = doc(db, "courses", enrollData.courseId);
-          const courseDoc = await getDoc(courseRef);
-          
-          if (courseDoc.exists()) {
-            return {
-              id: enrollData.courseId,
-              enrollmentId: enrollDoc.id,
-              progress: enrollData.progress || 0,
-              enrolledAt: enrollData.enrolledAt,
-              ...courseDoc.data()
-            };
-          }
-          return null;
-        });
+        // Fetch all available courses
+        const coursesCollection = collection(db, "courses");
+        const coursesSnapshot = await getDocs(coursesCollection);
+        const allCoursesData = coursesSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          isEnrolled: enrolledCourseIds.includes(doc.id)
+        }));
         
-        const coursesData = (await Promise.all(coursePromises)).filter(Boolean);
-        setEnrolledCourses(coursesData);
+        // Filter out courses the student is already enrolled in for the "Available Courses" section
+        const availableCourses = allCoursesData.filter(course => !enrolledCourseIds.includes(course.id));
+        setAllCourses(availableCourses);
         
         // Fetch mentor reports
         const reportsQuery = query(
@@ -285,6 +301,70 @@ export default function Dashboard() {
                             className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
                           >
                             {course.progress > 0 ? 'Continue Course' : 'Start Course'}
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          {/* Available Courses */}
+          <div className="mt-8">
+            <h2 className="text-2xl font-semibold text-gray-900">Available Courses</h2>
+            {allCourses.length === 0 ? (
+              <div className="mt-4 bg-white shadow overflow-hidden sm:rounded-lg p-6">
+                <div className="flex flex-col items-center justify-center py-6">
+                  <FaGraduationCap className="h-12 w-12 text-gray-300 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900">No additional courses available</h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    There are no additional courses available at the moment. Please check back later.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                {allCourses.map(course => (
+                  <div key={course.id} className="bg-white overflow-hidden shadow rounded-lg">
+                    <div className="p-5">
+                      <div className="flex-shrink-0">
+                        <img 
+                          className="h-48 w-full object-cover rounded-md" 
+                          src={course.thumbnailUrl || 'https://via.placeholder.com/600x400?text=Course'} 
+                          alt={course.title} 
+                        />
+                      </div>
+                      <div className="mt-4">
+                        <h3 className="text-lg font-medium text-gray-900">{course.title}</h3>
+                        <p className="mt-2 text-sm text-gray-500 line-clamp-2">{course.description}</p>
+                        
+                        <div className="mt-2">
+                          {course.duration && (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mr-2">
+                              Duration: {course.duration}
+                            </span>
+                          )}
+                          {course.level && (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              Level: {course.level}
+                            </span>
+                          )}
+                        </div>
+                        
+                        <div className="mt-4 flex justify-between items-center">
+                          <Link
+                            to={`/student/course-details/${course.id}`}
+                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200"
+                          >
+                            View Details
+                          </Link>
+                          <Link
+                            to={`/student/enroll/${course.id}`}
+                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
+                          >
+                            Enroll Now
                           </Link>
                         </div>
                       </div>

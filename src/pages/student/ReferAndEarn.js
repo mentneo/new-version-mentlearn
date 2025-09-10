@@ -230,16 +230,16 @@ export default function ReferAndEarn() {
               <div className="p-6">
                 <div className="mb-6">
                   <p className="text-gray-600 mb-2">Share this link with your friends:</p>
-                  <div className="flex items-center">
+                  <div className="flex flex-col sm:flex-row">
                     <input
                       type="text"
                       value={getReferralLink()}
-                      className="flex-grow p-3 border border-gray-300 rounded-l-md bg-gray-50 text-gray-800"
+                      className="flex-grow p-3 border border-gray-300 rounded-md sm:rounded-r-none bg-gray-50 text-gray-800 mb-2 sm:mb-0"
                       readOnly
                     />
                     <button
                       onClick={copyToClipboard}
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-r-md flex items-center"
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-md sm:rounded-l-none flex items-center justify-center"
                     >
                       {copied ? <FaRegCheckCircle className="mr-2" /> : <FaCopy className="mr-2" />}
                       {copied ? 'Copied!' : 'Copy'}
