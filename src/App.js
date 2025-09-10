@@ -33,6 +33,8 @@ import SimpleDashboard from './pages/SimpleDashboard';
 import ThemeTestPage from './pages/ThemeTestPage';
 import TermsAndConditions from './pages/TermsAndConditions';
 import PrivacyPolicy from './pages/PrivacyPolicy';
+import CancellationRefunds from './pages/CancellationRefunds';
+import Shipping from './pages/Shipping';
 
 // Admin pages
 import AdminDashboard from './pages/admin/Dashboard';
@@ -48,6 +50,7 @@ import StudentDashboard from './pages/student/Dashboard';
 import StudentNewDashboard from './pages/student/NewDashboard';
 import SimplifiedDashboard from './pages/student/SimplifiedDashboard';
 import CourseView from './pages/student/CourseView';
+import CourseDetail from './pages/student/CourseDetail';
 import Progress from './pages/student/Progress';
 import InterviewPrep from './pages/student/InterviewPrep';
 import QuizAttempt from './pages/student/QuizAttempt';
@@ -60,6 +63,8 @@ import ProfileSettings from './pages/student/ProfileSettings';
 import CourseContent from './pages/student/CourseContent'; // Add missing import
 import PaymentSuccess from './pages/payment/PaymentSuccess'; // Add missing import
 import PaymentVerification from './pages/payment/PaymentVerification';
+import CourseEnrollment from './pages/student/CourseEnrollment';
+import CoursePaymentSuccess from './pages/student/CoursePaymentSuccess';
 
 // Mentor pages
 import MentorDashboard from './pages/mentor/Dashboard';
@@ -107,6 +112,8 @@ function App() {
               <Route path="/theme-test" element={<ThemeTestPage />} />
               <Route path="/terms" element={<TermsAndConditions />} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/cancellation-refunds" element={<CancellationRefunds />} />
+              <Route path="/shipping" element={<Shipping />} />
               <Route path="/cookies" element={<CookiesPage />} />
               <Route path="/abhi" element={<ExternalRedirect to="https://mentneodashboard.vercel.app/login" />} />
               
@@ -147,6 +154,9 @@ function App() {
             <Route path="/student/simple-dashboard" element={<ProtectedRoute><SimplifiedDashboard /></ProtectedRoute>} />
             <Route path="/student/courses" element={<ProtectedRoute><StudentCourses /></ProtectedRoute>} />
             <Route path="/student/course/:courseId" element={<ProtectedRoute><CourseView /></ProtectedRoute>} />
+            <Route path="/student/course-details/:courseId" element={<ProtectedRoute><CourseDetail /></ProtectedRoute>} />
+            <Route path="/student/enroll/:courseId" element={<ProtectedRoute><CourseEnrollment /></ProtectedRoute>} />
+            <Route path="/payment/success" element={<ProtectedRoute><CoursePaymentSuccess /></ProtectedRoute>} />
             <Route path="/student/progress" element={<ProtectedRoute><Progress /></ProtectedRoute>} />
             <Route path="/student/interview-prep" element={<ProtectedRoute><InterviewPrep /></ProtectedRoute>} />
             <Route path="/student/refer-and-earn" element={<ProtectedRoute><ReferAndEarn /></ProtectedRoute>} />

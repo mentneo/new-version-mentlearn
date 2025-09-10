@@ -34,6 +34,12 @@ const Footer = () => {
           <Link to="/privacy" className={`${darkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'} text-sm`}>
             Privacy Policy
           </Link>
+          <Link to="/cancellation-refunds" className={`${darkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'} text-sm`}>
+            Cancellation & Refunds
+          </Link>
+          <Link to="/shipping" className={`${darkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'} text-sm`}>
+            Shipping
+          </Link>
         </div>
       </div>
     </footer>
