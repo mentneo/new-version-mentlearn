@@ -53,6 +53,7 @@ import Progress from './pages/student/Progress';
 import InterviewPrep from './pages/student/InterviewPrep';
 import QuizAttempt from './pages/student/QuizAttempt';
 import StudentQuizzes from './pages/student/StudentQuizzes';
+import ReferAndEarn from './pages/student/ReferAndEarn';
 import TakeQuiz from './pages/student/TakeQuiz';
 import QuizResults from './pages/student/QuizResults';
 import StudentCourses from './pages/student/StudentCourses';
@@ -150,6 +151,7 @@ function App() {
             <Route path="/student/course/:courseId" element={<ProtectedRoute><CourseView /></ProtectedRoute>} />
             <Route path="/student/progress" element={<ProtectedRoute><Progress /></ProtectedRoute>} />
             <Route path="/student/interview-prep" element={<ProtectedRoute><InterviewPrep /></ProtectedRoute>} />
+            <Route path="/student/refer-and-earn" element={<ProtectedRoute><ReferAndEarn /></ProtectedRoute>} />
             <Route path="/student/quiz/:quizId" element={<ProtectedRoute><QuizAttempt /></ProtectedRoute>} />
             <Route path="/student/quizzes" element={<ProtectedRoute><StudentQuizzes /></ProtectedRoute>} />
             <Route path="/student/quizzes/:quizId/take/:assignmentId" element={<ProtectedRoute><TakeQuiz /></ProtectedRoute>} />

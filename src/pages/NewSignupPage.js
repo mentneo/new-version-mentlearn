@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { FaEnvelope, FaLock, FaUser, FaEye, FaEyeSlash, FaArrowLeft, FaCheckCircle } from 'react-icons/fa';
+import { FaEnvelope, FaLock, FaUser, FaEye, FaEyeSlash, FaArrowLeft, FaCheckCircle, FaGift } from 'react-icons/fa';
 
 export default function NewSignupPage() {
   const [firstName, setFirstName] = useState('');
@@ -14,8 +14,19 @@ export default function NewSignupPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [agreed, setAgreed] = useState(false);
+  const [referralCode, setReferralCode] = useState('');
   const { signup } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Check for referral code in URL
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const ref = params.get('ref');
+    if (ref) {
+      setReferralCode(ref);
+    }
+  }, [location.search]);
 
   // Password strength checker
   const getPasswordStrength = (password) => {
@@ -65,6 +76,7 @@ export default function NewSignupPage() {
         lastName,
         displayName: `${firstName} ${lastName}`,
         role: accountType,
+        referredBy: referralCode || null,
         createdAt: new Date()
       });
       
@@ -165,6 +177,26 @@ export default function NewSignupPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   className="py-3 pl-10 pr-3 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white focus:ring-blue-500 focus:border-blue-500 shadow-sm"
                   placeholder="you@example.com"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="referralCode" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Referral Code (Optional)
+              </label>
+              <div className="mt-1 relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaGift className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  id="referralCode"
+                  name="referralCode"
+                  type="text"
+                  value={referralCode}
+                  onChange={(e) => setReferralCode(e.target.value)}
+                  className="py-3 pl-10 pr-3 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                  placeholder="Enter referral code (if any)"
                 />
               </div>
             </div>

@@ -6,7 +6,10 @@ import {
   sendPasswordResetEmail,
   onAuthStateChanged
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, collection, getDocs } from 'firebase/firestore';
+import { 
+  doc, getDoc, setDoc, collection, getDocs,
+  query, where, updateDoc, arrayUnion, increment
+} from 'firebase/firestore';
 import { auth, db } from '../firebase/firebase';
 
 const AuthContext = createContext();
@@ -60,10 +63,66 @@ export function AuthProvider({ children }) {
 
       await setDoc(doc(db, "users", userCredential.user.uid), userData);
       
+      // Handle referral if present
+      if (extraData.referredBy) {
+        await handleReferral(userCredential.user.uid, extraData.referredBy);
+      }
+      
       return userCredential;
     } catch (error) {
       console.error("Error during signup:", error);
       throw error;
+    }
+  }
+  
+  // Process a referral when a new user signs up
+  async function handleReferral(newUserId, referralCode) {
+    try {
+      // Find the user who referred the new user
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, where("referralCode", "==", referralCode));
+      const querySnapshot = await getDocs(q);
+      
+      if (!querySnapshot.empty) {
+        const referrerDoc = querySnapshot.docs[0];
+        const referrerId = referrerDoc.id;
+        const referrerData = referrerDoc.data();
+        
+        // Get new user's data
+        const newUserDoc = await getDoc(doc(db, "users", newUserId));
+        const newUserData = newUserDoc.data();
+        
+        // Update the referrals document
+        const referralRef = doc(db, "referrals", referrerId);
+        const referralDoc = await getDoc(referralRef);
+        
+        if (referralDoc.exists()) {
+          // Add the new referral to history
+          await updateDoc(referralRef, {
+            totalReferrals: increment(1),
+            pendingReferrals: increment(1),
+            referralHistory: arrayUnion({
+              userId: newUserId,
+              name: newUserData.firstName + ' ' + newUserData.lastName || newUserData.email,
+              email: newUserData.email,
+              date: new Date(),
+              status: 'pending'
+            })
+          });
+        }
+        
+        // Update the new user to record who referred them
+        await updateDoc(doc(db, "users", newUserId), {
+          referredBy: referrerId,
+          referralCode: referralCode
+        });
+        
+        console.log(`Referral processed: User ${newUserId} was referred by ${referrerId}`);
+      } else {
+        console.log(`No user found with referral code: ${referralCode}`);
+      }
+    } catch (error) {
+      console.error("Error processing referral:", error);
     }
   }
 

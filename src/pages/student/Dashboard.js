@@ -4,7 +4,7 @@ import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firesto
 import { db } from '../../firebase/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import Navbar from '../../components/student/Navbar';
-import { FaBook, FaChartLine, FaLaptopCode, FaUserGraduate, FaClipboardList } from 'react-icons/fa';
+import { FaBook, FaChartLine, FaLaptopCode, FaUserGraduate, FaClipboardList, FaUsers } from 'react-icons/fa';
 
 export default function Dashboard() {
   const { currentUser } = useAuth();
@@ -139,6 +139,12 @@ export default function Dashboard() {
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200"
               >
                 <FaChartLine className="mr-2" /> View Progress
+              </Link>
+              <Link 
+                to="/student/refer-and-earn" 
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200"
+              >
+                <FaUsers className="mr-2" /> Refer & Earn
               </Link>
               <Link 
                 to="/student/interview-prep" 
