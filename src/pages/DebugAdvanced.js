@@ -107,12 +107,6 @@ export default function DebuggingPage() {
               Student Simple Dashboard
             </Link>
             <Link 
-              to="/theme-test"
-              className="px-4 py-2 bg-purple-500 text-white rounded text-center hover:bg-purple-600 transition-colors"
-            >
-              Theme Test
-            </Link>
-            <Link 
               to="/"
               className="px-4 py-2 bg-gray-500 text-white rounded text-center hover:bg-gray-600 transition-colors"
             >

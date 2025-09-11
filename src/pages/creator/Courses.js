@@ -12,24 +12,14 @@ const CourseSchema = Yup.object().shape({
   duration: Yup.string().required('Duration is required'),
   skillLevel: Yup.string().required('Skill level is required'),
   status: Yup.string().required('Status is required').oneOf(['draft', 'published'], 'Invalid status'),
+  // Temporarily simplify modules validation
   modules: Yup.array().of(
     Yup.object().shape({
       title: Yup.string().required('Module title is required'),
       description: Yup.string().required('Module description is required'),
-      topics: Yup.array().of(
-        Yup.object().shape({
-          title: Yup.string().required('Topic title is required'),
-          type: Yup.string().required('Topic type is required'),
-          content: Yup.string().when('type', (type, schema) => {
-            return type === 'text' ? schema.required('Content is required for text topics') : schema;
-          }),
-          videoUrl: Yup.string().when('type', (type, schema) => {
-            return type === 'video' ? schema.required('Video URL is required for video topics') : schema;
-          }),
-        })
-      ).min(1, 'At least one topic is required'),
+      topics: Yup.array().min(1, 'At least one topic is required')
     })
-  ).min(1, 'At least one module is required'),
+  ).min(1, 'At least one module is required')
 });
 
 export default function CreatorCourses() {
@@ -104,6 +94,8 @@ export default function CreatorCourses() {
     console.log('🚀 Course creation started');
     console.log('Current user:', currentUser);
     console.log('Form values:', values);
+    console.log('Form values type:', typeof values);
+    console.log('Form values keys:', Object.keys(values));
 
     if (!currentUser) {
       console.error('❌ No current user');
@@ -126,16 +118,20 @@ export default function CreatorCourses() {
       };
 
       console.log('📊 Course data to save:', courseData);
+      console.log('Course data type:', typeof courseData);
+      console.log('Course data keys:', Object.keys(courseData));
 
       if (editingCourse) {
         // Update existing course
         console.log('✏️ Updating existing course...');
+        console.log('Editing course ID:', editingCourse.id);
         await updateDoc(doc(db, 'courses', editingCourse.id), courseData);
         setSuccess('Course updated successfully!');
         console.log('✅ Course updated successfully');
       } else {
         // Create new course
         console.log('🆕 Creating new course...');
+        console.log('Collection reference:', collection(db, 'courses'));
         const docRef = await addDoc(collection(db, 'courses'), courseData);
         setSuccess('Course created successfully!');
         console.log('✅ Course created successfully with ID:', docRef.id);
@@ -155,6 +151,7 @@ export default function CreatorCourses() {
       console.error('❌ Error saving course:', err);
       console.error('Error details:', err.message);
       console.error('Error code:', err.code);
+      console.error('Error stack:', err.stack);
       setError('Failed to save course: ' + err.message);
     } finally {
       setSubmitting(false);
@@ -240,49 +237,6 @@ export default function CreatorCourses() {
             className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
           >
             <FaPlus className="mr-2" /> Create New Course
-          </button>
-        </div>
-
-        {/* Quick Test Course Creation */}
-        <div className="mb-6 p-4 bg-blue-100 border border-blue-400 rounded-md">
-          <h3 className="text-sm font-medium text-blue-800 mb-2">Quick Test Course Creation</h3>
-          <button
-            onClick={async () => {
-              console.log('🧪 Testing simple course creation...');
-              if (!currentUser) {
-                alert('No user logged in!');
-                return;
-              }
-
-              try {
-                const testCourse = {
-                  title: 'Test Course ' + Date.now(),
-                  description: 'This is a test course created for debugging',
-                  price: 100,
-                  duration: '4 weeks',
-                  skillLevel: 'beginner',
-                  status: 'draft',
-                  creatorId: currentUser.uid,
-                  createdAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString(),
-                  enrollments: 0,
-                  rating: 0,
-                  reviews: []
-                };
-
-                console.log('Test course data:', testCourse);
-                const docRef = await addDoc(collection(db, 'courses'), testCourse);
-                console.log('✅ Test course created with ID:', docRef.id);
-                alert('Test course created successfully! ID: ' + docRef.id);
-                fetchCourses();
-              } catch (error) {
-                console.error('❌ Test course creation failed:', error);
-                alert('Test course creation failed: ' + error.message);
-              }
-            }}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
-          >
-            Create Test Course
           </button>
         </div>
 
@@ -379,10 +333,12 @@ export default function CreatorCourses() {
                         }
                       ]
                     }}
-                    validationSchema={CourseSchema}
+                    validationSchema={null}
                     onSubmit={(values, actions) => {
                       console.log('📝 Form submitted with values:', values);
                       console.log('Form actions:', actions);
+                      console.log('Current user:', currentUser);
+                      alert('Form submitted! Check console for details.');
                       handleAddCourse(values, actions);
                     }}
                   >
@@ -390,6 +346,7 @@ export default function CreatorCourses() {
                       console.log('Form state - Values:', values);
                       console.log('Form state - Errors:', errors);
                       console.log('Form state - Touched:', touched);
+                      console.log('Form state - IsSubmitting:', isSubmitting);
                       return (
                       <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
@@ -626,6 +583,7 @@ export default function CreatorCourses() {
                             type="submit"
                             disabled={isSubmitting}
                             className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                            onClick={() => console.log('Submit button clicked')}
                           >
                             {isSubmitting ? 'Saving...' : (editingCourse ? 'Update Course' : 'Create Course')}
                           </button>

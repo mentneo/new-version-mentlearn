@@ -24,8 +24,8 @@ const storage = getStorage(app);
 
 // Cloudinary configuration
 const cloudinaryConfig = {
-  cloudName: 'dp8bfdbab',
-  uploadPreset: 'mentneo_uploads' // Make sure this upload preset exists in your Cloudinary account
+  cloudName: process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || 'dp8bfdbab',
+  uploadPreset: process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET || 'mentneo_uploads'
 };
 
 console.log("Firebase initialized with project:", firebaseConfig.projectId);

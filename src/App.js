@@ -32,7 +32,6 @@ import DirectAdminAccess from './pages/DirectAdminAccess';
 import DebugPage from './pages/DebugPage';
 import DebugAdvanced from './pages/DebugAdvanced';
 import SimpleDashboard from './pages/SimpleDashboard';
-import ThemeTestPage from './pages/ThemeTestPage';
 import TermsAndConditions from './pages/TermsAndConditions';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import CancellationRefunds from './pages/CancellationRefunds';
@@ -83,6 +82,7 @@ import Interviews from './pages/mentor/Interviews';
 // Creator pages
 import CreatorDashboard from './pages/creator/Dashboard';
 import CreatorCourses from './pages/creator/Courses';
+import CreatorProfile from './pages/creator/Profile';
 
 // Course selection page
 import CourseSelectionPage from './pages/auth/CourseSelectionPage';
@@ -114,7 +114,6 @@ function App() {
               <Route path="/debug" element={<DebugPage />} />
               <Route path="/debug-advanced" element={<DebugAdvanced />} />
               <Route path="/simple" element={<SimpleDashboard />} />
-              <Route path="/theme-test" element={<ThemeTestPage />} />
               <Route path="/terms" element={<TermsAndConditions />} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/cancellation-refunds" element={<CancellationRefunds />} />
@@ -124,12 +123,6 @@ function App() {
               
               {/* Emergency Admin Access */}
               <Route path="/emergency-admin" element={<DirectAdminAccess />} />
-              
-              {/* DIRECT ACCESS ROUTES FOR TESTING - Remove in production */}
-              <Route path="/direct-admin" element={<AdminDashboard />} />
-              <Route path="/direct-admin/courses" element={<ManageCourses />} />
-              <Route path="/direct-admin/students" element={<ManageStudents />} />
-              <Route path="/direct-admin/mentors" element={<ManageMentors />} />
               
               {/* Admin Routes with new layout */}
               <Route path="/admin" element={<AdminLayout />}>
@@ -159,7 +152,7 @@ function App() {
                 <Route path="dashboard" element={<CreatorDashboard />} />
                 <Route path="courses" element={<CreatorCourses />} />
                 <Route path="enrollments" element={<CreatorDashboard />} />
-                <Route path="profile" element={<CreatorDashboard />} />
+                <Route path="profile" element={<CreatorProfile />} />
               </Route>
             
             {/* Student Routes with protection */}

@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { getFirestore, doc, getDoc, updateDoc } from 'firebase/firestore';
+import React, { useState, useEffect, useRef } from 'react';
+import { getFirestore, doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { useAuth } from '../../contexts/AuthContext';
 import { Formik, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
-import { FaEdit } from 'react-icons/fa';
+import { FaEdit, FaCamera, FaTrash, FaUpload } from 'react-icons/fa';
+import { uploadImageWithFallback } from '../../utils/cloudinary';
 
 const ProfileSchema = Yup.object().shape({
   name: Yup.string().required('Name is required'),
@@ -21,15 +22,28 @@ export default function CreatorProfile() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imagePreview, setImagePreview] = useState(null);
+  const fileInputRef = useRef(null);
 
   const { currentUser } = useAuth();
   const db = getFirestore();
 
   useEffect(() => {
-    fetchProfile();
-  }, []);
+    if (currentUser) {
+      fetchProfile();
+    } else {
+      setLoading(false);
+    }
+  }, [currentUser]);
 
   const fetchProfile = async () => {
+    if (!currentUser) {
+      setError('User not authenticated');
+      setLoading(false);
+      return;
+    }
+
     try {
       const creatorQuery = doc(db, 'creators', currentUser.uid);
       const creatorDoc = await getDoc(creatorQuery);
@@ -37,10 +51,27 @@ export default function CreatorProfile() {
       if (creatorDoc.exists()) {
         setProfile(creatorDoc.data());
       } else {
-        setError('Creator profile not found');
+        // Create a new creator profile if it doesn't exist
+        const newProfile = {
+          name: currentUser.displayName || '',
+          email: currentUser.email || '',
+          phone: '',
+          specialization: '',
+          experience: '',
+          bio: '',
+          linkedIn: '',
+          website: '',
+          profileImage: '',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+
+        await setDoc(creatorQuery, newProfile);
+        setProfile(newProfile);
+        setSuccess('Profile created successfully!');
       }
     } catch (err) {
-      console.error('Error fetching profile:', err);
+      console.error('Error fetching/creating profile:', err);
       setError('Failed to load profile');
     } finally {
       setLoading(false);
@@ -51,7 +82,14 @@ export default function CreatorProfile() {
     try {
       const creatorRef = doc(db, 'creators', currentUser.uid);
       await updateDoc(creatorRef, {
-        ...values,
+        name: values.name,
+        phone: values.phone,
+        specialization: values.specialization,
+        experience: values.experience,
+        bio: values.bio,
+        linkedIn: values.linkedIn,
+        website: values.website,
+        profileImage: values.profileImage,
         updatedAt: new Date().toISOString()
       });
 
@@ -66,6 +104,57 @@ export default function CreatorProfile() {
     }
   };
 
+  const handleImageSelect = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => setImagePreview(e.target.result);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleImageUpload = async () => {
+    if (!fileInputRef.current?.files[0]) return;
+
+    setImageUploading(true);
+    try {
+      const file = fileInputRef.current.files[0];
+      const imageUrl = await uploadImageWithFallback(file, currentUser.uid);
+
+      const creatorRef = doc(db, 'creators', currentUser.uid);
+      await updateDoc(creatorRef, {
+        profileImage: imageUrl,
+        updatedAt: new Date().toISOString()
+      });
+
+      setProfile(prev => ({ ...prev, profileImage: imageUrl }));
+      setImagePreview(null);
+      setSuccess('Profile image updated successfully!');
+    } catch (err) {
+      console.error('Error uploading image:', err);
+      setError('Failed to upload image. Please try again.');
+    } finally {
+      setImageUploading(false);
+    }
+  };
+
+  const handleImageRemove = async () => {
+    try {
+      const creatorRef = doc(db, 'creators', currentUser.uid);
+      await updateDoc(creatorRef, {
+        profileImage: null,
+        updatedAt: new Date().toISOString()
+      });
+
+      setProfile(prev => ({ ...prev, profileImage: null }));
+      setImagePreview(null);
+      setSuccess('Profile image removed successfully!');
+    } catch (err) {
+      console.error('Error removing image:', err);
+      setError('Failed to remove image');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -74,11 +163,21 @@ export default function CreatorProfile() {
     );
   }
 
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen p-8">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          You must be logged in to access this page.
+        </div>
+      </div>
+    );
+  }
+
   if (!profile) {
     return (
       <div className="min-h-screen p-8">
-        <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded">
-          Creator profile not found. Please contact admin for assistance.
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          Unable to load or create profile. Please try refreshing the page.
         </div>
       </div>
     );
@@ -113,6 +212,80 @@ export default function CreatorProfile() {
           )}
 
           <div className="p-6">
+            {/* Profile Image Section */}
+            <div className="mb-8">
+              <div className="flex items-center space-x-6">
+                <div className="relative">
+                  <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+                    {(profile.profileImage || imagePreview) ? (
+                      <img
+                        src={imagePreview || profile.profileImage}
+                        alt="Profile"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <FaCamera className="text-gray-400 text-2xl" />
+                    )}
+                  </div>
+                  {isEditing && (
+                    <div className="absolute -bottom-2 -right-2 flex space-x-1">
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="bg-indigo-600 text-white p-1 rounded-full hover:bg-indigo-700"
+                        title="Upload new image"
+                      >
+                        <FaUpload className="text-xs" />
+                      </button>
+                      {profile.profileImage && (
+                        <button
+                          type="button"
+                          onClick={handleImageRemove}
+                          className="bg-red-600 text-white p-1 rounded-full hover:bg-red-700"
+                          title="Remove image"
+                        >
+                          <FaTrash className="text-xs" />
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900">{profile.name || 'Creator'}</h3>
+                  <p className="text-sm text-gray-500">{profile.specialization || 'Specialization not set'}</p>
+                  {isEditing && imagePreview && (
+                    <div className="mt-2 flex space-x-2">
+                      <button
+                        type="button"
+                        onClick={handleImageUpload}
+                        disabled={imageUploading}
+                        className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
+                      >
+                        {imageUploading ? 'Uploading...' : 'Save Image'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setImagePreview(null);
+                          if (fileInputRef.current) fileInputRef.current.value = '';
+                        }}
+                        className="inline-flex items-center px-3 py-1 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageSelect}
+                className="hidden"
+              />
+            </div>
+
             {isEditing ? (
               <Formik
                 initialValues={{
@@ -122,7 +295,8 @@ export default function CreatorProfile() {
                   experience: profile.experience || '',
                   bio: profile.bio || '',
                   linkedIn: profile.linkedIn || '',
-                  website: profile.website || ''
+                  website: profile.website || '',
+                  profileImage: profile.profileImage || ''
                 }}
                 validationSchema={ProfileSchema}
                 onSubmit={handleUpdateProfile}
@@ -221,6 +395,25 @@ export default function CreatorProfile() {
               </Formik>
             ) : (
               <div className="space-y-6">
+                {/* Profile Image Display */}
+                <div className="flex items-center space-x-6 pb-6 border-b border-gray-200">
+                  <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+                    {profile.profileImage ? (
+                      <img
+                        src={profile.profileImage}
+                        alt="Profile"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <FaCamera className="text-gray-400 text-2xl" />
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900">{profile.name}</h3>
+                    <p className="text-sm text-gray-500">{profile.specialization}</p>
+                  </div>
+                </div>
+
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Name</h3>
                   <p className="mt-1 text-sm text-gray-900">{profile.name}</p>

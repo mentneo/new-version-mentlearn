@@ -1,4 +1,9 @@
-import { cloudinaryConfig } from '../firebase/firebase';
+import { cloudinaryConfig } from '../../firebase/firebase';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+import { auth, db } from '../../firebase/firebase';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 /**
  * Uploads a file to Cloudinary
@@ -38,14 +43,22 @@ export const uploadToCloudinary = async (file, resourceType = 'image') => {
     // Make HTTP request to Cloudinary
     const response = await fetch(url, {
       method: 'POST',
-      body: formData
+      body: formData,
+      // Add CORS headers
+      mode: 'cors',
+      credentials: 'omit'
     });
 
     // Handle response
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Cloudinary upload failed:", errorText);
-      throw new Error(`Cloudinary upload failed: ${response.status} ${response.statusText}`);
+      console.error("Cloudinary upload failed:", {
+        status: response.status,
+        statusText: response.statusText,
+        errorText: errorText,
+        url: url
+      });
+      throw new Error(`Cloudinary upload failed: ${response.status} ${response.statusText} - ${errorText}`);
     }
 
     const data = await response.json();
@@ -82,7 +95,12 @@ export const uploadVideo = async (videoFile) => {
  * Signup page component
  */
 const SignupPage = () => {
-  // ...existing code...
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [setSubmitting] = useState(false);
+  const navigate = useNavigate();
 
   /**
    * Handles the signup form submission

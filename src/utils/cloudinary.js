@@ -106,15 +106,32 @@ export const uploadVideo = async (videoFile) => {
 /**
  * Attempts to upload an image to Cloudinary, with Firebase Storage as fallback
  * @param {File} imageFile - The image file to upload
+ * @param {string} userId - The user ID for Firebase Storage path
  * @returns {Promise<string>} - URL of the uploaded image
  */
-export const uploadImageWithFallback = async (imageFile) => {
+export const uploadImageWithFallback = async (imageFile, userId) => {
   try {
     // Try Cloudinary first
     return await uploadImage(imageFile);
   } catch (cloudinaryError) {
     console.warn("Cloudinary upload failed, trying Firebase Storage as fallback", cloudinaryError);
-    // Use Firebase as fallback
-    return await uploadToFirebaseStorage(imageFile, `profile-images/${Date.now()}_${imageFile.name}`);
+    // Use Firebase as fallback - use the correct path that matches storage rules
+    return await uploadToFirebaseStorage(imageFile, `users/${userId}/profile/${Date.now()}_${imageFile.name}`);
+  }
+};
+
+/**
+ * Attempts to upload a course thumbnail to Cloudinary, with Firebase Storage as fallback
+ * @param {File} imageFile - The image file to upload
+ * @returns {Promise<string>} - URL of the uploaded image
+ */
+export const uploadCourseThumbnailWithFallback = async (imageFile) => {
+  try {
+    // Try Cloudinary first
+    return await uploadImage(imageFile);
+  } catch (cloudinaryError) {
+    console.warn("Cloudinary upload failed, trying Firebase Storage as fallback", cloudinaryError);
+    // Use Firebase as fallback - use the course thumbnails path
+    return await uploadToFirebaseStorage(imageFile, `courses/thumbnails/${Date.now()}_${imageFile.name}`);
   }
 };

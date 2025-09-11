@@ -186,12 +186,6 @@ export default function SimplifiedDashboard() {
               <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Navigation Links</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Link 
-                  to="/theme-test"
-                  className="px-4 py-3 bg-green-500 hover:bg-green-600 text-white rounded text-center transition-colors"
-                >
-                  Theme Test Page
-                </Link>
-                <Link 
                   to="/simple"
                   className="px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded text-center transition-colors"
                 >

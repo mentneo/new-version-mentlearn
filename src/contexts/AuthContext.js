@@ -138,6 +138,8 @@ export function AuthProvider({ children }) {
     return sendPasswordResetEmail(auth, email);
   }
 
+
+
   async function getUserRole(uid) {
     try {
       // If no users exist yet, this will be the first admin

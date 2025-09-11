@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { collection, getDocs, doc, deleteDoc, addDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../firebase/firebase';
-import { uploadImage as uploadToCloudinary } from '../../utils/cloudinary';
+import { uploadCourseThumbnailWithFallback } from '../../utils/cloudinary';
 import { uploadImage as uploadToFirebase } from '../../utils/storage';
 import { useAuth } from '../../contexts/AuthContext';
 import Navbar from '../../components/admin/Navbar';
@@ -104,9 +104,9 @@ export default function ManageCourses() {
         try {
           console.log("Attempting to upload thumbnail to Cloudinary...");
           
-          // Only use Cloudinary for upload - no fallback to Firebase Storage
-          thumbnailUrl = await uploadToCloudinary(thumbnailFile, 'image');
-          console.log("Cloudinary upload result:", thumbnailUrl);
+          // Use Cloudinary with Firebase Storage fallback
+          thumbnailUrl = await uploadCourseThumbnailWithFallback(thumbnailFile);
+          console.log("Upload result:", thumbnailUrl);
           
           // If no URL was returned, use a placeholder
           if (!thumbnailUrl) {

@@ -20,7 +20,7 @@ export default function Dashboard() {
       try {
         if (!currentUser) return;
 
-        // Fetch enrollments
+        // Regular user - fetch enrollments
         const enrollmentsQuery = query(
           collection(db, "enrollments"),
           where("studentId", "==", currentUser.uid)
