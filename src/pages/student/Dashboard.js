@@ -148,32 +148,32 @@ export default function Dashboard() {
       <Navbar />
       <div className="py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4 md:mb-0">Student Dashboard</h1>
-            <div className="flex flex-wrap gap-2">
+          <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0 mb-6">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Student Dashboard</h1>
+            <div className="flex flex-col space-y-2 sm:flex-row sm:flex-wrap sm:gap-2 sm:space-y-0">
               <Link 
                 to="/student/progress" 
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200"
+                className="inline-flex items-center justify-center px-3 py-2 sm:px-4 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 touch-manipulation"
               >
-                <FaChartLine className="mr-2" /> View Progress
+                <FaChartLine className="mr-1 sm:mr-2" /> View Progress
               </Link>
               <Link 
                 to="/student/refer-and-earn" 
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200"
+                className="inline-flex items-center justify-center px-3 py-2 sm:px-4 border border-transparent text-sm font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200 touch-manipulation"
               >
-                <FaUsers className="mr-2" /> Refer & Earn
+                <FaUsers className="mr-1 sm:mr-2" /> Refer & Earn
               </Link>
               <Link 
                 to="/student/quizzes" 
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-purple-700 bg-purple-100 hover:bg-purple-200"
+                className="inline-flex items-center justify-center px-3 py-2 sm:px-4 border border-transparent text-sm font-medium rounded-md text-purple-700 bg-purple-100 hover:bg-purple-200 touch-manipulation"
               >
-                <FaQuestionCircle className="mr-2" /> Quizzes
+                <FaQuestionCircle className="mr-1 sm:mr-2" /> Quizzes
               </Link>
               <Link 
                 to="/student/interview-prep" 
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+                className="inline-flex items-center justify-center px-3 py-2 sm:px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 touch-manipulation"
               >
-                <FaLaptopCode className="mr-2" /> Interview Prep
+                <FaLaptopCode className="mr-1 sm:mr-2" /> Interview Prep
               </Link>
             </div>
           </div>
@@ -191,30 +191,28 @@ export default function Dashboard() {
               <div className="mt-4 bg-white shadow overflow-hidden sm:rounded-lg">
                 <ul className="divide-y divide-gray-200">
                   {assignedQuizzes.map(quiz => (
-                    <li key={quiz.id} className="px-4 sm:px-6 py-4">
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                        <div className="mb-4 sm:mb-0 sm:pr-4">
-                          <h3 className="text-lg font-medium text-gray-900">{quiz.title}</h3>
-                          <p className="mt-1 text-sm text-gray-500">{quiz.description}</p>
-                          <div className="mt-2 flex flex-col sm:flex-row sm:items-center text-sm text-gray-500">
-                            <div className="flex items-center mb-1 sm:mb-0">
-                              <FaUserGraduate className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
-                              <p>Assigned by: {quiz.mentorName || 'Your mentor'}</p>
-                            </div>
-                            <span className="hidden sm:inline mx-2">•</span>
-                            <div className="flex items-center mb-1 sm:mb-0">
-                              <p>Time limit: {quiz.timeLimit} minutes</p>
-                            </div>
-                            <span className="hidden sm:inline mx-2">•</span>
+                    <li key={quiz.id} className="px-4 py-4 sm:px-6">
+                      <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+                        <div className="flex-1 sm:pr-4">
+                          <h3 className="text-base sm:text-lg font-medium text-gray-900">{quiz.title}</h3>
+                          <p className="mt-1 text-sm text-gray-500 line-clamp-2">{quiz.description}</p>
+                          <div className="mt-3 flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4 text-sm text-gray-500">
                             <div className="flex items-center">
-                              <p>Passing score: {quiz.passingScore}%</p>
+                              <FaUserGraduate className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
+                              <p className="truncate">Assigned by: {quiz.mentorName || 'Your mentor'}</p>
+                            </div>
+                            <div className="flex items-center">
+                              <p>Time: {quiz.timeLimit} min</p>
+                            </div>
+                            <div className="flex items-center">
+                              <p>Pass: {quiz.passingScore}%</p>
                             </div>
                           </div>
                         </div>
-                        <div>
+                        <div className="flex-shrink-0">
                           <Link
                             to={`/student/quiz/${quiz.id}`}
-                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
+                            className="inline-flex items-center justify-center w-full sm:w-auto px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 touch-manipulation"
                           >
                             <FaClipboardList className="mr-2" /> Start Quiz
                           </Link>
@@ -268,42 +266,40 @@ export default function Dashboard() {
                 </div>
               </div>
             ) : (
-              <div className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {enrolledCourses.map(course => (
                   <div key={course.id} className="bg-white overflow-hidden shadow rounded-lg">
-                    <div className="p-5">
-                      <div className="flex-shrink-0">
-                        <img 
-                          className="h-48 w-full object-cover rounded-md" 
-                          src={course.thumbnailUrl || 'https://via.placeholder.com/600x400?text=Course'} 
-                          alt={course.title} 
-                        />
-                      </div>
+                    <div className="aspect-w-16 aspect-h-9 sm:aspect-h-12">
+                      <img 
+                        className="w-full h-32 sm:h-40 lg:h-48 object-cover" 
+                        src={course.thumbnailUrl || 'https://via.placeholder.com/600x400?text=Course'} 
+                        alt={course.title} 
+                      />
+                    </div>
+                    <div className="p-4 sm:p-5">
+                      <h3 className="text-base sm:text-lg font-medium text-gray-900 line-clamp-2">{course.title}</h3>
+                      <p className="mt-2 text-sm text-gray-500 line-clamp-2">{course.description}</p>
+                      
                       <div className="mt-4">
-                        <h3 className="text-lg font-medium text-gray-900">{course.title}</h3>
-                        <p className="mt-2 text-sm text-gray-500 line-clamp-2">{course.description}</p>
-                        
-                        <div className="mt-4">
-                          <div className="flex items-center justify-between text-sm">
-                            <div className="text-gray-500">Progress</div>
-                            <div className="font-medium text-indigo-600">{course.progress}%</div>
-                          </div>
-                          <div className="mt-1 w-full bg-gray-200 rounded-full h-2.5">
-                            <div 
-                              className="bg-indigo-600 h-2.5 rounded-full" 
-                              style={{ width: `${course.progress}%` }}
-                            ></div>
-                          </div>
+                        <div className="flex items-center justify-between text-sm mb-2">
+                          <div className="text-gray-500">Progress</div>
+                          <div className="font-medium text-indigo-600">{course.progress}%</div>
                         </div>
-                        
-                        <div className="mt-4 flex">
-                          <Link
-                            to={`/student/course/${course.id}`}
-                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
-                          >
-                            {course.progress > 0 ? 'Continue Course' : 'Start Course'}
-                          </Link>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div 
+                            className="bg-indigo-600 h-2 rounded-full transition-all duration-300" 
+                            style={{ width: `${course.progress}%` }}
+                          ></div>
                         </div>
+                      </div>
+                      
+                      <div className="mt-4">
+                        <Link
+                          to={`/student/course/${course.id}`}
+                          className="inline-flex items-center justify-center w-full px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 touch-manipulation"
+                        >
+                          {course.progress > 0 ? 'Continue Course' : 'Start Course'}
+                        </Link>
                       </div>
                     </div>
                   </div>
@@ -326,48 +322,46 @@ export default function Dashboard() {
                 </div>
               </div>
             ) : (
-              <div className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {allCourses.map(course => (
                   <div key={course.id} className="bg-white overflow-hidden shadow rounded-lg">
-                    <div className="p-5">
-                      <div className="flex-shrink-0">
-                        <img 
-                          className="h-48 w-full object-cover rounded-md" 
-                          src={course.thumbnailUrl || 'https://via.placeholder.com/600x400?text=Course'} 
-                          alt={course.title} 
-                        />
+                    <div className="aspect-w-16 aspect-h-9 sm:aspect-h-12">
+                      <img 
+                        className="w-full h-32 sm:h-40 lg:h-48 object-cover" 
+                        src={course.thumbnailUrl || 'https://via.placeholder.com/600x400?text=Course'} 
+                        alt={course.title} 
+                      />
+                    </div>
+                    <div className="p-4 sm:p-5">
+                      <h3 className="text-base sm:text-lg font-medium text-gray-900 line-clamp-2">{course.title}</h3>
+                      <p className="mt-2 text-sm text-gray-500 line-clamp-2">{course.description}</p>
+                      
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {course.duration && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            Duration: {course.duration}
+                          </span>
+                        )}
+                        {course.level && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Level: {course.level}
+                          </span>
+                        )}
                       </div>
-                      <div className="mt-4">
-                        <h3 className="text-lg font-medium text-gray-900">{course.title}</h3>
-                        <p className="mt-2 text-sm text-gray-500 line-clamp-2">{course.description}</p>
-                        
-                        <div className="mt-2">
-                          {course.duration && (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mr-2">
-                              Duration: {course.duration}
-                            </span>
-                          )}
-                          {course.level && (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                              Level: {course.level}
-                            </span>
-                          )}
-                        </div>
-                        
-                        <div className="mt-4 flex justify-between items-center">
-                          <Link
-                            to={`/student/course-details/${course.id}`}
-                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200"
-                          >
-                            View Details
-                          </Link>
-                          <Link
-                            to={`/student/enroll/${course.id}`}
-                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
-                          >
-                            Enroll Now
-                          </Link>
-                        </div>
+                      
+                      <div className="mt-4 flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2 sm:justify-between">
+                        <Link
+                          to={`/student/course-details/${course.id}`}
+                          className="inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 touch-manipulation"
+                        >
+                          View Details
+                        </Link>
+                        <Link
+                          to={`/student/enroll/${course.id}`}
+                          className="inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 touch-manipulation"
+                        >
+                          Enroll Now
+                        </Link>
                       </div>
                     </div>
                   </div>
@@ -393,28 +387,28 @@ export default function Dashboard() {
               <div className="mt-4 bg-white shadow overflow-hidden sm:rounded-lg">
                 <ul className="divide-y divide-gray-200">
                   {mentorReports.map(report => (
-                    <li key={report.id} className="px-4 sm:px-6 py-4">
-                      <div>
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2">
-                          <h3 className="text-lg font-medium text-gray-900">Week {report.weekNumber} Report</h3>
-                          <p className="text-sm text-gray-500 mt-1 sm:mt-0">
+                    <li key={report.id} className="px-4 py-4 sm:px-6">
+                      <div className="mb-4">
+                        <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+                          <h3 className="text-base sm:text-lg font-medium text-gray-900">Week {report.weekNumber} Report</h3>
+                          <p className="text-sm text-gray-500">
                             {report.timestamp.toLocaleDateString()}
                           </p>
                         </div>
-                        <div className="mt-2 max-w-xl text-sm text-gray-500">
-                          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                            <div className="sm:col-span-1 mb-3 sm:mb-0">
-                              <dt className="font-medium text-gray-500">Strengths</dt>
-                              <dd className="mt-1 text-gray-900">{report.strengths}</dd>
-                            </div>
-                            <div className="sm:col-span-1 mb-3 sm:mb-0">
-                              <dt className="font-medium text-gray-500">Areas for Improvement</dt>
-                              <dd className="mt-1 text-gray-900">{report.areasForImprovement}</dd>
-                            </div>
-                            <div className="sm:col-span-1">
-                              <dt className="font-medium text-gray-500">Recommendations</dt>
-                              <dd className="mt-1 text-gray-900">{report.recommendations}</dd>
-                            </div>
+                      </div>
+                      <div className="mt-3">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                          <div className="sm:col-span-1">
+                            <dt className="font-medium text-gray-500 text-sm mb-2">Strengths</dt>
+                            <dd className="mt-1 text-sm text-gray-900 bg-gray-50 p-3 rounded-md">{report.strengths}</dd>
+                          </div>
+                          <div className="sm:col-span-1">
+                            <dt className="font-medium text-gray-500 text-sm mb-2">Areas for Improvement</dt>
+                            <dd className="mt-1 text-sm text-gray-900 bg-gray-50 p-3 rounded-md">{report.areasForImprovement}</dd>
+                          </div>
+                          <div className="sm:col-span-1">
+                            <dt className="font-medium text-gray-500 text-sm mb-2">Recommendations</dt>
+                            <dd className="mt-1 text-sm text-gray-900 bg-gray-50 p-3 rounded-md">{report.recommendations}</dd>
                           </div>
                         </div>
                       </div>

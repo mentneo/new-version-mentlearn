@@ -3,7 +3,7 @@ import { collection, query, where, getDocs, addDoc, doc, updateDoc, deleteDoc, g
 import { getAuth } from 'firebase/auth';
 import { Formik, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
-import { FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaUpload } from 'react-icons/fa';
 
 const CourseSchema = Yup.object().shape({
   title: Yup.string().required('Required'),
@@ -240,15 +240,15 @@ export default function CreatorDashboard() {
           </div>
 
           {/* Courses Section */}
-          <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold text-gray-900">My Courses</h1>
+          <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">My Courses</h1>
             <button
               onClick={() => {
                 setEditingCourse(null);
                 setThumbnailPreview('');
                 setShowAddModal(true);
               }}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
+              className="inline-flex items-center justify-center w-full sm:w-auto px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 touch-manipulation"
             >
               <FaPlus className="mr-2" /> Create New Course
             </button>
@@ -275,40 +275,43 @@ export default function CreatorDashboard() {
                 </li>
               ) : (
                 courses.map(course => (
-                  <li key={course.id} className="px-6 py-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center flex-1">
+                  <li key={course.id} className="px-4 py-4 sm:px-6">
+                    <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+                      <div className="flex-1 flex items-center space-x-4">
                         {course.thumbnailUrl && (
-                          <div className="flex-shrink-0 h-16 w-16 mr-4">
+                          <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20">
                             <img
-                              className="h-16 w-16 rounded-md object-cover"
+                              className="w-full h-full rounded-md object-cover"
                               src={course.thumbnailUrl}
                               alt={course.title}
                             />
                           </div>
                         )}
-                        <div className="flex-1">
-                          <div className="text-lg font-medium text-indigo-600">{course.title}</div>
-                          <div className="mt-1 text-sm text-gray-500">{course.description}</div>
-                          <div className="mt-2 text-sm">
-                            <span className="text-gray-500">Price: </span>
-                            <span className="font-medium text-gray-900">₹{course.price}</span>
-                            <span className="mx-2">•</span>
-                            <span className="text-gray-500">Enrollments: </span>
-                            <span className="font-medium text-gray-900">{course.enrollments || 0}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-base sm:text-lg font-medium text-indigo-600 truncate">{course.title}</div>
+                          <div className="mt-1 text-sm text-gray-500 line-clamp-2">{course.description}</div>
+                          <div className="mt-2 flex flex-col space-y-1 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4 text-sm">
+                            <div className="flex items-center">
+                              <span className="text-gray-500">Price:</span>
+                              <span className="ml-1 font-medium text-gray-900">₹{course.price}</span>
+                            </div>
+                            <div className="flex items-center">
+                              <span className="text-gray-500">Enrollments:</span>
+                              <span className="ml-1 font-medium text-gray-900">{course.enrollments || 0}</span>
+                            </div>
                           </div>
                         </div>
                       </div>
-                      <div className="flex space-x-2">
+                      <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
                         <button
                           onClick={() => handleEditCourse(course)}
-                          className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                          className="inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 touch-manipulation"
                         >
                           <FaEdit className="mr-1" /> Edit
                         </button>
                         <button
                           onClick={() => handleDeleteCourse(course.id)}
-                          className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-red-600 hover:bg-red-700"
+                          className="inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 touch-manipulation"
                         >
                           <FaTrash className="mr-1" /> Delete
                         </button>
@@ -330,11 +333,11 @@ export default function CreatorDashboard() {
               <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
             </div>
             <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full">
+            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
               <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                 <div className="sm:flex sm:items-start">
                   <div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
-                    <h3 className="text-lg font-medium leading-6 text-gray-900">
+                    <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
                       {editingCourse ? 'Edit Course' : 'Create New Course'}
                     </h3>
                     <div className="mt-4">
@@ -361,7 +364,7 @@ export default function CreatorDashboard() {
                         onSubmit={handleAddCourse}
                       >
                         {({ values, handleSubmit, isSubmitting }) => (
-                          <form onSubmit={handleSubmit} className="space-y-6">
+                          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
                             <div>
                               <label htmlFor="title" className="block text-sm font-medium text-gray-700">Title</label>
                               <Field
@@ -395,32 +398,33 @@ export default function CreatorDashboard() {
 
                             <div>
                               <label className="block text-sm font-medium text-gray-700">Thumbnail</label>
-                              <div className="mt-1 flex items-center">
+                              <div className="mt-1 flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
                                 {thumbnailPreview && (
-                                  <img src={thumbnailPreview} alt="Preview" className="h-24 w-24 object-cover rounded-md mr-4" />
+                                  <img src={thumbnailPreview} alt="Preview" className="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-md" />
                                 )}
-                                <label className="cursor-pointer bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none">
+                                <label className="cursor-pointer inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none touch-manipulation">
+                                  <FaUpload className="mr-2" />
                                   <span>Upload Image</span>
                                   <input type="file" className="sr-only" onChange={handleThumbnailChange} accept="image/*" />
                                 </label>
                               </div>
                             </div>
 
-                            <div className="flex justify-end space-x-3">
+                            <div className="flex flex-col space-y-3 sm:flex-row sm:space-y-0 sm:space-x-3 sm:justify-end pt-4">
                               <button
                                 type="button"
                                 onClick={() => {
                                   setShowAddModal(false);
                                   setEditingCourse(null);
                                 }}
-                                className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                className="inline-flex items-center justify-center w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 touch-manipulation"
                               >
                                 Cancel
                               </button>
                               <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                className="inline-flex items-center justify-center w-full sm:w-auto px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 touch-manipulation"
                               >
                                 {isSubmitting ? 'Saving...' : (editingCourse ? 'Update Course' : 'Create Course')}
                               </button>

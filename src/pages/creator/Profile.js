@@ -211,12 +211,12 @@ export default function CreatorProfile() {
             </div>
           )}
 
-          <div className="p-6">
+                    <div className="p-4 sm:p-6">
             {/* Profile Image Section */}
-            <div className="mb-8">
-              <div className="flex items-center space-x-6">
-                <div className="relative">
-                  <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+            <div className="mb-6 sm:mb-8">
+              <div className="flex flex-col sm:flex-row items-center sm:space-x-6">
+                <div className="relative mb-4 sm:mb-0">
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
                     {(profile.profileImage || imagePreview) ? (
                       <img
                         src={imagePreview || profile.profileImage}
@@ -224,7 +224,7 @@ export default function CreatorProfile() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <FaCamera className="text-gray-400 text-2xl" />
+                      <FaCamera className="text-gray-400 text-xl sm:text-2xl" />
                     )}
                   </div>
                   {isEditing && (
@@ -232,7 +232,7 @@ export default function CreatorProfile() {
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="bg-indigo-600 text-white p-1 rounded-full hover:bg-indigo-700"
+                        className="bg-indigo-600 text-white p-1.5 sm:p-2 rounded-full hover:bg-indigo-700 touch-manipulation"
                         title="Upload new image"
                       >
                         <FaUpload className="text-xs" />
@@ -241,7 +241,7 @@ export default function CreatorProfile() {
                         <button
                           type="button"
                           onClick={handleImageRemove}
-                          className="bg-red-600 text-white p-1 rounded-full hover:bg-red-700"
+                          className="bg-red-600 text-white p-1.5 sm:p-2 rounded-full hover:bg-red-700 touch-manipulation"
                           title="Remove image"
                         >
                           <FaTrash className="text-xs" />
@@ -250,16 +250,16 @@ export default function CreatorProfile() {
                     </div>
                   )}
                 </div>
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900">{profile.name || 'Creator'}</h3>
+                <div className="text-center sm:text-left">
+                  <h3 className="text-base sm:text-lg font-medium text-gray-900">{profile.name || 'Creator'}</h3>
                   <p className="text-sm text-gray-500">{profile.specialization || 'Specialization not set'}</p>
                   {isEditing && imagePreview && (
-                    <div className="mt-2 flex space-x-2">
+                    <div className="mt-3 sm:mt-2 flex flex-col sm:flex-row gap-2">
                       <button
                         type="button"
                         onClick={handleImageUpload}
                         disabled={imageUploading}
-                        className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
+                        className="inline-flex items-center justify-center px-3 py-1.5 sm:px-4 sm:py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 touch-manipulation"
                       >
                         {imageUploading ? 'Uploading...' : 'Save Image'}
                       </button>
@@ -269,7 +269,7 @@ export default function CreatorProfile() {
                           setImagePreview(null);
                           if (fileInputRef.current) fileInputRef.current.value = '';
                         }}
-                        className="inline-flex items-center px-3 py-1 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                        className="inline-flex items-center justify-center px-3 py-1.5 sm:px-4 sm:py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 touch-manipulation"
                       >
                         Cancel
                       </button>
@@ -302,45 +302,49 @@ export default function CreatorProfile() {
                 onSubmit={handleUpdateProfile}
               >
                 {({ handleSubmit, isSubmitting }) => (
-                  <form onSubmit={handleSubmit} className="space-y-6">
-                    <div>
-                      <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
-                      <Field
-                        type="text"
-                        name="name"
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                      />
-                      <ErrorMessage name="name" component="div" className="mt-1 text-sm text-red-600" />
+                  <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+                    <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2">
+                      <div>
+                        <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
+                        <Field
+                          type="text"
+                          name="name"
+                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        />
+                        <ErrorMessage name="name" component="div" className="mt-1 text-sm text-red-600" />
+                      </div>
+
+                      <div>
+                        <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone</label>
+                        <Field
+                          type="text"
+                          name="phone"
+                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        />
+                        <ErrorMessage name="phone" component="div" className="mt-1 text-sm text-red-600" />
+                      </div>
                     </div>
 
-                    <div>
-                      <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone</label>
-                      <Field
-                        type="text"
-                        name="phone"
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                      />
-                      <ErrorMessage name="phone" component="div" className="mt-1 text-sm text-red-600" />
-                    </div>
+                    <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2">
+                      <div>
+                        <label htmlFor="specialization" className="block text-sm font-medium text-gray-700">Specialization</label>
+                        <Field
+                          type="text"
+                          name="specialization"
+                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        />
+                        <ErrorMessage name="specialization" component="div" className="mt-1 text-sm text-red-600" />
+                      </div>
 
-                    <div>
-                      <label htmlFor="specialization" className="block text-sm font-medium text-gray-700">Specialization</label>
-                      <Field
-                        type="text"
-                        name="specialization"
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                      />
-                      <ErrorMessage name="specialization" component="div" className="mt-1 text-sm text-red-600" />
-                    </div>
-
-                    <div>
-                      <label htmlFor="experience" className="block text-sm font-medium text-gray-700">Experience</label>
-                      <Field
-                        type="text"
-                        name="experience"
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                      />
-                      <ErrorMessage name="experience" component="div" className="mt-1 text-sm text-red-600" />
+                      <div>
+                        <label htmlFor="experience" className="block text-sm font-medium text-gray-700">Experience</label>
+                        <Field
+                          type="text"
+                          name="experience"
+                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        />
+                        <ErrorMessage name="experience" component="div" className="mt-1 text-sm text-red-600" />
+                      </div>
                     </div>
 
                     <div>
@@ -354,38 +358,40 @@ export default function CreatorProfile() {
                       <ErrorMessage name="bio" component="div" className="mt-1 text-sm text-red-600" />
                     </div>
 
-                    <div>
-                      <label htmlFor="linkedIn" className="block text-sm font-medium text-gray-700">LinkedIn Profile</label>
-                      <Field
-                        type="text"
-                        name="linkedIn"
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                      />
-                      <ErrorMessage name="linkedIn" component="div" className="mt-1 text-sm text-red-600" />
+                    <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2">
+                      <div>
+                        <label htmlFor="linkedIn" className="block text-sm font-medium text-gray-700">LinkedIn Profile</label>
+                        <Field
+                          type="text"
+                          name="linkedIn"
+                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        />
+                        <ErrorMessage name="linkedIn" component="div" className="mt-1 text-sm text-red-600" />
+                      </div>
+
+                      <div>
+                        <label htmlFor="website" className="block text-sm font-medium text-gray-700">Personal Website</label>
+                        <Field
+                          type="text"
+                          name="website"
+                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        />
+                        <ErrorMessage name="website" component="div" className="mt-1 text-sm text-red-600" />
+                      </div>
                     </div>
 
-                    <div>
-                      <label htmlFor="website" className="block text-sm font-medium text-gray-700">Personal Website</label>
-                      <Field
-                        type="text"
-                        name="website"
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                      />
-                      <ErrorMessage name="website" component="div" className="mt-1 text-sm text-red-600" />
-                    </div>
-
-                    <div className="flex justify-end space-x-3">
+                    <div className="flex flex-col space-y-3 sm:flex-row sm:space-y-0 sm:space-x-3 sm:justify-end pt-4">
                       <button
                         type="button"
                         onClick={() => setIsEditing(false)}
-                        className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        className="inline-flex items-center justify-center w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 touch-manipulation"
                       >
                         Cancel
                       </button>
                       <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        className="inline-flex items-center justify-center w-full sm:w-auto px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 touch-manipulation"
                       >
                         {isSubmitting ? 'Saving...' : 'Save Changes'}
                       </button>
@@ -394,10 +400,10 @@ export default function CreatorProfile() {
                 )}
               </Formik>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 {/* Profile Image Display */}
-                <div className="flex items-center space-x-6 pb-6 border-b border-gray-200">
-                  <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-6 pb-6 border-b border-gray-200">
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center mx-auto sm:mx-0 mb-4 sm:mb-0">
                     {profile.profileImage ? (
                       <img
                         src={profile.profileImage}
@@ -405,67 +411,71 @@ export default function CreatorProfile() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <FaCamera className="text-gray-400 text-2xl" />
+                      <FaCamera className="text-gray-400 text-xl sm:text-2xl" />
                     )}
                   </div>
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900">{profile.name}</h3>
+                  <div className="text-center sm:text-left">
+                    <h3 className="text-lg sm:text-xl font-medium text-gray-900">{profile.name}</h3>
                     <p className="text-sm text-gray-500">{profile.specialization}</p>
                   </div>
                 </div>
 
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Name</h3>
-                  <p className="mt-1 text-sm text-gray-900">{profile.name}</p>
-                </div>
+                <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2">
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">Name</h3>
+                    <p className="mt-1 text-sm text-gray-900">{profile.name}</p>
+                  </div>
 
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Phone</h3>
-                  <p className="mt-1 text-sm text-gray-900">{profile.phone}</p>
-                </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">Phone</h3>
+                    <p className="mt-1 text-sm text-gray-900">{profile.phone}</p>
+                  </div>
 
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Specialization</h3>
-                  <p className="mt-1 text-sm text-gray-900">{profile.specialization}</p>
-                </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">Specialization</h3>
+                    <p className="mt-1 text-sm text-gray-900">{profile.specialization}</p>
+                  </div>
 
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Experience</h3>
-                  <p className="mt-1 text-sm text-gray-900">{profile.experience}</p>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">Experience</h3>
+                    <p className="mt-1 text-sm text-gray-900">{profile.experience}</p>
+                  </div>
                 </div>
 
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Bio</h3>
-                  <p className="mt-1 text-sm text-gray-900">{profile.bio}</p>
+                  <p className="mt-1 text-sm text-gray-900 leading-relaxed">{profile.bio}</p>
                 </div>
 
-                {profile.linkedIn && (
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500">LinkedIn Profile</h3>
-                    <a
-                      href={profile.linkedIn}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-1 text-sm text-indigo-600 hover:text-indigo-500"
-                    >
-                      {profile.linkedIn}
-                    </a>
-                  </div>
-                )}
+                <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2">
+                  {profile.linkedIn && (
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500">LinkedIn Profile</h3>
+                      <a
+                        href={profile.linkedIn}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-1 text-sm text-indigo-600 hover:text-indigo-500 break-all"
+                      >
+                        {profile.linkedIn}
+                      </a>
+                    </div>
+                  )}
 
-                {profile.website && (
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500">Personal Website</h3>
-                    <a
-                      href={profile.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-1 text-sm text-indigo-600 hover:text-indigo-500"
-                    >
-                      {profile.website}
-                    </a>
-                  </div>
-                )}
+                  {profile.website && (
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500">Personal Website</h3>
+                      <a
+                        href={profile.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-1 text-sm text-indigo-600 hover:text-indigo-500 break-all"
+                      >
+                        {profile.website}
+                      </a>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

@@ -3,7 +3,7 @@ import { collection, query, where, getDocs, addDoc, doc, updateDoc, deleteDoc, g
 import { useAuth } from '../../contexts/AuthContext';
 import { Formik, Field, ErrorMessage, FieldArray } from 'formik';
 import * as Yup from 'yup';
-import { FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaUpload } from 'react-icons/fa';
 
 const CourseSchema = Yup.object().shape({
   title: Yup.string().required('Title is required'),
@@ -226,43 +226,46 @@ export default function CreatorCourses() {
           </div>
         </div>
 
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">My Courses</h1>
+        <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">My Courses</h1>
           <button
             onClick={() => {
               setEditingCourse(null);
               setThumbnailPreview('');
               setShowAddModal(true);
             }}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
+            className="inline-flex items-center justify-center w-full sm:w-auto px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 touch-manipulation"
           >
             <FaPlus className="mr-2" /> Create New Course
           </button>
         </div>
 
         {/* Course List */}
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {courses.map(course => (
             <div key={course.id} className="bg-white rounded-lg shadow overflow-hidden">
               {course.thumbnailUrl && (
-                <div className="h-48 w-full">
+                <div className="aspect-w-16 aspect-h-9">
                   <img
                     src={course.thumbnailUrl}
                     alt={course.title}
-                    className="h-full w-full object-cover"
+                    className="w-full h-32 sm:h-40 lg:h-48 object-cover"
                   />
                 </div>
               )}
-              <div className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900">{course.title}</h3>
-                <p className="mt-2 text-sm text-gray-600 line-clamp-2">{course.description}</p>
-                <div className="mt-4 flex items-center justify-between">
-                  <div>
-                    <span className="text-sm font-medium text-gray-900">₹{course.price}</span>
-                    <span className="mx-2 text-gray-400">•</span>
-                    <span className="text-sm text-gray-500">{course.enrollments || 0} enrolled</span>
+              <div className="p-4 sm:p-5">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 line-clamp-2">{course.title}</h3>
+                <p className="mt-2 text-sm text-gray-600 line-clamp-3">{course.description}</p>
+                <div className="mt-4 flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+                  <div className="flex flex-col space-y-1 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4 text-sm">
+                    <div className="flex items-center">
+                      <span className="font-medium text-gray-900">₹{course.price}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="text-gray-500">{course.enrollments || 0} enrolled</span>
+                    </div>
                   </div>
-                  <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold self-start ${
                     course.status === 'published' 
                       ? 'bg-green-100 text-green-800'
                       : 'bg-yellow-100 text-yellow-800'
@@ -270,26 +273,26 @@ export default function CreatorCourses() {
                     {course.status}
                   </span>
                 </div>
-                <div className="mt-4 flex justify-end space-x-2">
+                <div className="mt-4 flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
                   <button
                     onClick={() => handlePublishCourse(course)}
-                    className={`inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white ${
+                    className={`inline-flex items-center justify-center w-full sm:w-auto px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white ${
                       course.status === 'published'
                         ? 'bg-gray-500 hover:bg-gray-600'
                         : 'bg-green-600 hover:bg-green-700'
-                    }`}
+                    } touch-manipulation`}
                   >
                     {course.status === 'published' ? 'Unpublish' : 'Publish'}
                   </button>
                   <button
                     onClick={() => handleEditCourse(course)}
-                    className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                    className="inline-flex items-center justify-center w-full sm:w-auto px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 touch-manipulation"
                   >
                     <FaEdit className="mr-1" /> Edit
                   </button>
                   <button
                     onClick={() => handleDeleteCourse(course.id)}
-                    className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-red-600 hover:bg-red-700"
+                    className="inline-flex items-center justify-center w-full sm:w-auto px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 touch-manipulation"
                   >
                     <FaTrash className="mr-1" /> Delete
                   </button>
@@ -306,8 +309,8 @@ export default function CreatorCourses() {
               <div className="fixed inset-0 transition-opacity" aria-hidden="true">
                 <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
               </div>
-              <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full">
-                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+              <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4 max-h-screen overflow-y-auto">
                   <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
                     {editingCourse ? 'Edit Course' : 'Create New Course'}
                   </h3>
@@ -348,8 +351,8 @@ export default function CreatorCourses() {
                       console.log('Form state - Touched:', touched);
                       console.log('Form state - IsSubmitting:', isSubmitting);
                       return (
-                      <form onSubmit={handleSubmit} className="space-y-6">
-                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+                        <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2">
                           <div>
                             <label className="block text-sm font-medium text-gray-700">Title</label>
                             <Field
@@ -382,7 +385,7 @@ export default function CreatorCourses() {
                           <ErrorMessage name="description" component="div" className="mt-1 text-sm text-red-600" />
                         </div>
 
-                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2">
                           <div>
                             <label className="block text-sm font-medium text-gray-700">Duration</label>
                             <Field
@@ -424,11 +427,12 @@ export default function CreatorCourses() {
 
                         <div>
                           <label className="block text-sm font-medium text-gray-700">Thumbnail</label>
-                          <div className="mt-1 flex items-center">
+                          <div className="mt-1 flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
                             {thumbnailPreview && (
-                              <img src={thumbnailPreview} alt="Preview" className="h-24 w-24 object-cover rounded-md mr-4" />
+                              <img src={thumbnailPreview} alt="Preview" className="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-md" />
                             )}
-                            <label className="cursor-pointer bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none">
+                            <label className="cursor-pointer inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none touch-manipulation">
+                              <FaUpload className="mr-2" />
                               <span>Upload Image</span>
                               <input type="file" className="sr-only" onChange={handleThumbnailChange} accept="image/*" />
                             </label>
@@ -568,21 +572,21 @@ export default function CreatorCourses() {
                           </FieldArray>
                         </div>
 
-                        <div className="flex justify-end space-x-3">
+                        <div className="flex flex-col space-y-3 sm:flex-row sm:space-y-0 sm:space-x-3 sm:justify-end pt-4">
                           <button
                             type="button"
                             onClick={() => {
                               setShowAddModal(false);
                               setEditingCourse(null);
                             }}
-                            className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                            className="inline-flex items-center justify-center w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 touch-manipulation"
                           >
                             Cancel
                           </button>
                           <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                            className="inline-flex items-center justify-center w-full sm:w-auto px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 touch-manipulation"
                             onClick={() => console.log('Submit button clicked')}
                           >
                             {isSubmitting ? 'Saving...' : (editingCourse ? 'Update Course' : 'Create Course')}

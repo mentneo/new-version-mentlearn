@@ -82,7 +82,8 @@ export default function Navbar() {
             {/* Mobile menu button */}
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-white hover:bg-indigo-500 focus:outline-none"
+              className="inline-flex items-center justify-center p-2 rounded-md text-white hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white touch-manipulation"
+              aria-expanded="false"
             >
               <span className="sr-only">Open main menu</span>
               {isOpen ? <FaTimes className="block h-6 w-6" /> : <FaBars className="block h-6 w-6" />}
@@ -94,44 +95,46 @@ export default function Navbar() {
       {/* Mobile menu, show/hide based on menu state */}
       {isOpen && (
         <div className="md:hidden">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-indigo-700">
             <Link
               to="/student/dashboard"
-              className="text-white hover:bg-indigo-500 block px-3 py-2 rounded-md text-base font-medium"
+              className="text-white hover:bg-indigo-500 block px-3 py-3 rounded-md text-base font-medium touch-manipulation"
               onClick={() => setIsOpen(false)}
             >
-              <FaBook className="inline-block mr-1" /> Courses
+              <FaBook className="inline-block mr-2" /> Courses
             </Link>
             <Link
               to="/student/progress"
-              className="text-white hover:bg-indigo-500 block px-3 py-2 rounded-md text-base font-medium"
+              className="text-white hover:bg-indigo-500 block px-3 py-3 rounded-md text-base font-medium touch-manipulation"
               onClick={() => setIsOpen(false)}
             >
-              <FaChartLine className="inline-block mr-1" /> Progress
+              <FaChartLine className="inline-block mr-2" /> Progress
             </Link>
             <Link
               to="/student/interview-prep"
-              className="text-white hover:bg-indigo-500 block px-3 py-2 rounded-md text-base font-medium"
+              className="text-white hover:bg-indigo-500 block px-3 py-3 rounded-md text-base font-medium touch-manipulation"
               onClick={() => setIsOpen(false)}
             >
-              <FaBriefcase className="inline-block mr-1" /> Interview Prep
+              <FaBriefcase className="inline-block mr-2" /> Interview Prep
             </Link>
             <Link
               to="/student/profile"
-              className="text-white hover:bg-indigo-500 block px-3 py-2 rounded-md text-base font-medium"
+              className="text-white hover:bg-indigo-500 block px-3 py-3 rounded-md text-base font-medium touch-manipulation"
               onClick={() => setIsOpen(false)}
             >
-              <FaUser className="inline-block mr-1" /> Profile
+              <FaUser className="inline-block mr-2" /> Profile
             </Link>
-            <button
-              onClick={() => {
-                handleLogout();
-                setIsOpen(false);
-              }}
-              className="text-white hover:bg-indigo-500 block w-full text-left px-3 py-2 rounded-md text-base font-medium"
-            >
-              <FaSignOutAlt className="inline-block mr-1" /> Sign out
-            </button>
+            <div className="border-t border-indigo-500 pt-2 mt-2">
+              <button
+                onClick={() => {
+                  handleLogout();
+                  setIsOpen(false);
+                }}
+                className="text-white hover:bg-indigo-500 block w-full text-left px-3 py-3 rounded-md text-base font-medium touch-manipulation"
+              >
+                <FaSignOutAlt className="inline-block mr-2" /> Sign out
+              </button>
+            </div>
           </div>
         </div>
       )}

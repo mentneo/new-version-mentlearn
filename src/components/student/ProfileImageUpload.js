@@ -89,11 +89,11 @@ const ProfileImageUpload = ({ currentImageUrl, onImageUpdate }) => {
   };
 
   return (
-    <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'} p-4 rounded-lg shadow`}>
+    <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'} p-4 sm:p-6 rounded-lg shadow`}>
       <div className="text-center">
         <div className="flex flex-col items-center">
           {/* Image Preview */}
-          <div className={`relative w-32 h-32 rounded-full overflow-hidden mb-4 ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+          <div className={`relative w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden mb-4 ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
             {imagePreview ? (
               <img 
                 src={imagePreview} 
@@ -102,16 +102,16 @@ const ProfileImageUpload = ({ currentImageUrl, onImageUpdate }) => {
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
-                <FaUser className={`h-16 w-16 ${darkMode ? 'text-gray-500' : 'text-gray-300'}`} />
+                <FaUser className={`h-12 w-12 sm:h-16 sm:w-16 ${darkMode ? 'text-gray-500' : 'text-gray-300'}`} />
               </div>
             )}
             
             {/* Camera Icon Overlay */}
             <label 
               htmlFor="profile-image" 
-              className="absolute bottom-0 right-0 bg-blue-500 text-white p-2 rounded-full cursor-pointer hover:bg-blue-600 transition-colors"
+              className="absolute bottom-0 right-0 bg-blue-500 text-white p-2 sm:p-3 rounded-full cursor-pointer hover:bg-blue-600 transition-colors touch-manipulation"
             >
-              <FaCamera className="h-4 w-4" />
+              <FaCamera className="h-3 w-3 sm:h-4 sm:w-4" />
             </label>
             
             <input
@@ -125,13 +125,13 @@ const ProfileImageUpload = ({ currentImageUrl, onImageUpdate }) => {
           
           {/* Error/Success Messages */}
           {error && (
-            <div className="mb-4 text-red-500 text-sm">
+            <div className="mb-4 text-red-500 text-sm px-2">
               {error}
             </div>
           )}
           
           {success && (
-            <div className="mb-4 text-green-500 text-sm">
+            <div className="mb-4 text-green-500 text-sm px-2">
               {success}
             </div>
           )}
@@ -140,7 +140,7 @@ const ProfileImageUpload = ({ currentImageUrl, onImageUpdate }) => {
           {image && !uploading && (
             <button
               onClick={handleUpload}
-              className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors"
+              className="mt-2 px-6 py-3 sm:px-8 sm:py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors text-sm sm:text-base font-medium touch-manipulation"
             >
               Upload Image
             </button>
@@ -150,13 +150,13 @@ const ProfileImageUpload = ({ currentImageUrl, onImageUpdate }) => {
           {uploading && (
             <div className="mt-2 flex items-center justify-center">
               <FaSpinner className="animate-spin h-5 w-5 mr-2 text-blue-500" />
-              <span>Uploading...</span>
+              <span className="text-sm sm:text-base">Uploading...</span>
             </div>
           )}
         </div>
         
-        <p className={`mt-4 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-          Click the camera icon to upload a new profile picture.<br/>
+        <p className={`mt-4 text-xs sm:text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'} px-2`}>
+          Click the camera icon to upload a new profile picture.<br className="hidden sm:block"/>
           Maximum file size: 5MB
         </p>
       </div>
