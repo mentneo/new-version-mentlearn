@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { FaBook, FaChartLine, FaBriefcase, FaUser, FaSignOutAlt, FaBars, FaTimes } from 'react-icons/fa';
+import { useTheme } from '../../contexts/ThemeContext';
+import { FaBook, FaChartLine, FaBriefcase, FaUser, FaSignOutAlt, FaBars, FaTimes, FaMoon, FaSun } from 'react-icons/fa';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const { currentUser, logout } = useAuth();
+  const { darkMode, toggleDarkMode } = useTheme();
   const navigate = useNavigate();
 
   async function handleLogout() {
@@ -58,6 +60,13 @@ export default function Navbar() {
           </div>
           <div className="hidden md:block">
             <div className="ml-4 flex items-center md:ml-6">
+              <button
+                onClick={toggleDarkMode}
+                className="text-white hover:bg-indigo-500 px-3 py-2 rounded-md text-sm font-medium mr-2"
+                aria-label="Toggle dark mode"
+              >
+                {darkMode ? <FaSun className="inline-block" /> : <FaMoon className="inline-block" />}
+              </button>
               <div className="relative">
                 <div>
                   <button
@@ -125,6 +134,15 @@ export default function Navbar() {
               <FaUser className="inline-block mr-2" /> Profile
             </Link>
             <div className="border-t border-indigo-500 pt-2 mt-2">
+              <button
+                onClick={toggleDarkMode}
+                className="text-white hover:bg-indigo-500 block w-full text-left px-3 py-3 rounded-md text-base font-medium touch-manipulation"
+              >
+                {darkMode ? 
+                  <><FaSun className="inline-block mr-2" /> Light Mode</> : 
+                  <><FaMoon className="inline-block mr-2" /> Dark Mode</>
+                }
+              </button>
               <button
                 onClick={() => {
                   handleLogout();

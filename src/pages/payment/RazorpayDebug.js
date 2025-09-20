@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Card, ListGroup, Button, Form, Alert } from 'react-bootstrap';
 import { useAuth } from '../../contexts/AuthContext';
+import RazorpayService from '../../utils/RazorpayService';
 
 const RazorpayDebug = () => {
-  const { currentUser } = useAuth();
+  // const { currentUser } = useAuth();
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
   const [environment, setEnvironment] = useState({});
   const [testResult, setTestResult] = useState(null);
@@ -70,7 +71,7 @@ const RazorpayDebug = () => {
 
       // Create a test instance (won't actually charge anything)
       const rzp = new window.Razorpay({
-        key: 'rzp_test_tSkVPhb1dwSOoX',
+        key: 'rzp_test_tSkVPhb1dwSOoX', // This is safe to use directly in the test page
         amount: 100,
         currency: 'INR',
         name: 'Test Transaction',

@@ -3,11 +3,13 @@ import { Link } from 'react-router-dom';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import Navbar from '../../components/student/Navbar';
 import { FaBook, FaChartLine, FaLaptopCode, FaUserGraduate, FaClipboardList, FaUsers, FaQuestionCircle, FaGraduationCap } from 'react-icons/fa';
 
 export default function Dashboard() {
   const { currentUser } = useAuth();
+  const { darkMode } = useTheme();
   const [enrolledCourses, setEnrolledCourses] = useState([]);
   const [allCourses, setAllCourses] = useState([]);
   const [mentorReports, setMentorReports] = useState([]);
@@ -129,14 +131,14 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-100">
+      <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
         <Navbar />
         <div className="py-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+              <div className={`animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 ${darkMode ? 'border-indigo-400' : 'border-indigo-500'}`}></div>
             </div>
-            <p className="text-center mt-4">Loading your dashboard...</p>
+            <p className={`text-center mt-4 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Loading your dashboard...</p>
           </div>
         </div>
       </div>
@@ -144,28 +146,28 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
       <Navbar />
       <div className="py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0 mb-6">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Student Dashboard</h1>
+            <h1 className={`text-2xl sm:text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Student Dashboard</h1>
             <div className="flex flex-col space-y-2 sm:flex-row sm:flex-wrap sm:gap-2 sm:space-y-0">
               <Link 
                 to="/student/progress" 
-                className="inline-flex items-center justify-center px-3 py-2 sm:px-4 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 touch-manipulation"
+                className={`inline-flex items-center justify-center px-3 py-2 sm:px-4 border border-transparent text-sm font-medium rounded-md ${darkMode ? 'text-indigo-200 bg-indigo-800 hover:bg-indigo-700' : 'text-indigo-700 bg-indigo-100 hover:bg-indigo-200'} touch-manipulation`}
               >
                 <FaChartLine className="mr-1 sm:mr-2" /> View Progress
               </Link>
               <Link 
                 to="/student/refer-and-earn" 
-                className="inline-flex items-center justify-center px-3 py-2 sm:px-4 border border-transparent text-sm font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200 touch-manipulation"
+                className={`inline-flex items-center justify-center px-3 py-2 sm:px-4 border border-transparent text-sm font-medium rounded-md ${darkMode ? 'text-green-200 bg-green-800 hover:bg-green-700' : 'text-green-700 bg-green-100 hover:bg-green-200'} touch-manipulation`}
               >
                 <FaUsers className="mr-1 sm:mr-2" /> Refer & Earn
               </Link>
               <Link 
                 to="/student/quizzes" 
-                className="inline-flex items-center justify-center px-3 py-2 sm:px-4 border border-transparent text-sm font-medium rounded-md text-purple-700 bg-purple-100 hover:bg-purple-200 touch-manipulation"
+                className={`inline-flex items-center justify-center px-3 py-2 sm:px-4 border border-transparent text-sm font-medium rounded-md ${darkMode ? 'text-purple-200 bg-purple-800 hover:bg-purple-700' : 'text-purple-700 bg-purple-100 hover:bg-purple-200'} touch-manipulation`}
               >
                 <FaQuestionCircle className="mr-1 sm:mr-2" /> Quizzes
               </Link>
@@ -179,7 +181,7 @@ export default function Dashboard() {
           </div>
           
           {error && (
-            <div className="mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            <div className={`mt-4 ${darkMode ? 'bg-red-900 border-red-800 text-red-200' : 'bg-red-100 border-red-400 text-red-700'} border px-4 py-3 rounded`}>
               {error}
             </div>
           )}
@@ -187,25 +189,25 @@ export default function Dashboard() {
           {/* Assigned Quizzes Section */}
           {assignedQuizzes.length > 0 ? (
             <div className="mt-8">
-              <h2 className="text-2xl font-semibold text-gray-900">Assigned Quizzes</h2>
-              <div className="mt-4 bg-white shadow overflow-hidden sm:rounded-lg">
-                <ul className="divide-y divide-gray-200">
+              <h2 className={`text-2xl font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Assigned Quizzes</h2>
+              <div className={`mt-4 ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow overflow-hidden sm:rounded-lg`}>
+                <ul className={`divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
                   {assignedQuizzes.map(quiz => (
-                    <li key={quiz.id} className="px-4 py-4 sm:px-6">
+                    <li key={quiz.id} className={`px-4 py-4 sm:px-6 ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}>
                       <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
                         <div className="flex-1 sm:pr-4">
-                          <h3 className="text-base sm:text-lg font-medium text-gray-900">{quiz.title}</h3>
-                          <p className="mt-1 text-sm text-gray-500 line-clamp-2">{quiz.description}</p>
+                          <h3 className={`text-base sm:text-lg font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>{quiz.title}</h3>
+                          <p className={`mt-1 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'} line-clamp-2`}>{quiz.description}</p>
                           <div className="mt-3 flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4 text-sm text-gray-500">
                             <div className="flex items-center">
-                              <FaUserGraduate className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
-                              <p className="truncate">Assigned by: {quiz.mentorName || 'Your mentor'}</p>
+                              <FaUserGraduate className={`flex-shrink-0 mr-1.5 h-4 w-4 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`} />
+                              <p className={`truncate ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Assigned by: {quiz.mentorName || 'Your mentor'}</p>
                             </div>
                             <div className="flex items-center">
-                              <p>Time: {quiz.timeLimit} min</p>
+                              <p className={darkMode ? 'text-gray-400' : ''}>Time: {quiz.timeLimit} min</p>
                             </div>
                             <div className="flex items-center">
-                              <p>Pass: {quiz.passingScore}%</p>
+                              <p className={darkMode ? 'text-gray-400' : ''}>Pass: {quiz.passingScore}%</p>
                             </div>
                           </div>
                         </div>
@@ -221,10 +223,10 @@ export default function Dashboard() {
                     </li>
                   ))}
                 </ul>
-                <div className="bg-gray-50 px-6 py-3">
+                <div className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'} px-6 py-3`}>
                   <Link
                     to="/student/quizzes"
-                    className="text-sm font-medium text-indigo-600 hover:text-indigo-500 flex items-center"
+                    className={`text-sm font-medium ${darkMode ? 'text-indigo-300 hover:text-indigo-200' : 'text-indigo-600 hover:text-indigo-500'} flex items-center`}
                   >
                     <FaQuestionCircle className="mr-2" /> View all quizzes
                   </Link>
@@ -233,12 +235,12 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="mt-8">
-              <h2 className="text-2xl font-semibold text-gray-900">Quizzes</h2>
-              <div className="mt-4 bg-white shadow overflow-hidden sm:rounded-lg p-6">
+              <h2 className={`text-2xl font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Quizzes</h2>
+              <div className={`mt-4 ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow overflow-hidden sm:rounded-lg p-6`}>
                 <div className="flex flex-col items-center justify-center py-6">
-                  <FaQuestionCircle className="h-12 w-12 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900">No assigned quizzes</h3>
-                  <p className="mt-1 text-sm text-gray-500">
+                  <FaQuestionCircle className={`h-12 w-12 ${darkMode ? 'text-gray-600' : 'text-gray-300'} mb-4`} />
+                  <h3 className={`text-lg font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>No assigned quizzes</h3>
+                  <p className={`mt-1 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                     You don't have any assigned quizzes yet. Explore all available quizzes.
                   </p>
                   <Link
@@ -254,13 +256,13 @@ export default function Dashboard() {
 
           {/* Enrolled Courses */}
           <div className="mt-8">
-            <h2 className="text-2xl font-semibold text-gray-900">Your Courses</h2>
+            <h2 className={`text-2xl font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Your Courses</h2>
             {enrolledCourses.length === 0 ? (
-              <div className="mt-4 bg-white shadow overflow-hidden sm:rounded-lg p-6">
+              <div className={`mt-4 ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow overflow-hidden sm:rounded-lg p-6`}>
                 <div className="flex flex-col items-center justify-center py-6">
-                  <FaBook className="h-12 w-12 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900">No courses yet</h3>
-                  <p className="mt-1 text-sm text-gray-500">
+                  <FaBook className={`h-12 w-12 ${darkMode ? 'text-gray-600' : 'text-gray-300'} mb-4`} />
+                  <h3 className={`text-lg font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>No courses yet</h3>
+                  <p className={`mt-1 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                     You're not enrolled in any courses yet. Courses assigned by your admin will appear here.
                   </p>
                 </div>
@@ -268,7 +270,7 @@ export default function Dashboard() {
             ) : (
               <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {enrolledCourses.map(course => (
-                  <div key={course.id} className="bg-white overflow-hidden shadow rounded-lg">
+                  <div key={course.id} className={`${darkMode ? 'bg-gray-800' : 'bg-white'} overflow-hidden shadow rounded-lg`}>
                     <div className="aspect-w-16 aspect-h-9 sm:aspect-h-12">
                       <img 
                         className="w-full h-32 sm:h-40 lg:h-48 object-cover" 
@@ -277,17 +279,17 @@ export default function Dashboard() {
                       />
                     </div>
                     <div className="p-4 sm:p-5">
-                      <h3 className="text-base sm:text-lg font-medium text-gray-900 line-clamp-2">{course.title}</h3>
-                      <p className="mt-2 text-sm text-gray-500 line-clamp-2">{course.description}</p>
+                      <h3 className={`text-base sm:text-lg font-medium ${darkMode ? 'text-white' : 'text-gray-900'} line-clamp-2`}>{course.title}</h3>
+                      <p className={`mt-2 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'} line-clamp-2`}>{course.description}</p>
                       
                       <div className="mt-4">
                         <div className="flex items-center justify-between text-sm mb-2">
-                          <div className="text-gray-500">Progress</div>
-                          <div className="font-medium text-indigo-600">{course.progress}%</div>
+                          <div className={darkMode ? 'text-gray-400' : 'text-gray-500'}>Progress</div>
+                          <div className={`font-medium ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>{course.progress}%</div>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className={`w-full ${darkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded-full h-2`}>
                           <div 
-                            className="bg-indigo-600 h-2 rounded-full transition-all duration-300" 
+                            className={`${darkMode ? 'bg-indigo-500' : 'bg-indigo-600'} h-2 rounded-full transition-all duration-300`} 
                             style={{ width: `${course.progress}%` }}
                           ></div>
                         </div>
@@ -310,13 +312,13 @@ export default function Dashboard() {
           
           {/* Available Courses */}
           <div className="mt-8">
-            <h2 className="text-2xl font-semibold text-gray-900">Available Courses</h2>
+            <h2 className={`text-2xl font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Available Courses</h2>
             {allCourses.length === 0 ? (
-              <div className="mt-4 bg-white shadow overflow-hidden sm:rounded-lg p-6">
+              <div className={`mt-4 ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow overflow-hidden sm:rounded-lg p-6`}>
                 <div className="flex flex-col items-center justify-center py-6">
-                  <FaGraduationCap className="h-12 w-12 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900">No additional courses available</h3>
-                  <p className="mt-1 text-sm text-gray-500">
+                  <FaGraduationCap className={`h-12 w-12 ${darkMode ? 'text-gray-600' : 'text-gray-300'} mb-4`} />
+                  <h3 className={`text-lg font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>No additional courses available</h3>
+                  <p className={`mt-1 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                     There are no additional courses available at the moment. Please check back later.
                   </p>
                 </div>
@@ -324,7 +326,7 @@ export default function Dashboard() {
             ) : (
               <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {allCourses.map(course => (
-                  <div key={course.id} className="bg-white overflow-hidden shadow rounded-lg">
+                  <div key={course.id} className={`${darkMode ? 'bg-gray-800' : 'bg-white'} overflow-hidden shadow rounded-lg`}>
                     <div className="aspect-w-16 aspect-h-9 sm:aspect-h-12">
                       <img 
                         className="w-full h-32 sm:h-40 lg:h-48 object-cover" 
@@ -333,17 +335,17 @@ export default function Dashboard() {
                       />
                     </div>
                     <div className="p-4 sm:p-5">
-                      <h3 className="text-base sm:text-lg font-medium text-gray-900 line-clamp-2">{course.title}</h3>
-                      <p className="mt-2 text-sm text-gray-500 line-clamp-2">{course.description}</p>
+                      <h3 className={`text-base sm:text-lg font-medium ${darkMode ? 'text-white' : 'text-gray-900'} line-clamp-2`}>{course.title}</h3>
+                      <p className={`mt-2 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'} line-clamp-2`}>{course.description}</p>
                       
                       <div className="mt-3 flex flex-wrap gap-2">
                         {course.duration && (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${darkMode ? 'bg-blue-900 text-blue-200' : 'bg-blue-100 text-blue-800'}`}>
                             Duration: {course.duration}
                           </span>
                         )}
                         {course.level && (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${darkMode ? 'bg-green-900 text-green-200' : 'bg-green-100 text-green-800'}`}>
                             Level: {course.level}
                           </span>
                         )}
@@ -352,7 +354,7 @@ export default function Dashboard() {
                       <div className="mt-4 flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2 sm:justify-between">
                         <Link
                           to={`/student/course-details/${course.id}`}
-                          className="inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 touch-manipulation"
+                          className={`inline-flex items-center justify-center px-3 py-2 border ${darkMode ? 'border-gray-600 text-gray-300 bg-gray-700 hover:bg-gray-600' : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'} text-sm font-medium rounded-md touch-manipulation`}
                         >
                           View Details
                         </Link>
@@ -372,26 +374,26 @@ export default function Dashboard() {
           
           {/* Latest Mentor Feedback */}
           <div className="mt-8">
-            <h2 className="text-2xl font-semibold text-gray-900">Latest Mentor Feedback</h2>
+            <h2 className={`text-2xl font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Latest Mentor Feedback</h2>
             {mentorReports.length === 0 ? (
-              <div className="mt-4 bg-white shadow overflow-hidden sm:rounded-lg p-6">
+              <div className={`mt-4 ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow overflow-hidden sm:rounded-lg p-6`}>
                 <div className="flex flex-col items-center justify-center py-6">
-                  <FaUserGraduate className="h-12 w-12 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900">No mentor feedback yet</h3>
-                  <p className="mt-1 text-sm text-gray-500">
+                  <FaUserGraduate className={`h-12 w-12 ${darkMode ? 'text-gray-600' : 'text-gray-300'} mb-4`} />
+                  <h3 className={`text-lg font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>No mentor feedback yet</h3>
+                  <p className={`mt-1 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                     Your mentor will provide feedback on your progress. Check back later.
                   </p>
                 </div>
               </div>
             ) : (
-              <div className="mt-4 bg-white shadow overflow-hidden sm:rounded-lg">
-                <ul className="divide-y divide-gray-200">
+              <div className={`mt-4 ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow overflow-hidden sm:rounded-lg`}>
+                <ul className={`divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
                   {mentorReports.map(report => (
-                    <li key={report.id} className="px-4 py-4 sm:px-6">
+                    <li key={report.id} className={`px-4 py-4 sm:px-6 ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}>
                       <div className="mb-4">
                         <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-                          <h3 className="text-base sm:text-lg font-medium text-gray-900">Week {report.weekNumber} Report</h3>
-                          <p className="text-sm text-gray-500">
+                          <h3 className={`text-base sm:text-lg font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>Week {report.weekNumber} Report</h3>
+                          <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                             {report.timestamp.toLocaleDateString()}
                           </p>
                         </div>
@@ -399,26 +401,26 @@ export default function Dashboard() {
                       <div className="mt-3">
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                           <div className="sm:col-span-1">
-                            <dt className="font-medium text-gray-500 text-sm mb-2">Strengths</dt>
-                            <dd className="mt-1 text-sm text-gray-900 bg-gray-50 p-3 rounded-md">{report.strengths}</dd>
+                            <dt className={`font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'} text-sm mb-2`}>Strengths</dt>
+                            <dd className={`mt-1 text-sm ${darkMode ? 'text-gray-200 bg-gray-700' : 'text-gray-900 bg-gray-50'} p-3 rounded-md`}>{report.strengths}</dd>
                           </div>
                           <div className="sm:col-span-1">
-                            <dt className="font-medium text-gray-500 text-sm mb-2">Areas for Improvement</dt>
-                            <dd className="mt-1 text-sm text-gray-900 bg-gray-50 p-3 rounded-md">{report.areasForImprovement}</dd>
+                            <dt className={`font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'} text-sm mb-2`}>Areas for Improvement</dt>
+                            <dd className={`mt-1 text-sm ${darkMode ? 'text-gray-200 bg-gray-700' : 'text-gray-900 bg-gray-50'} p-3 rounded-md`}>{report.areasForImprovement}</dd>
                           </div>
                           <div className="sm:col-span-1">
-                            <dt className="font-medium text-gray-500 text-sm mb-2">Recommendations</dt>
-                            <dd className="mt-1 text-sm text-gray-900 bg-gray-50 p-3 rounded-md">{report.recommendations}</dd>
+                            <dt className={`font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'} text-sm mb-2`}>Recommendations</dt>
+                            <dd className={`mt-1 text-sm ${darkMode ? 'text-gray-200 bg-gray-700' : 'text-gray-900 bg-gray-50'} p-3 rounded-md`}>{report.recommendations}</dd>
                           </div>
                         </div>
                       </div>
                     </li>
                   ))}
                 </ul>
-                <div className="bg-gray-50 px-6 py-3">
+                <div className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'} px-6 py-3`}>
                   <Link
                     to="/student/progress"
-                    className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
+                    className={`text-sm font-medium ${darkMode ? 'text-indigo-300 hover:text-indigo-200' : 'text-indigo-600 hover:text-indigo-500'}`}
                   >
                     View all feedback
                   </Link>

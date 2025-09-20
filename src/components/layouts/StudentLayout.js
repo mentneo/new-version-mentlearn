@@ -22,8 +22,10 @@ const StudentLayout = ({ children }) => {
         : 'bg-gray-100 text-gray-900'
     }`}>
       <NewStudentNavbar />
-      <main className="pb-16">
-        {children}
+      <main className="pb-16 md:pl-64">
+        <div className="md:pt-0 pt-14">
+          {children}
+        </div>
       </main>
       <Footer />
     </div>

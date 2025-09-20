@@ -62,6 +62,7 @@ import TakeQuiz from './pages/student/TakeQuiz';
 import QuizResults from './pages/student/QuizResults';
 import StudentCourses from './pages/student/StudentCourses';
 import ProfileSettings from './pages/student/ProfileSettings';
+import StudentProfile from './pages/student/StudentProfile'; // Import the new profile page
 import CourseContent from './pages/student/CourseContent'; // Add missing import
 import PaymentSuccess from './pages/payment/PaymentSuccess'; // Add missing import
 import PaymentVerification from './pages/payment/PaymentVerification';
@@ -83,6 +84,7 @@ import Interviews from './pages/mentor/Interviews';
 import CreatorDashboard from './pages/creator/Dashboard';
 import CreatorCourses from './pages/creator/Courses';
 import CreatorProfile from './pages/creator/Profile';
+import CreatorEnrollments from './pages/creator/Enrollments';
 
 // Course selection page
 import CourseSelectionPage from './pages/auth/CourseSelectionPage';
@@ -151,7 +153,7 @@ function App() {
               <Route path="/creator" element={<CreatorRoute><CreatorLayout /></CreatorRoute>}>
                 <Route path="dashboard" element={<CreatorDashboard />} />
                 <Route path="courses" element={<CreatorCourses />} />
-                <Route path="enrollments" element={<CreatorDashboard />} />
+                <Route path="enrollments" element={<CreatorEnrollments />} />
                 <Route path="profile" element={<CreatorProfile />} />
               </Route>
             
@@ -173,7 +175,7 @@ function App() {
             <Route path="/student/quizzes/:quizId/results/:assignmentId" element={<ProtectedRoute><QuizResults /></ProtectedRoute>} />
             
             {/* Add the new profile settings route */}
-            <Route path="/student/profile" element={<ProtectedRoute><ProfileSettings /></ProtectedRoute>} />
+            <Route path="/student/profile" element={<ProtectedRoute><StudentProfile /></ProtectedRoute>} />
             
             {/* Mentor Routes with protection */}
             <Route path="/mentor/dashboard" element={<MentorDashboard />} />

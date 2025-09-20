@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { collection, query, where, getDocs, addDoc, doc, updateDoc, deleteDoc, getFirestore } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, doc, updateDoc, deleteDoc, getFirestore, onSnapshot } from 'firebase/firestore';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 import { getAuth } from 'firebase/auth';
 import { Formik, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
@@ -38,6 +39,9 @@ export default function CreatorDashboard() {
   const [editingCourse, setEditingCourse] = useState(null);
   const [thumbnailPreview, setThumbnailPreview] = useState('');
   const [creatorProfile, setCreatorProfile] = useState(null);
+  const [enrollmentStats, setEnrollmentStats] = useState([]); // For graph
+  const [totalEnrollments, setTotalEnrollments] = useState(0);
+  const [coursePopularity, setCoursePopularity] = useState([]); // For bar chart
 
   const auth = getAuth();
   const db = getFirestore();
@@ -62,32 +66,52 @@ export default function CreatorDashboard() {
     }
   }, [user, db]);
 
-  const fetchCourses = useCallback(async () => {
-    try {
-      const coursesRef = collection(db, 'courses');
-      const q = query(coursesRef, where('creatorId', '==', user.uid));
-      const querySnapshot = await getDocs(q);
-      
-      const coursesList = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      
+  // Real-time fetch for courses and enrollments
+  const fetchCoursesRealtime = useCallback(() => {
+    if (!user) return;
+    setLoading(true);
+    const coursesRef = collection(db, 'courses');
+    const q = query(coursesRef, where('creatorId', '==', user.uid));
+    const unsub = onSnapshot(q, async (querySnapshot) => {
+      const coursesList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setCourses(coursesList);
-    } catch (err) {
-      console.error('Error fetching courses:', err);
-      setError('Failed to load courses');
-    } finally {
+
+      // For analytics: fetch enrollments for each course
+      let total = 0;
+      let popularity = [];
+      let enrollmentsByDate = {};
+      for (const course of coursesList) {
+        const enrollRef = collection(db, 'enrollments');
+        const eq = query(enrollRef, where('courseId', '==', course.id));
+        const enrollSnap = await getDocs(eq);
+        popularity.push({ name: course.title, Enrollments: enrollSnap.size });
+        total += enrollSnap.size;
+        enrollSnap.forEach(docSnap => {
+          const data = docSnap.data();
+          // Assume data.createdAt is ISO string
+          const date = data.createdAt ? data.createdAt.slice(0, 10) : 'Unknown';
+          enrollmentsByDate[date] = (enrollmentsByDate[date] || 0) + 1;
+        });
+      }
+      setTotalEnrollments(total);
+      setCoursePopularity(popularity);
+      // Convert enrollmentsByDate to array sorted by date
+      const statsArr = Object.entries(enrollmentsByDate)
+        .map(([date, count]) => ({ date, count }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+      setEnrollmentStats(statsArr);
       setLoading(false);
-    }
+    });
+    return unsub;
   }, [user, db]);
 
   useEffect(() => {
     if (user) {
       fetchCreatorProfile();
-      fetchCourses();
+      const unsub = fetchCoursesRealtime();
+      return () => { if (unsub) unsub(); };
     }
-  }, [user, fetchCreatorProfile, fetchCourses]);
+  }, [user, fetchCreatorProfile, fetchCoursesRealtime]);
 
   const handleThumbnailChange = (event) => {
     const file = event.target.files[0];
@@ -133,8 +157,7 @@ export default function CreatorDashboard() {
         coursesCount: (creatorProfile.coursesCount || 0) + (editingCourse ? 0 : 1)
       });
 
-      // Refresh course list
-      fetchCourses();
+  // No need to refresh course list, real-time updates will handle it
       
       // Reset form and close modal
       resetForm();
@@ -212,6 +235,51 @@ export default function CreatorDashboard() {
     <div className="min-h-screen bg-gray-100">
       <div className="py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Real-time Analytics Section */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="bg-white rounded-lg shadow p-6 flex flex-col items-center justify-center">
+              <div className="text-3xl font-bold text-indigo-700">{courses.length}</div>
+              <div className="text-gray-500 mt-1">Total Courses</div>
+            </div>
+            <div className="bg-white rounded-lg shadow p-6 flex flex-col items-center justify-center">
+              <div className="text-3xl font-bold text-indigo-700">{totalEnrollments}</div>
+              <div className="text-gray-500 mt-1">Total Enrollments</div>
+            </div>
+            <div className="bg-white rounded-lg shadow p-6 flex flex-col items-center justify-center">
+              <div className="text-3xl font-bold text-indigo-700">{creatorProfile?.coursesCount || courses.length}</div>
+              <div className="text-gray-500 mt-1">Courses Published</div>
+            </div>
+          </div>
+
+          {/* Graphs Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-semibold mb-4 text-indigo-700">Enrollments Over Time</h3>
+              <ResponsiveContainer width="100%" height={250}>
+                <LineChart data={enrollmentStats} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis allowDecimals={false} />
+                  <Tooltip />
+                  <Line type="monotone" dataKey="count" stroke="#6366f1" strokeWidth={3} dot={{ r: 4 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-semibold mb-4 text-indigo-700">Course Popularity</h3>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={coursePopularity} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis allowDecimals={false} />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="Enrollments" fill="#6366f1" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
           {/* Creator Profile Section */}
           <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
             <div className="px-4 py-5 sm:px-6">
