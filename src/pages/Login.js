@@ -4,6 +4,7 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase/firebase';
 import { handleFirebaseError } from '../utils/errorHandler';
+import { FaArrowLeft } from 'react-icons/fa';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -152,6 +153,14 @@ export default function Login() {
           </div>
         </form>
       </div>
+      {/* Back Button */}
+      <button
+        onClick={() => navigate(-1)}
+        className="flex items-center px-4 py-2 mt-4 ml-4 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-all"
+      >
+        <FaArrowLeft className="mr-2" />
+        Back
+      </button>
     </div>
   );
 }

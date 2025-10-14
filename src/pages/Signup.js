@@ -5,6 +5,7 @@ import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/firebase';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth } from '../firebase/firebase';
+import { FaArrowLeft } from 'react-icons/fa';
 
 export default function Signup() {
   const [email, setEmail] = useState('');

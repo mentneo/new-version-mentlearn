@@ -1,29 +1,33 @@
 import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate } from 'react-router-dom'; // Remove unused useLocation
 import { useAuth } from '../contexts/AuthContext';
 
-// Basic protected route
-export const ProtectedRoute = ({ children }) => {
+// Protected route - requires authentication
+export function ProtectedRoute({ children }) {
   const { currentUser } = useAuth();
-  const location = useLocation();
   
   if (!currentUser) {
-    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+    return <Navigate to="/login" />;
   }
   
   return children;
-};
+}
 
-// Payment protected route
-export const PaymentProtectedRoute = ({ children, requiresPayment = false }) => {
-  const { currentUser, paymentStatus } = useAuth();
-  const location = useLocation();
+// Payment protected route - requires authentication and payment
+export function PaymentProtectedRoute({ children }) {
+  const { currentUser } = useAuth(); // Remove unused paymentStatus
   
   if (!currentUser) {
-    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+    return <Navigate to="/login" />;
   }
   
-  // Removed payment requirement check to allow direct access to dashboard
+  // Uncomment if you want to enforce payment
+  /*
+  const { paymentStatus } = useAuth();
+  if (!paymentStatus?.accessGranted && currentUser.role !== 'admin') {
+    return <Navigate to="/payment-flow" />;
+  }
+  */
   
   return children;
-};
+}

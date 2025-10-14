@@ -2,66 +2,44 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/mentneo-logo.png" />
+    <link rel="icon" href="%PUBLIC_URL%/mentneo-logo.ico" />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/mentneo-logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#5D67E9" />
+    <meta name="theme-color" content="#007bff" />
     <meta
       name="description"
-      content="Mentneo - Connect with expert mentors and enhance your skills with personalized learning experiences."
+      content="Mentneo - Transform Your College Life into a Career Launchpad. Join our Full Stack Development Program with expert mentorship."
     />
-    
-    <!-- Favicon and App Icons -->
-    <link rel="apple-touch-icon" sizes="180x180" href="%PUBLIC_URL%/logo.png" />
-    <link rel="icon" type="image/png" sizes="32x32" href="%PUBLIC_URL%/logo.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="%PUBLIC_URL%/logo.png" />
+    <meta
+      name="keywords"
+      content="Mentneo, coding bootcamp, full stack development, web development, programming courses, tech education, career development"
+    />
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://mentneo.com/" />
-    <meta property="og:title" content="Mentneo - Learn. Build. Dominate." />
-    <meta property="og:description" content="Connect with expert mentors and enhance your skills with personalized learning experiences." />
-    <meta property="og:image" content="%PUBLIC_URL%/mentneo-social.jpg" />
-    
+    <meta property="og:title" content="Mentneo - Full Stack Development Program" />
+    <meta
+      property="og:description"
+      content="Transform Your College Life into a Career Launchpad with Mentneo's Full Stack Development Program"
+    />
+    <meta property="og:image" content="%PUBLIC_URL%/mentneo-logo.png" />
+
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:url" content="https://mentneo.com/" />
-    <meta property="twitter:title" content="Mentneo - Learn. Build. Dominate." />
-    <meta property="twitter:description" content="Connect with expert mentors and enhance your skills with personalized learning experiences." />
-    <meta property="twitter:image" content="%PUBLIC_URL%/mentneo-social.jpg" />
+    <meta property="twitter:title" content="Mentneo - Full Stack Development Program" />
+    <meta
+      property="twitter:description"
+      content="Transform Your College Life into a Career Launchpad with Mentneo's Full Stack Development Program"
+    />
+    <meta property="twitter:image" content="%PUBLIC_URL%/mentneo-logo.png" />
     
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    
-    <!-- Preconnect to essential domains -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preconnect" href="https://js.stripe.com" crossorigin />
-    
-    <!-- Canonical URL -->
-    <link rel="canonical" href="https://mentneo.com/" />
-
-    <!-- Stripe.js Integration -->
-    <script async src="https://js.stripe.com/v3/"></script>
-
-    <title>Mentneo - Learn. Build. Dominate.</title>
+    <title>Mentneo - Full Stack Development Program</title>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
-    <!--
-      This HTML file is a template.
-      If you open it directly in the browser, you will see an empty page.
-
-      You can add webfonts, meta tags, or analytics to this file.
-      The build step will place the bundled scripts into the <body> tag.
-
-      To begin the development, run `npm start` or `yarn start`.
-      To create a production bundle, use `npm run build` or `yarn build`.
-    -->
-    <script>
-      // Initialize Stripe configuration
-      window.initStripe = function(publishableKey) {
-        window.stripe = Stripe(publishableKey);
-      }
-    </script>
   </body>
 </html>

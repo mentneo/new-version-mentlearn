@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase/firebase';
 import { useAuth } from '../../contexts/AuthContext';
-import RazorpayService from '../../utils/RazorpayService';
 import Navbar from '../../components/student/Navbar';
 import { FaGraduationCap, FaCalendarAlt, FaUserGraduate, FaRupeeSign, FaCheckCircle } from 'react-icons/fa';
 
@@ -11,21 +10,91 @@ export default function CourseEnrollment() {
   const { courseId } = useParams();
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handlePayment = () => {
+    try {
+      setIsProcessing(true);
+      
+      // Create and append the Razorpay payment form
+      const container = document.createElement('div');
+      container.innerHTML = `
+        <form>
+          <script src="https://checkout.razorpay.com/v1/payment-button.js" 
+            data-payment_button_id="pl_RSSwaF2hu2HE26" 
+            async>
+          </script>
+        </form>
+      `;
+      
+      // Add the form to the body and click it
+      document.body.appendChild(container);
+      const button = container.querySelector('form script');
+      if (button) {
+        button.scrollIntoView();
+        setTimeout(() => {
+          const razorpayButton = document.querySelector('.razorpay-payment-button');
+          if (razorpayButton) razorpayButton.click();
+        }, 1000);
+      }
+
+      // Clean up after the payment window closes
+      const cleanup = () => {
+        if (container && document.body.contains(container)) {
+          document.body.removeChild(container);
+        }
+        setIsProcessing(false);
+      };
+
+      // Listen for the payment completion
+      window.addEventListener('message', function handler(event) {
+        if (event.data.type === 'razorpay:complete') {
+          cleanup();
+          window.removeEventListener('message', handler);
+        }
+      });
+
+    } catch (error) {
+      console.error('Error initiating payment:', error);
+      setError('Failed to initiate payment. Please try again.');
+      setIsProcessing(false);
+    }
+  };
+
+  useEffect(() => {
+    // Get the container element
+    const container = document.getElementById('razorpay-container');
+    if (!container) return;
+
+    // Create and append the form and script elements
+    const form = document.createElement('form');
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/payment-button.js';
+    script.setAttribute('data-payment_button_id', 'pl_RSSwaF2hu2HE26');
+    script.async = true;
+
+    form.appendChild(script);
+    container.innerHTML = ''; // Clear any existing content
+    container.appendChild(form);
+
+    return () => {
+      // Cleanup when component unmounts
+      if (container) {
+        container.innerHTML = '';
+      }
+    };
+  }, []); // Empty dependency array since we only want this to run once
   
   const [courseDetails, setCourseDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [processing, setProcessing] = useState(false);
-  const [paymentError, setPaymentError] = useState(null);
-  const [useCustomAmount, setUseCustomAmount] = useState(false);
-  const [customAmount, setCustomAmount] = useState('');
   const [permissionStatus, setPermissionStatus] = useState({
     checking: true,
     hasPermission: false,
     message: null
   });
-  const [isDemoMode, setIsDemoMode] = useState(true); // Enable demo mode to bypass actual Firebase operations
 
+  // Effect for fetching course details
   useEffect(() => {
     async function fetchCourseDetails() {
       try {
@@ -42,87 +111,73 @@ export default function CourseEnrollment() {
           return;
         }
 
-        // In demo mode, automatically grant permissions
-        if (isDemoMode) {
-          console.log("Demo mode: Skipping permission checks");
-          setPermissionStatus({
-            checking: false,
-            hasPermission: true,
-            message: null
-          });
-        } else {
-          // Check user permission status
+        // Add retry logic for Firestore access
+        let retries = 3;
+        while (retries > 0) {
           try {
             const userRef = doc(db, "users", currentUser.uid);
-            const userDoc = await getDoc(userRef);
+            await getDoc(userRef); // Just verify we can access Firestore
+            break; // If successful, break the retry loop
+          } catch (error) {
+            retries--;
+            if (retries === 0) {
+              console.error("Failed to access Firestore after multiple attempts:", error);
+              setError("Unable to verify permissions. Please try again later.");
+              setLoading(false);
+              return;
+            }
+            // Wait before retrying
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
+
+        // Check user permission status
+        try {
+          const userRef = doc(db, "users", currentUser.uid);
+          const userDoc = await getDoc(userRef);
+          
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
             
-            if (userDoc.exists()) {
-              const userData = userDoc.data();
-              
-              // Check if user role has permission to enroll
-              if (userData.role === 'banned' || userData.role === 'suspended') {
-                setPermissionStatus({
-                  checking: false,
-                  hasPermission: false,
-                  message: "Your account does not have permission to enroll in courses. Please contact support for assistance."
-                });
-              } else {
-                setPermissionStatus({
-                  checking: false,
-                  hasPermission: true,
-                  message: null
-                });
-              }
+            // Check if user role has permission to enroll
+            if (userData.role === 'banned' || userData.role === 'suspended') {
+              setPermissionStatus({
+                checking: false,
+                hasPermission: false,
+                message: "Your account does not have permission to enroll in courses. Please contact support for assistance."
+              });
             } else {
-              // Create user if doesn't exist
               setPermissionStatus({
                 checking: false,
                 hasPermission: true,
                 message: null
               });
             }
-          } catch (permErr) {
-            console.error("Error checking permissions:", permErr);
+          } else {
+            // Create user if doesn't exist
             setPermissionStatus({
               checking: false,
-              hasPermission: true, // Default to allowing enrollment if permission check fails
+              hasPermission: true,
               message: null
             });
           }
+        } catch (permErr) {
+          console.error("Error checking permissions:", permErr);
+          setPermissionStatus({
+            checking: false,
+            hasPermission: true, // Default to allowing enrollment if permission check fails
+            message: null
+          });
         }
 
-        // In demo mode, use mock course data instead of fetching from Firebase
-        if (isDemoMode) {
-          console.log("Demo mode: Using mock course data");
-          const mockCourseData = {
-            id: courseId,
-            title: "Demo Course",
-            description: "This is a demo course for testing payment integration",
-            price: 999,
-            currency: "INR",
-            thumbnail: "https://via.placeholder.com/300x200?text=Demo+Course",
-            instructorName: "Demo Instructor",
-            duration: "4 weeks",
-            level: "Beginner",
-            enrollmentCount: 42,
-            rating: 4.7,
-            lessons: [
-              { title: "Introduction to Demo", duration: "15 min" },
-              { title: "Demo Fundamentals", duration: "30 min" },
-              { title: "Advanced Demo Techniques", duration: "45 min" }
-            ]
-          };
-          setCourseDetails(mockCourseData);
+        // Fetch course data from Firebase
+        const courseRef = doc(db, "courses", courseId);
+        const courseDoc = await getDoc(courseRef);
+        
+        if (courseDoc.exists()) {
+          setCourseDetails({ id: courseDoc.id, ...courseDoc.data() });
         } else {
-          // Fetch real course data from Firebase
-          const courseRef = doc(db, "courses", courseId);
-          const courseDoc = await getDoc(courseRef);
-          
-          if (courseDoc.exists()) {
-            setCourseDetails({ id: courseDoc.id, ...courseDoc.data() });
-          } else {
-            setError("Course not found");
-          }
+          setError("Course not found");
         }
       } catch (err) {
         console.error("Error fetching course details:", err);
@@ -133,124 +188,9 @@ export default function CourseEnrollment() {
     }
 
     fetchCourseDetails();
-  }, [courseId, currentUser, isDemoMode]);
+  }, [courseId, currentUser]);
 
-  const handleEnrollment = async () => {
-    try {
-      setProcessing(true);
-      setPaymentError(null);
-      
-      if (!currentUser || !courseDetails) {
-        setPaymentError("Missing user or course information");
-        setProcessing(false);
-        return;
-      }
-      
-      // Check permissions again before proceeding
-      if (!permissionStatus.hasPermission && !isDemoMode) {
-        setPaymentError(permissionStatus.message || "You don't have permission to enroll in this course");
-        setProcessing(false);
-        return;
-      }
-      
-      // Validate custom amount if enabled
-      if (useCustomAmount) {
-        const amount = parseFloat(customAmount);
-        if (isNaN(amount) || amount <= 0) {
-          setPaymentError("Please enter a valid amount greater than 0");
-          setProcessing(false);
-          return;
-        }
-      }
-      
-      // User details for Razorpay
-      const userDetails = {
-        id: currentUser.uid,
-        name: currentUser.displayName || '',
-        email: currentUser.email || '',
-        phone: '', // You might want to get this from user profile if available
-        plan: 'course_' + courseId // Using course ID as plan identifier
-      };
-      
-      // Create an order
-      const orderAmount = useCustomAmount ? parseFloat(customAmount) : (courseDetails.price || 999);
-      
-      try {
-        let orderData;
-        
-        if (isDemoMode) {
-          // Demo mode - create mock order data using RazorpayService's demo mode
-          console.log("DEMO MODE: Creating order with RazorpayService demo mode");
-          orderData = await RazorpayService.createOrder(
-            currentUser.uid,
-            orderAmount,
-            userDetails,
-            'course_' + courseId,
-            useCustomAmount,
-            isDemoMode
-          );
-        } else {
-          // Normal mode - use RazorpayService
-          orderData = await RazorpayService.createOrder(
-            currentUser.uid,
-            orderAmount,
-            userDetails,
-            'course_' + courseId,
-            useCustomAmount
-          );
-        }
-        
-        // Process payment with Razorpay
-        await RazorpayService.processPayment(
-          orderData,
-          userDetails,
-          // Success callback
-          (response) => {
-            console.log("Payment successful:", response);
-            // In demo mode, just navigate to success
-            navigate(`/payment/success?courseId=${courseId}&orderId=${orderData.id}`);
-          },
-          // Failure callback
-          (error) => {
-            console.error("Payment failed:", error);
-            
-            // Handle specific permission errors
-            if (error.code === "PERMISSION_DENIED" || error.message?.includes("permission")) {
-              setPaymentError("You don't have permission to complete this payment. This is a demo version, so Firestore operations may fail due to security rules.");
-            } else {
-              setPaymentError(error.message || "Payment failed. Please try again.");
-            }
-            
-            setProcessing(false);
-          },
-          useCustomAmount,
-          isDemoMode
-        );
-      } catch (orderError) {
-        console.error("Order creation error:", orderError);
-        
-        // Handle specific permission errors
-        if (orderError.code === "permission-denied" || orderError.message?.includes("permission")) {
-          setPaymentError("This is a demo version. Firebase security rules are preventing writing to the database. You can still test the Razorpay flow in demo mode.");
-        } else {
-          setPaymentError(orderError.message || "Failed to create payment order. Please try again.");
-        }
-        
-        setProcessing(false);
-      }
-    } catch (error) {
-      console.error("Error during enrollment:", error);
-      
-      // Handle general permission errors
-      if (error.code === "PERMISSION_DENIED" || error.message?.includes("permission")) {
-        setPaymentError("Demo mode: You don't have permission to complete this action due to Firebase security rules.");
-      } else {
-        setPaymentError(error.message || "An error occurred during enrollment. Please try again.");
-      }
-      
-      setProcessing(false);
-    }
-  };
+
 
   if (loading || permissionStatus.checking) {
     return (
@@ -405,79 +345,21 @@ export default function CourseEnrollment() {
             <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Payment Details</h3>
               
-              {paymentError && (
-                <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-                  {paymentError}
-                </div>
-              )}
+
               
               <div className="mb-4">
-                <div className="flex items-center mb-3">
-                  <input
-                    id="default-amount"
-                    name="payment-type"
-                    type="radio"
-                    checked={!useCustomAmount}
-                    onChange={() => setUseCustomAmount(false)}
-                    className="h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
-                  />
-                  <label htmlFor="default-amount" className="ml-2 block text-sm text-gray-700">
-                    Pay course fee
-                  </label>
-                </div>
-                <div className="flex items-center mb-3">
-                  <input
-                    id="custom-amount"
-                    name="payment-type"
-                    type="radio"
-                    checked={useCustomAmount}
-                    onChange={() => setUseCustomAmount(true)}
-                    className="h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
-                  />
-                  <label htmlFor="custom-amount" className="ml-2 block text-sm text-gray-700">
-                    Enter custom amount
-                  </label>
-                </div>
-                
-                {useCustomAmount && (
-                  <div className="mt-3 mb-4">
-                    <label htmlFor="custom-amount-input" className="block text-sm font-medium text-gray-700">
-                      Custom Amount (₹)
-                    </label>
-                    <div className="mt-1 relative rounded-md shadow-sm">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <span className="text-gray-500 sm:text-sm">₹</span>
-                      </div>
-                      <input
-                        type="number"
-                        name="custom-amount-input"
-                        id="custom-amount-input"
-                        min="1"
-                        step="1"
-                        value={customAmount}
-                        onChange={(e) => setCustomAmount(e.target.value)}
-                        className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md"
-                        placeholder="0.00"
-                      />
-                    </div>
-                    <p className="mt-1 text-sm text-gray-500">Enter the amount you wish to pay</p>
-                  </div>
-                )}
+                <p className="text-sm text-gray-700">
+                  Click the button below to proceed with the payment.
+                </p>
               </div>
               
               <div className="bg-gray-50 p-4 rounded-md mb-6">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-700">
-                    {useCustomAmount ? 'Custom Amount' : 'Course Fee'}
-                  </span>
-                  <span className="font-medium">
-                    {useCustomAmount 
-                      ? (customAmount ? `₹${parseFloat(customAmount).toFixed(2)}` : '₹0.00')
-                      : `₹${courseDetails?.price || '999'}`}
-                  </span>
+                  <span className="text-gray-700">Course Fee</span>
+                  <span className="font-medium">₹{courseDetails?.price || '999'}</span>
                 </div>
                 
-                {!useCustomAmount && courseDetails?.discount > 0 && (
+                {courseDetails?.discount > 0 && (
                   <div className="flex justify-between items-center mt-2">
                     <span className="text-gray-700">Discount</span>
                     <span className="font-medium text-green-600">-₹{courseDetails.discount}</span>
@@ -488,64 +370,42 @@ export default function CourseEnrollment() {
                 
                 <div className="flex justify-between items-center font-bold">
                   <span>Total</span>
-                  <span>
-                    {useCustomAmount 
-                      ? (customAmount ? `₹${parseFloat(customAmount).toFixed(2)}` : '₹0.00')
-                      : `₹${courseDetails?.discountedPrice || courseDetails?.price || '999'}`}
-                  </span>
+                  <span>₹{courseDetails?.discountedPrice || courseDetails?.price || '999'}</span>
                 </div>
               </div>
               
-              {/* Demo Mode Toggle (for development/testing) */}
-              <div className="bg-yellow-50 p-4 rounded-md mb-6 border border-yellow-200">
-                <div className="flex items-center space-x-2">
-                  <input
-                    id="demo-mode-toggle"
-                    type="checkbox"
-                    checked={isDemoMode}
-                    onChange={() => setIsDemoMode(!isDemoMode)}
-                    className="h-4 w-4 text-yellow-600 border-yellow-300 focus:ring-yellow-500"
-                  />
-                  <label htmlFor="demo-mode-toggle" className="font-medium text-yellow-800">
-                    Demo Mode
-                  </label>
-                </div>
-                {isDemoMode && (
-                  <p className="mt-2 text-sm text-yellow-700">
-                    In demo mode, you can test the payment flow without requiring Firebase database write permissions.
-                    No actual data will be stored in the database.
+
+              
+                            <div className="w-full mb-6">
+                <button
+                  onClick={handlePayment}
+                  disabled={isProcessing}
+                  className={`w-full inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white ${
+                    isProcessing 
+                      ? 'bg-indigo-400 cursor-not-allowed' 
+                      : 'bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
+                  }`}
+                >
+                  {isProcessing ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Processing...
+                    </>
+                  ) : (
+                    'Proceed to Payment'
+                  )}
+                </button>
+                {error && (
+                  <p className="mt-2 text-sm text-red-600">
+                    {error}
                   </p>
                 )}
               </div>
               
-              <button
-                onClick={handleEnrollment}
-                disabled={processing || (useCustomAmount && (!customAmount || parseFloat(customAmount) <= 0))}
-                className={`w-full inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white ${
-                  processing || (useCustomAmount && (!customAmount || parseFloat(customAmount) <= 0)) 
-                    ? 'bg-gray-400 cursor-not-allowed' 
-                    : 'bg-indigo-600 hover:bg-indigo-700'
-                }`}
-              >
-                {processing ? (
-                  <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white mr-3"></div>
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    Proceed to Payment
-                  </>
-                )}
-              </button>
-              
-              {isDemoMode && (
-                <div className="mt-3 bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-2 rounded text-sm">
-                  <p className="font-bold">Demo Mode Active</p>
-                  <p>This is running in demo mode. Firebase operations are simulated and no actual database writes will occur.</p>
-                  <p>You can still test the Razorpay payment interface (no actual charges will be made).</p>
-                </div>
-              )}
+
               
               <p className="mt-3 text-sm text-gray-500 text-center">
                 By proceeding, you agree to our terms and conditions.

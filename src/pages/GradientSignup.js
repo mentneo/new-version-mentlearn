@@ -1,354 +1,407 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { auth, db } from '../firebase/firebase';
-import { handleFirebaseError } from '../utils/errorHandler';
-import { useTheme } from '../contexts/ThemeContext';
-import { FaFacebookF, FaGoogle, FaApple, FaEnvelope, FaLock, FaUser, FaPhone, FaEye, FaEyeSlash, FaMoon, FaSun, FaArrowLeft } from 'react-icons/fa';
-import logoImg from '../assets/mentneo-logo.png';
-import logo3dImg from '../assets/mentneo-3d-logo.png';
+import { useAuth } from '../contexts/AuthContext';
+import { motion } from 'framer-motion';
+import { 
+  FaEye, 
+  FaEyeSlash, 
+  FaGoogle, 
+  FaGithub, 
+  FaLinkedin,
+  FaShieldAlt,
+  FaCheckCircle,
+  FaUserGraduate,
+  FaRocket
+} from 'react-icons/fa';
+import MenteoLogo from '../components/MenteoLogo';
 
-export default function GradientSignup() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+const GradientSignup = () => {
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    password: '',
+    confirmPassword: ''
+  });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const { darkMode, toggleDarkMode } = useTheme();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const { signup } = useAuth();
   const navigate = useNavigate();
-  
-  // Apply dark mode class to body
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [darkMode]);
 
-  async function handleSubmit(e) {
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const validateForm = () => {
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.password) {
+      setError('Please fill in all required fields');
+      return false;
+    }
+
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      return false;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return false;
+    }
+
+    if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      setError('Please enter a valid email address');
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (password !== confirmPassword) {
-      return setError("Passwords do not match");
+    if (!validateForm()) {
+      return;
     }
-    
+
+    setLoading(true);
+    setError('');
+
     try {
-      setError('');
-      setLoading(true);
-      
-      // Create user with Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      
-      // Update profile display name
-      await updateProfile(user, {
-        displayName: name
+      await signup(formData.email, formData.password, {
+        name: `${formData.firstName} ${formData.lastName}`,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phone: formData.phone,
+        role: 'student'
       });
       
-      // Create user document in Firestore
-      await setDoc(doc(db, "users", user.uid), {
-        name,
-        email: user.email,
-        phone,
-        role: 'student', // Default role for new signups
-        createdAt: serverTimestamp(),
-      });
-      
-      // Redirect to dashboard
-      navigate('/student/dashboard');
+      navigate('/dashboard');
     } catch (error) {
-      console.error("Signup error:", error);
-      setError(handleFirebaseError(error));
+      console.error('Signup error:', error);
+      setError(error.message || 'Failed to create account. Please try again.');
     } finally {
       setLoading(false);
     }
-  }
-
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
-
-  const toggleConfirmPasswordVisibility = () => {
-    setShowConfirmPassword(!showConfirmPassword);
   };
 
   return (
-    <div className={`flex min-h-screen w-full ${darkMode ? 'dark' : ''}`}>
-      {/* Left Section - Signup Form with gradient background */}
-      <div className="w-full lg:w-1/2 flex flex-col p-8 md:p-12 justify-center relative bg-gradient-to-br from-pink-300 via-purple-400 to-blue-500 dark:from-indigo-900 dark:via-purple-900 dark:to-blue-800">
-        {/* Top navigation with back button, logo, and dark mode toggle */}
-        <div className="absolute top-6 left-8 right-8 flex justify-between items-center">
-          <div className="flex items-center">
-            <button 
-              onClick={() => navigate('/')} 
-              className="mr-4 p-2 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 text-white transition-colors duration-200"
-              aria-label="Go back"
-            >
-              <FaArrowLeft className="h-5 w-5" />
-            </button>
-            <div className="flex items-center">
-              <img src={logo3dImg} alt="Mentneo 3D Logo" className="h-10 w-10 mr-2" />
-              <img src={logoImg} alt="Mentneo Logo" className="h-8" />
-            </div>
-          </div>
-          
-          <button
-            onClick={toggleDarkMode}
-            className="p-2 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 text-white transition-colors duration-200"
-            aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
-          >
-            {darkMode ? <FaSun className="h-5 w-5" /> : <FaMoon className="h-5 w-5" />}
-          </button>
-        </div>
-        
-        <div className="max-w-md mx-auto w-full mt-16">
-          <h1 className="text-4xl font-bold text-white mb-2">Join Mentneo</h1>
-          <p className="text-white text-opacity-90 mb-8">Create your account to start learning today.</p>
-          
-          {error && (
-            <div className="bg-white bg-opacity-20 backdrop-filter backdrop-blur-lg rounded-lg p-4 mb-6 text-white border border-red-300">
-              {error}
-            </div>
-          )}
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaUser className="h-5 w-5 text-white" />
-              </div>
-              <input
-                type="text"
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                className="block w-full pl-10 pr-3 py-3 bg-white bg-opacity-20 backdrop-filter backdrop-blur-md border-0 rounded-lg text-white placeholder-white placeholder-opacity-70 focus:ring-2 focus:ring-white focus:bg-opacity-30 focus:outline-none"
-                placeholder="Full name"
-              />
-            </div>
-            
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaEnvelope className="h-5 w-5 text-white" />
-              </div>
-              <input
-                type="email"
-                id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="block w-full pl-10 pr-3 py-3 bg-white bg-opacity-20 backdrop-filter backdrop-blur-md border-0 rounded-lg text-white placeholder-white placeholder-opacity-70 focus:ring-2 focus:ring-white focus:bg-opacity-30 focus:outline-none"
-                placeholder="Email address"
-              />
-            </div>
-            
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaPhone className="h-5 w-5 text-white" />
-              </div>
-              <input
-                type="tel"
-                id="phone"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="block w-full pl-10 pr-3 py-3 bg-white bg-opacity-20 backdrop-filter backdrop-blur-md border-0 rounded-lg text-white placeholder-white placeholder-opacity-70 focus:ring-2 focus:ring-white focus:bg-opacity-30 focus:outline-none"
-                placeholder="Phone number (optional)"
-              />
-            </div>
-            
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaLock className="h-5 w-5 text-white" />
-              </div>
-              <input
-                type={showPassword ? "text" : "password"}
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="block w-full pl-10 pr-10 py-3 bg-white bg-opacity-20 backdrop-filter backdrop-blur-md border-0 rounded-lg text-white placeholder-white placeholder-opacity-70 focus:ring-2 focus:ring-white focus:bg-opacity-30 focus:outline-none"
-                placeholder="Password"
-              />
-              <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                <button
-                  type="button"
-                  onClick={togglePasswordVisibility}
-                  className="text-white focus:outline-none"
-                >
-                  {showPassword ? <FaEyeSlash className="h-5 w-5" /> : <FaEye className="h-5 w-5" />}
-                </button>
-              </div>
-            </div>
-            
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaLock className="h-5 w-5 text-white" />
-              </div>
-              <input
-                type={showConfirmPassword ? "text" : "password"}
-                id="confirmPassword"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                className="block w-full pl-10 pr-10 py-3 bg-white bg-opacity-20 backdrop-filter backdrop-blur-md border-0 rounded-lg text-white placeholder-white placeholder-opacity-70 focus:ring-2 focus:ring-white focus:bg-opacity-30 focus:outline-none"
-                placeholder="Confirm password"
-              />
-              <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                <button
-                  type="button"
-                  onClick={toggleConfirmPasswordVisibility}
-                  className="text-white focus:outline-none"
-                >
-                  {showConfirmPassword ? <FaEyeSlash className="h-5 w-5" /> : <FaEye className="h-5 w-5" />}
-                </button>
-              </div>
-            </div>
-            
-            <div className="mt-2">
-              <p className="text-sm text-white text-opacity-90">
-                Password must be at least 8 characters and include letters, numbers, and special characters.
-              </p>
-            </div>
-            
-            <div className="flex items-center mt-4">
-              <input
-                id="terms"
-                name="terms"
-                type="checkbox"
-                required
-                className="h-4 w-4 bg-transparent border-white rounded focus:ring-2 focus:ring-white"
-              />
-              <label htmlFor="terms" className="ml-2 block text-sm text-white">
-                I agree to the <Link to="/terms" className="underline">Terms of Service</Link> and <Link to="/privacy" className="underline">Privacy Policy</Link>
-              </label>
-            </div>
-            
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full flex justify-center py-3 px-4 bg-gradient-to-r from-orange-300 to-orange-400 rounded-lg shadow-md hover:from-orange-400 hover:to-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-300 focus:ring-opacity-50 transition-all duration-200 text-white font-semibold"
-            >
-              {loading ? "Creating account..." : "Sign up"}
-            </button>
-            
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-white border-opacity-30"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-gradient-to-br from-pink-300 via-purple-400 to-blue-500 text-white">
-                  Or sign up with
-                </span>
-              </div>
-            </div>
-            
-            <div className="flex space-x-4 justify-center">
-              <button
-                type="button"
-                className="flex items-center justify-center w-12 h-12 rounded-full bg-white bg-opacity-20 backdrop-filter backdrop-blur-md hover:bg-opacity-30 transition-all duration-200"
-              >
-                <FaGoogle className="h-5 w-5 text-white" />
-              </button>
-              <button
-                type="button"
-                className="flex items-center justify-center w-12 h-12 rounded-full bg-white bg-opacity-20 backdrop-filter backdrop-blur-md hover:bg-opacity-30 transition-all duration-200"
-              >
-                <FaFacebookF className="h-5 w-5 text-white" />
-              </button>
-              <button
-                type="button"
-                className="flex items-center justify-center w-12 h-12 rounded-full bg-white bg-opacity-20 backdrop-filter backdrop-blur-md hover:bg-opacity-30 transition-all duration-200"
-              >
-                <FaApple className="h-5 w-5 text-white" />
-              </button>
-            </div>
-            
-            <p className="mt-6 text-center text-white">
-              Already have an account?{' '}
-              <Link to="/login" className="font-semibold hover:underline">
-                Sign in
-              </Link>
-            </p>
-          </form>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-[#0a0a1a] via-[#1a1a2e] to-[#16213e] text-white overflow-hidden relative">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500 opacity-20 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute top-1/3 -left-40 w-80 h-80 bg-purple-500 opacity-20 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute -bottom-40 right-1/4 w-80 h-80 bg-blue-500 opacity-20 rounded-full blur-3xl animate-pulse delay-2000"></div>
       </div>
 
-      {/* Right Section - Feature Showcase */}
-      <div className="hidden lg:block lg:w-1/2 bg-gradient-to-bl from-indigo-900 via-purple-900 to-blue-900 dark:from-slate-800 dark:via-slate-900 dark:to-black p-12 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-purple-400 to-pink-300 rounded-full filter blur-3xl opacity-20 -mt-24 -mr-24 dark:from-purple-600 dark:to-pink-500"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-blue-400 to-indigo-300 rounded-full filter blur-3xl opacity-20 -mb-24 -ml-24 dark:from-blue-600 dark:to-indigo-500"></div>
-        
-        {/* Logo in the top right */}
-        <div className="absolute top-6 right-8">
-          <img src={logo3dImg} alt="Mentneo 3D Logo" className="h-16 w-16" />
-        </div>
-        
-        {/* Feature Card */}
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-lg">
-          <div className="bg-white bg-opacity-10 backdrop-filter backdrop-blur-xl rounded-2xl p-8 border border-white border-opacity-20 shadow-xl dark:border-opacity-10 dark:bg-opacity-5">
-            <h2 className="text-2xl font-bold text-white mb-6">Premium Learning Experience</h2>
-            
-            <div className="space-y-4">
-              <div className="flex items-start">
-                <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gradient-to-r from-pink-400 to-purple-500 flex items-center justify-center text-white">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="ml-4">
-                  <p className="text-white font-medium">Learning How to Learn</p>
-                  <p className="text-white text-opacity-70 text-sm">Master meta-learning techniques that help you learn any new skill faster.</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start">
-                <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gradient-to-r from-blue-400 to-indigo-500 flex items-center justify-center text-white">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
-                  </svg>
-                </div>
-                <div className="ml-4">
-                  <p className="text-white font-medium">Premium Certifications</p>
-                  <p className="text-white text-opacity-70 text-sm">Earn industry-recognized credentials that boost your career prospects.</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start">
-                <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gradient-to-r from-green-400 to-teal-500 flex items-center justify-center text-white">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v1h8v-1zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-1a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v1h-3zM4.75 14.094A5.973 5.973 0 004 17v1H1v-1a3 3 0 013.75-2.906z" />
-                  </svg>
-                </div>
-                <div className="ml-4">
-                  <p className="text-white font-medium">Mentor Community</p>
-                  <p className="text-white text-opacity-70 text-sm">Connect with expert mentors who guide you through your learning journey.</p>
+      <div className="relative z-10 min-h-screen flex">
+        {/* Left Section - Hero */}
+        <div className="hidden lg:flex lg:w-1/2 flex-col justify-center items-center p-12 relative">
+          <motion.div
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8 }}
+            className="max-w-md text-center"
+          >
+            <div className="mb-8">
+              <div className="w-32 h-32 mx-auto mb-6 relative">
+                <div className="w-full h-full bg-gradient-to-br from-[#007bff] to-[#6f42c1] rounded-2xl flex items-center justify-center transform -rotate-12 hover:rotate-0 transition-transform duration-500">
+                  <FaRocket className="text-5xl text-white" />
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-        
-        {/* Quick Tip Card */}
-        <div className="absolute bottom-12 right-12 max-w-xs">
-          <div className="bg-white rounded-xl p-4 shadow-lg dark:bg-slate-800 dark:text-white">
-            <p className="text-purple-800 font-medium text-sm mb-2 dark:text-purple-300">Did You Know?</p>
-            <p className="text-gray-700 text-sm dark:text-gray-300">Students who complete our certification programs report a 40% increase in job interview success rates!</p>
             
-            <div className="mt-3 flex -space-x-2 overflow-hidden">
-              <div className="inline-block h-8 w-8 rounded-full ring-2 ring-white bg-gradient-to-r from-blue-400 to-indigo-500"></div>
-              <div className="inline-block h-8 w-8 rounded-full ring-2 ring-white bg-gradient-to-r from-pink-400 to-purple-500"></div>
-              <div className="inline-block h-8 w-8 rounded-full ring-2 ring-white bg-gradient-to-r from-yellow-400 to-orange-500"></div>
-              <div className="inline-block h-8 w-8 rounded-full ring-2 ring-white bg-gradient-to-r from-green-400 to-teal-500"></div>
+            <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-[#007bff] to-[#6f42c1] text-transparent bg-clip-text">
+              Launch Your Tech Career 🚀
+            </h1>
+            <p className="text-lg text-gray-300 mb-6">
+              Join thousands of students who transformed their college life into a successful Full Stack development career with Mentlearning.
+            </p>
+            
+            <div className="grid grid-cols-2 gap-4 text-sm text-gray-400">
+              <div className="flex items-center">
+                <FaCheckCircle className="text-green-400 mr-2" />
+                <span>Real Projects</span>
+              </div>
+              <div className="flex items-center">
+                <FaCheckCircle className="text-green-400 mr-2" />
+                <span>1:1 Mentorship</span>
+              </div>
+              <div className="flex items-center">
+                <FaCheckCircle className="text-green-400 mr-2" />
+                <span>Job Guarantee</span>
+              </div>
+              <div className="flex items-center">
+                <FaCheckCircle className="text-green-400 mr-2" />
+                <span>Live Support</span>
+              </div>
             </div>
+          </motion.div>
+        </div>
+
+        {/* Right Section - Signup Form */}
+        <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-8 lg:p-12">
+          <div className="w-full max-w-md">
+            {/* Logo */}
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="text-center mb-8"
+            >
+              <Link to="/" className="inline-block">
+                <MenteoLogo size="large" />
+              </Link>
+            </motion.div>
+
+            {/* Form Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="relative"
+            >
+              {/* Glassmorphism background */}
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-600/10 rounded-2xl blur-xl"></div>
+              <div className="relative bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 shadow-2xl">
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl font-bold mb-2">Join Mentlearning</h2>
+                  <p className="text-gray-300">Start your Full Stack development journey today</p>
+                </div>
+
+                {/* Error Message */}
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 mb-4 text-red-200 text-sm"
+                  >
+                    {error}
+                  </motion.div>
+                )}
+
+                {/* Signup Form */}
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  {/* Name Fields */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="firstName" className="block text-sm font-medium text-gray-300 mb-2">
+                        First Name
+                      </label>
+                      <input
+                        id="firstName"
+                        name="firstName"
+                        type="text"
+                        value={formData.firstName}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm placeholder-gray-400 text-white transition-all duration-300"
+                        placeholder="First name"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="lastName" className="block text-sm font-medium text-gray-300 mb-2">
+                        Last Name
+                      </label>
+                      <input
+                        id="lastName"
+                        name="lastName"
+                        type="text"
+                        value={formData.lastName}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm placeholder-gray-400 text-white transition-all duration-300"
+                        placeholder="Last name"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Email Field */}
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+                      Email Address
+                    </label>
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm placeholder-gray-400 text-white transition-all duration-300"
+                      placeholder="Enter your email"
+                      required
+                    />
+                  </div>
+
+                  {/* Phone Field */}
+                  <div>
+                    <label htmlFor="phone" className="block text-sm font-medium text-gray-300 mb-2">
+                      Phone Number (Optional)
+                    </label>
+                    <input
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm placeholder-gray-400 text-white transition-all duration-300"
+                      placeholder="Your phone number"
+                    />
+                  </div>
+
+                  {/* Password Fields */}
+                  <div className="grid grid-cols-1 gap-4">
+                    <div>
+                      <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
+                        Password
+                      </label>
+                      <div className="relative">
+                        <input
+                          id="password"
+                          name="password"
+                          type={showPassword ? 'text' : 'password'}
+                          value={formData.password}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm placeholder-gray-400 text-white transition-all duration-300 pr-12"
+                          placeholder="Create password"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                        >
+                          {showPassword ? <FaEyeSlash /> : <FaEye />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-2">
+                        Confirm Password
+                      </label>
+                      <div className="relative">
+                        <input
+                          id="confirmPassword"
+                          name="confirmPassword"
+                          type={showConfirmPassword ? 'text' : 'password'}
+                          value={formData.confirmPassword}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm placeholder-gray-400 text-white transition-all duration-300 pr-12"
+                          placeholder="Confirm password"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                        >
+                          {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Signup Button */}
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full py-3 px-4 bg-gradient-to-r from-[#007bff] to-[#6f42c1] hover:from-blue-600 hover:to-purple-700 rounded-lg font-medium text-white shadow-lg hover:shadow-blue-500/25 transform hover:scale-105 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none mt-6"
+                  >
+                    {loading ? (
+                      <div className="flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white mr-2"></div>
+                        Creating Account...
+                      </div>
+                    ) : (
+                      'Create Account'
+                    )}
+                  </button>
+                </form>
+
+                {/* Divider */}
+                <div className="my-6 flex items-center">
+                  <div className="flex-grow border-t border-white/20"></div>
+                  <span className="flex-shrink-0 px-4 text-gray-400 text-sm">Or sign up with</span>
+                  <div className="flex-grow border-t border-white/20"></div>
+                </div>
+
+                {/* Social Signup */}
+                <div className="grid grid-cols-3 gap-3">
+                  <button className="flex items-center justify-center py-3 px-4 bg-white/10 hover:bg-white/20 rounded-lg border border-white/20 transition-all duration-300 hover:scale-105">
+                    <FaGoogle className="text-xl text-red-400" />
+                  </button>
+                  <button className="flex items-center justify-center py-3 px-4 bg-white/10 hover:bg-white/20 rounded-lg border border-white/20 transition-all duration-300 hover:scale-105">
+                    <FaGithub className="text-xl text-gray-300" />
+                  </button>
+                  <button className="flex items-center justify-center py-3 px-4 bg-white/10 hover:bg-white/20 rounded-lg border border-white/20 transition-all duration-300 hover:scale-105">
+                    <FaLinkedin className="text-xl text-blue-400" />
+                  </button>
+                </div>
+
+                {/* Login Link */}
+                <div className="text-center mt-6">
+                  <p className="text-gray-300">
+                    Already have an account?{' '}
+                    <Link
+                      to="/login"
+                      className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
+                    >
+                      Sign in here
+                    </Link>
+                  </p>
+                </div>
+
+                {/* Security Section */}
+                <div className="mt-6 pt-6 border-t border-white/20">
+                  <div className="flex items-center justify-center space-x-6 text-xs text-gray-400">
+                    <div className="flex items-center">
+                      <FaShieldAlt className="mr-1" />
+                      <span>Secure</span>
+                    </div>
+                    <div className="flex items-center">
+                      <FaCheckCircle className="mr-1" />
+                      <span>Verified</span>
+                    </div>
+                    <div className="flex items-center">
+                      <FaUserGraduate className="mr-1" />
+                      <span>Mentorship Certified</span>
+                    </div>
+                  </div>
+                  <p className="text-center text-xs text-gray-500 mt-2">
+                    Your data is safe with us
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Footer */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+              className="text-center mt-8"
+            >
+              <div className="flex justify-center space-x-6 text-xs text-gray-500 mb-2">
+                <Link to="/terms" className="hover:text-gray-300 transition-colors">Terms</Link>
+                <Link to="/privacy" className="hover:text-gray-300 transition-colors">Privacy</Link>
+                <Link to="/contact" className="hover:text-gray-300 transition-colors">Contact</Link>
+              </div>
+              <p className="text-xs text-gray-600">
+                © 2025 Mentlearning | All rights reserved
+              </p>
+            </motion.div>
           </div>
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default GradientSignup;

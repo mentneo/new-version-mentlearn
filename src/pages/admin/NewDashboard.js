@@ -16,7 +16,9 @@ import {
   FaArrowUp,
   FaArrowDown,
   FaRegCalendarAlt,
-  FaChartPie
+  FaChartPie,
+  FaChartLine,
+  FaTimes
 } from 'react-icons/fa';
 
 // Register ChartJS components
@@ -89,8 +91,9 @@ const ActionCard = ({ title, icon, linkTo, color }) => {
   );
 };
 
-export default function Dashboard() {
-  const { currentUser } = useAuth();
+const NewDashboard = () => {
+  // Only destructure what you actually use
+  const { userRole, createDataAnalyst } = useAuth();
   const { darkMode } = useTheme();
   const [stats, setStats] = useState({
     totalStudents: 0,
@@ -107,6 +110,17 @@ export default function Dashboard() {
   const [loadingPayments, setLoadingPayments] = useState(true);
   const [loadingStudents, setLoadingStudents] = useState(true);
   const [loadingMentors, setLoadingMentors] = useState(true);
+  const [showAnalystModal, setShowAnalystModal] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
+  const [formErrors, setFormErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   useEffect(() => {
     // Load the most critical data first - counts
@@ -379,6 +393,87 @@ export default function Dashboard() {
     </li>
   );
 
+  // Handle input changes
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value
+    });
+    
+    // Clear error for this field when typing
+    if (formErrors[name]) {
+      setFormErrors({
+        ...formErrors,
+        [name]: ''
+      });
+    }
+  };
+
+  // Validate form
+  const validateForm = () => {
+    const errors = {};
+    
+    if (!formData.name.trim()) {
+      errors.name = 'Name is required';
+    }
+    
+    if (!formData.email.trim()) {
+      errors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      errors.email = 'Email is invalid';
+    }
+    
+    if (!formData.password) {
+      errors.password = 'Password is required';
+    } else if (formData.password.length < 6) {
+      errors.password = 'Password must be at least 6 characters';
+    }
+    
+    if (formData.password !== formData.confirmPassword) {
+      errors.confirmPassword = 'Passwords do not match';
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  // Handle form submission
+  const handleCreateAnalyst = async (e) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
+    setIsSubmitting(true);
+    setSubmitError('');
+    
+    try {
+      await createDataAnalyst(formData.email, formData.password, formData.name);
+      
+      setSubmitSuccess(true);
+      
+      // Reset form
+      setTimeout(() => {
+        setFormData({
+          name: '',
+          email: '',
+          password: '',
+          confirmPassword: ''
+        });
+        setSubmitSuccess(false);
+        setShowAnalystModal(false);
+      }, 2000);
+      
+    } catch (error) {
+      console.error("Error creating data analyst:", error);
+      setSubmitError(error.message || 'Failed to create data analyst');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -388,6 +483,24 @@ export default function Dashboard() {
             <FaRegCalendarAlt className="mr-2" />
             {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </span>
+        </div>
+      </div>
+      
+      <div className="mb-6 flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Admin Dashboard</h2>
+        <div className="flex space-x-3">
+          <button
+            onClick={() => setShowAnalystModal(true)}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md flex items-center"
+          >
+            <FaUserPlus className="mr-2" /> Create Data Analyst
+          </button>
+          <Link 
+            to="/data-analyst/dashboard" 
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center"
+          >
+            <FaChartLine className="mr-2" /> Data Analytics
+          </Link>
         </div>
       </div>
       
@@ -708,6 +821,149 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Add a link to the Data Analyst Dashboard in the admin navigation menu */}
+      {userRole === 'admin' || userRole === 'data_analyst' ? (
+        <div className={`rounded-xl shadow-lg overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+          <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+            <h3 className="text-lg font-medium">Data Analytics</h3>
+            <Link to="/data-analyst/dashboard" className="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300">
+              Go to Data Analyst Dashboard
+            </Link>
+          </div>
+          <div className="p-6">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Access detailed analytics and reports on platform performance, user engagement, and more.
+            </p>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Data Analyst Creation Modal */}
+      {showAnalystModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold text-gray-900">Create Data Analyst</h3>
+              <button 
+                onClick={() => setShowAnalystModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <FaTimes />
+              </button>
+            </div>
+            
+            {submitSuccess ? (
+              <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+                Data analyst created successfully!
+              </div>
+            ) : (
+              <form onSubmit={handleCreateAnalyst}>
+                {submitError && (
+                  <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                    {submitError}
+                  </div>
+                )}
+                
+                <div className="mb-4">
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                    Full Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border ${
+                      formErrors.name ? 'border-red-500' : 'border-gray-300'
+                    } rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500`}
+                  />
+                  {formErrors.name && (
+                    <p className="mt-1 text-sm text-red-500">{formErrors.name}</p>
+                  )}
+                </div>
+                
+                <div className="mb-4">
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                    Email <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border ${
+                      formErrors.email ? 'border-red-500' : 'border-gray-300'
+                    } rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500`}
+                  />
+                  {formErrors.email && (
+                    <p className="mt-1 text-sm text-red-500">{formErrors.email}</p>
+                  )}
+                </div>
+                
+                <div className="mb-4">
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                    Password <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border ${
+                      formErrors.password ? 'border-red-500' : 'border-gray-300'
+                    } rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500`}
+                  />
+                  {formErrors.password && (
+                    <p className="mt-1 text-sm text-red-500">{formErrors.password}</p>
+                  )}
+                </div>
+                
+                <div className="mb-6">
+                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                    Confirm Password <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="password"
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border ${
+                      formErrors.confirmPassword ? 'border-red-500' : 'border-gray-300'
+                    } rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500`}
+                  />
+                  {formErrors.confirmPassword && (
+                    <p className="mt-1 text-sm text-red-500">{formErrors.confirmPassword}</p>
+                  )}
+                </div>
+                
+                <div className="flex justify-end space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowAnalystModal(false)}
+                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  >
+                    {isSubmitting ? 'Creating...' : 'Create Data Analyst'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+export default NewDashboard;

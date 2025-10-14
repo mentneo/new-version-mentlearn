@@ -1,8 +1,29 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { db } from '../firebase/firebase';
+import CourseCard from '../components/CourseCard';
 import { Link } from 'react-router-dom';
 import { FaGraduationCap, FaLaptopCode, FaChalkboardTeacher, FaArrowRight } from 'react-icons/fa';
 
 export default function Home() {
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    setLoading(true);
+  const q = collection(db, 'courses');
+  const unsubscribe = onSnapshot(q, (snapshot) => {
+      const courseList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setCourses(courseList);
+      setLoading(false);
+    }, (err) => {
+      setError('Failed to load courses.');
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
   return (
     <div className="bg-white">
       {/* Hero section */}
@@ -20,6 +41,16 @@ export default function Home() {
               Get started
               <FaArrowRight className="ml-2 -mr-1 h-5 w-5" />
             </Link>
+            <button
+              onClick={() => {
+                const el = document.getElementById('available-courses-section');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              type="button"
+            >
+              Browse Courses
+            </button>
             <Link to="/login" className="inline-flex items-center justify-center px-5 py-3 border border-white text-base font-medium rounded-md text-white hover:bg-indigo-500">
               Sign in
             </Link>
@@ -27,6 +58,26 @@ export default function Home() {
               Modern Sign in
             </Link>
           </div>
+        </div>
+      </div>
+
+      {/* Available Courses section */}
+      <div id="available-courses-section" className="py-12 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Available Courses</h2>
+          {loading ? (
+            <div className="text-center py-8 text-gray-500">Loading courses...</div>
+          ) : error ? (
+            <div className="text-center py-8 text-red-500">{error}</div>
+          ) : courses.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">No courses available at the moment.</div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+              {courses.map(course => (
+                <CourseCard key={course.id} course={course} />
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
