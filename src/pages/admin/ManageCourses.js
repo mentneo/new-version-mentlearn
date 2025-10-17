@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { collection, getDocs, doc, deleteDoc, addDoc, updateDoc } from 'firebase/firestore';
-import { db } from '../../firebase/firebase';
-import { uploadCourseThumbnailWithFallback } from '../../utils/cloudinary';
-import { uploadImage as uploadToFirebase } from '../../utils/storage';
-import { useAuth } from '../../contexts/AuthContext';
-import Navbar from '../../components/admin/Navbar';
-import { FaPlus, FaEdit, FaTrash, FaEye, FaUserPlus } from 'react-icons/fa';
+import { db } from '../../firebase/firebase.js';
+import { uploadCourseThumbnailWithFallback } from '../../utils/cloudinary.js';
+import { uploadImage as uploadToFirebase } from '../../utils/storage.js';
+import { useAuth } from '../../contexts/AuthContext.js';
+import Navbar from '../../components/admin/Navbar.js';
+import { FaPlus, FaEdit, FaTrash, FaEye, FaUserPlus } from 'react-icons/fa/index.esm.js';
 import { Formik, Form, Field, ErrorMessage, FieldArray } from 'formik';
 import * as Yup from 'yup';
 

@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { doc, getDoc, updateDoc, setDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../firebase/firebase';
-import { useAuth } from '../../contexts/AuthContext';
-import Navbar from '../../components/student/Navbar';
-import { FaCheckCircle, FaBook, FaArrowRight } from 'react-icons/fa';
+import { db } from '../../firebase/firebase.js';
+import { useAuth } from '../../contexts/AuthContext.js';
+import Navbar from '../../components/student/Navbar.js';
+import { FaCheckCircle, FaBook, FaArrowRight } from 'react-icons/fa/index.esm.js';
 
 export default function CoursePaymentSuccess() {
   const { courseId } = useParams();

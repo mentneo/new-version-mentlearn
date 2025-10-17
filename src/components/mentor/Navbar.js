@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext.js';
 import { 
   FaUserGraduate, 
   FaClipboardList,
@@ -63,16 +63,22 @@ export default function Navbar() {
                   <FaTachometerAlt className="inline-block mr-1" /> Dashboard
                 </Link>
                 <Link
+                  to="/mentor/assignments"
+                  className="text-white hover:bg-green-700 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  <FaClipboardList className="inline-block mr-1" /> Assignments
+                </Link>
+                <Link
                   to="/mentor/quizzes"
                   className="text-white hover:bg-green-700 px-3 py-2 rounded-md text-sm font-medium"
                 >
                   <FaClipboardList className="inline-block mr-1" /> Quizzes
                 </Link>
                 <Link
-                  to="/mentor/interviews"
+                  to="/mentor/calendar"
                   className="text-white hover:bg-green-700 px-3 py-2 rounded-md text-sm font-medium"
                 >
-                  <FaBriefcase className="inline-block mr-1" /> Interviews
+                  <FaTachometerAlt className="inline-block mr-1" /> Calendar
                 </Link>
                 <Link
                   to="/mentor/reports"
@@ -130,6 +136,13 @@ export default function Navbar() {
               <FaTachometerAlt className="inline-block mr-1" /> Dashboard
             </Link>
             <Link
+              to="/mentor/assignments"
+              className="text-white hover:bg-green-700 block px-3 py-2 rounded-md text-base font-medium"
+              onClick={() => setIsOpen(false)}
+            >
+              <FaClipboardList className="inline-block mr-1" /> Assignments
+            </Link>
+            <Link
               to="/mentor/quizzes"
               className="text-white hover:bg-green-700 block px-3 py-2 rounded-md text-base font-medium"
               onClick={() => setIsOpen(false)}
@@ -137,11 +150,11 @@ export default function Navbar() {
               <FaClipboardList className="inline-block mr-1" /> Quizzes
             </Link>
             <Link
-              to="/mentor/interviews"
+              to="/mentor/calendar"
               className="text-white hover:bg-green-700 block px-3 py-2 rounded-md text-base font-medium"
               onClick={() => setIsOpen(false)}
             >
-              <FaBriefcase className="inline-block mr-1" /> Interviews
+              <FaTachometerAlt className="inline-block mr-1" /> Calendar
             </Link>
             <Link
               to="/mentor/reports"

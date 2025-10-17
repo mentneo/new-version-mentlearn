@@ -1,8 +1,8 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FaArrowRight, FaUsers, FaTrophy, FaCode, FaUserGraduate, FaRobot, FaCloud, FaCubes, FaChartBar, FaUserTie, FaStar, FaDiscord, FaGithub, FaLinkedin, FaTwitter, FaArrowLeft } from 'react-icons/fa';
-import MenteoLogo from '../components/MenteoLogo';
+import { FaArrowRight, FaUsers, FaTrophy, FaCode, FaUserGraduate, FaRobot, FaCloud, FaCubes, FaChartBar, FaUserTie, FaStar, FaDiscord, FaGithub, FaLinkedin, FaTwitter, FaArrowLeft } from 'react-icons/fa/index.esm.js';
+import MenteoLogo from '../components/MenteoLogo.js';
 
 const learningTracks = [
 	{

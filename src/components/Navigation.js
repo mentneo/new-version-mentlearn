@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useTheme } from '../contexts/ThemeContext';
+import { useTheme } from '../contexts/ThemeContext.js';
 import { 
   FaGraduationCap, 
   FaPhoneAlt,
@@ -18,11 +18,11 @@ import {
   FaInfoCircle,
   FaUserPlus,
   FaSignInAlt
-} from 'react-icons/fa';
+} from 'react-icons/fa/index.esm.js';
 import { motion } from 'framer-motion';
 import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../firebase/firebase';
+import { db } from '../firebase/firebase.js';
 
 // Map container style
 const mapContainerStyle = {

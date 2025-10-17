@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
-import NewStudentNavbar from '../student/NewStudentNavbar';
-import Footer from './Footer';
-import { useTheme } from '../../contexts/ThemeContext';
+import NewStudentNavbar from '../student/NewStudentNavbar.js';
+import Footer from './Footer.js';
+import { useTheme } from '../../contexts/ThemeContext.js';
 
 const StudentLayout = ({ children }) => {
   const { darkMode, forceThemeRefresh } = useTheme();

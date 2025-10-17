@@ -10,7 +10,7 @@ import {
   doc, getDoc, setDoc, collection, getDocs,
   query, where, updateDoc, arrayUnion, increment
 } from 'firebase/firestore';
-import { auth, db } from '../firebase/firebase';
+import { auth, db } from '../firebase/firebase.js';
 
 const AuthContext = createContext();
 

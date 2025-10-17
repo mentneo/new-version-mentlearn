@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import SideNav from '../admin/SideNav';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useTheme } from '../../contexts/ThemeContext.js';
 
 export default function AdminLayout() {
   const { darkMode } = useTheme();

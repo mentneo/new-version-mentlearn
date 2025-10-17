@@ -1,5 +1,5 @@
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '../firebase/firebase';
+import { storage } from '../firebase/firebase.js';
 
 /**
  * Upload a file to Firebase Storage

@@ -13,10 +13,10 @@ import {
   FaBars,
   FaTimes,
   FaTwitter
-} from 'react-icons/fa';
+} from 'react-icons/fa/index.esm.js';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../firebase/firebase';
-import MenteoLogo from '../components/MenteoLogo';
+import { db } from '../firebase/firebase.js';
+import MenteoLogo from '../components/MenteoLogo.js';
 
 const HireFromUs = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

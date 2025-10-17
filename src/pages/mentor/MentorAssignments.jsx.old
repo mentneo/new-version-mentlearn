@@ -1,0 +1,426 @@
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { collection, query, where, getDocs, doc, getDoc, orderBy, addDoc } from 'firebase/firestore';
+import { db } from '../../firebase/firebase.js';
+import { useAuth } from '../../contexts/AuthContext.js';
+import { FiCalendar, FiClock, FiAlertCircle, FiCheckCircle, FiFileText, FiFilter, FiSearch, FiChevronRight, FiX, FiChevronDown, FiUpload, FiUsers, FiEdit, FiTrash2, FiPlus } from 'react-icons/fi/index.js';
+import { motion, AnimatePresence } from 'framer-motion';
+import Navbar from '../../components/mentor/Navbar.js';
+
+export default function MentorAssignments() {
+  const { currentUser } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [assignments, setAssignments] = useState([]);
+  const [students, setStudents] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterCourse, setFilterCourse] = useState('all');
+  const [filterMenuOpen, setFilterMenuOpen] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  
+  // Fetch assignments created by mentor
+  useEffect(() => {
+    const fetchAssignments = async () => {
+      if (!currentUser) return;
+      
+      try {
+        setLoading(true);
+        
+        // Fetch all assignments created by this mentor
+        const assignmentsQuery = query(
+          collection(db, "assignments"),
+          where("mentorId", "==", currentUser.uid),
+          orderBy("dueDate", "desc")
+        );
+        
+        const assignmentsSnapshot = await getDocs(assignmentsQuery);
+        
+        // Create a set of student IDs to fetch student details
+        const studentIds = new Set();
+        
+        // Process assignment data
+        const assignmentsData = await Promise.all(
+          assignmentsSnapshot.docs.map(async (docSnap) => {
+            const data = docSnap.data();
+            
+            // Fetch submissions for this assignment
+            const submissionsQuery = query(
+              collection(db, "submissions"),
+              where("assignmentId", "==", docSnap.id)
+            );
+            
+            const submissionsSnapshot = await getDocs(submissionsQuery);
+            const submissions = submissionsSnapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data()
+            }));
+            
+            // Count submission stats
+            const totalStudents = data.studentIds?.length || 0;
+            const submittedCount = submissions.length;
+            const gradedCount = submissions.filter(s => s.grade !== undefined).length;
+            
+            return {
+              id: docSnap.id,
+              ...data,
+              totalStudents,
+              submittedCount,
+              gradedCount,
+              submissions,
+              dueDate: data.dueDate?.toDate() || new Date()
+            };
+          })
+        );
+        
+        setAssignments(assignmentsData);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching assignments:", error);
+        setLoading(false);
+      }
+    };
+    
+    fetchAssignments();
+  }, [currentUser]);
+  
+  // Filter assignments
+  const filteredAssignments = assignments.filter(assignment => {
+    const matchesSearch = assignment.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         assignment.description?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const now = new Date();
+    const dueDate = assignment.dueDate;
+    
+    let matchesStatus = true;
+    if (filterStatus === 'active') {
+      matchesStatus = dueDate >= now;
+    } else if (filterStatus === 'overdue') {
+      matchesStatus = dueDate < now;
+    } else if (filterStatus === 'graded') {
+      matchesStatus = assignment.gradedCount === assignment.totalStudents && assignment.totalStudents > 0;
+    } else if (filterStatus === 'pending') {
+      matchesStatus = assignment.gradedCount < assignment.totalStudents;
+    }
+    
+    return matchesSearch && matchesStatus;
+  });
+  
+  // Get assignment status
+  const getAssignmentStatus = (assignment) => {
+    const now = new Date();
+    const dueDate = assignment.dueDate;
+    
+    if (assignment.gradedCount === assignment.totalStudents && assignment.totalStudents > 0) {
+      return { label: 'Completed', color: 'green', icon: <FiCheckCircle /> };
+    } else if (dueDate < now) {
+      return { label: 'Overdue', color: 'red', icon: <FiAlertCircle /> };
+    } else {
+      return { label: 'Active', color: 'blue', icon: <FiClock /> };
+    }
+  };
+  
+  // Format date
+  const formatDate = (date) => {
+    if (!date) return 'N/A';
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(date);
+  };
+  
+  // Get days remaining
+  const getDaysRemaining = (dueDate) => {
+    const now = new Date();
+    const diff = dueDate - now;
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    
+    if (days < 0) {
+      return `${Math.abs(days)} days overdue`;
+    } else if (days === 0) {
+      return 'Due today';
+    } else if (days === 1) {
+      return '1 day remaining';
+    } else {
+      return `${days} days remaining`;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
+      <Navbar />
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Assignments</h1>
+              <p className="mt-1 text-sm text-gray-500">
+                Manage and track student assignments
+              </p>
+            </div>
+            
+            <div className="mt-4 md:mt-0">
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+              >
+                <FiPlus className="mr-2" />
+                Create Assignment
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-xl p-6 shadow-sm border border-gray-100"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Total Assignments</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">{assignments.length}</p>
+              </div>
+              <div className="p-3 bg-indigo-100 rounded-lg">
+                <FiFileText className="text-indigo-600 text-xl" />
+              </div>
+            </div>
+          </motion.div>
+          
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-white rounded-xl p-6 shadow-sm border border-gray-100"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Active</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">
+                  {assignments.filter(a => a.dueDate >= new Date()).length}
+                </p>
+              </div>
+              <div className="p-3 bg-blue-100 rounded-lg">
+                <FiClock className="text-blue-600 text-xl" />
+              </div>
+            </div>
+          </motion.div>
+          
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-white rounded-xl p-6 shadow-sm border border-gray-100"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Pending Grading</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">
+                  {assignments.reduce((sum, a) => sum + (a.submittedCount - a.gradedCount), 0)}
+                </p>
+              </div>
+              <div className="p-3 bg-yellow-100 rounded-lg">
+                <FiAlertCircle className="text-yellow-600 text-xl" />
+              </div>
+            </div>
+          </motion.div>
+          
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-white rounded-xl p-6 shadow-sm border border-gray-100"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Completed</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">
+                  {assignments.filter(a => a.gradedCount === a.totalStudents && a.totalStudents > 0).length}
+                </p>
+              </div>
+              <div className="p-3 bg-green-100 rounded-lg">
+                <FiCheckCircle className="text-green-600 text-xl" />
+              </div>
+            </div>
+          </motion.div>
+        </div>
+        
+        {/* Filters and Search */}
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-6">
+          <div className="flex flex-col md:flex-row md:items-center gap-4">
+            {/* Search */}
+            <div className="flex-1 relative">
+              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search assignments..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+            
+            {/* Filter Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setFilterMenuOpen(!filterMenuOpen)}
+                className="inline-flex items-center px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <FiFilter className="mr-2" />
+                Filter: {filterStatus === 'all' ? 'All' : filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1)}
+                <FiChevronDown className="ml-2" />
+              </button>
+              
+              <AnimatePresence>
+                {filterMenuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10"
+                  >
+                    {['all', 'active', 'overdue', 'pending', 'graded'].map((status) => (
+                      <button
+                        key={status}
+                        onClick={() => {
+                          setFilterStatus(status);
+                          setFilterMenuOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors first:rounded-t-lg last:rounded-b-lg ${
+                          filterStatus === status ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700'
+                        }`}
+                      >
+                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+        </div>
+        
+        {/* Assignments List */}
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading assignments...</p>
+          </div>
+        ) : filteredAssignments.length === 0 ? (
+          <div className="bg-white rounded-xl p-12 text-center shadow-sm border border-gray-100">
+            <FiFileText className="text-5xl text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No assignments found</h3>
+            <p className="text-gray-600 mb-6">
+              {searchQuery || filterStatus !== 'all' 
+                ? 'Try adjusting your search or filters' 
+                : 'Create your first assignment to get started'}
+            </p>
+            {!searchQuery && filterStatus === 'all' && (
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+              >
+                <FiPlus className="mr-2" />
+                Create Assignment
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {filteredAssignments.map((assignment, index) => {
+              const status = getAssignmentStatus(assignment);
+              
+              return (
+                <motion.div
+                  key={assignment.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="text-lg font-semibold text-gray-900">{assignment.title}</h3>
+                        <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-${status.color}-100 text-${status.color}-700`}>
+                          {status.icon}
+                          {status.label}
+                        </span>
+                      </div>
+                      
+                      <p className="text-gray-600 text-sm mb-4">{assignment.description}</p>
+                      
+                      <div className="flex flex-wrap items-center gap-6 text-sm">
+                        <div className="flex items-center text-gray-600">
+                          <FiCalendar className="mr-2" />
+                          <span>Due: {formatDate(assignment.dueDate)}</span>
+                        </div>
+                        
+                        <div className="flex items-center text-gray-600">
+                          <FiClock className="mr-2" />
+                          <span>{getDaysRemaining(assignment.dueDate)}</span>
+                        </div>
+                        
+                        <div className="flex items-center text-gray-600">
+                          <FiUsers className="mr-2" />
+                          <span>{assignment.totalStudents} students assigned</span>
+                        </div>
+                      </div>
+                      
+                      {/* Submission Progress */}
+                      <div className="mt-4">
+                        <div className="flex items-center justify-between text-sm mb-2">
+                          <span className="text-gray-600">Submission Progress</span>
+                          <span className="font-medium text-gray-900">
+                            {assignment.submittedCount}/{assignment.totalStudents} submitted
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className="bg-indigo-600 h-2 rounded-full transition-all"
+                            style={{ width: `${assignment.totalStudents > 0 ? (assignment.submittedCount / assignment.totalStudents) * 100 : 0}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                      
+                      {/* Grading Progress */}
+                      <div className="mt-3">
+                        <div className="flex items-center justify-between text-sm mb-2">
+                          <span className="text-gray-600">Grading Progress</span>
+                          <span className="font-medium text-gray-900">
+                            {assignment.gradedCount}/{assignment.submittedCount} graded
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className="bg-green-600 h-2 rounded-full transition-all"
+                            style={{ width: `${assignment.submittedCount > 0 ? (assignment.gradedCount / assignment.submittedCount) * 100 : 0}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="ml-4 flex items-center gap-2">
+                      <Link
+                        to={`/mentor/assignments/${assignment.id}`}
+                        className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                      >
+                        <FiChevronRight className="text-xl" />
+                      </Link>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

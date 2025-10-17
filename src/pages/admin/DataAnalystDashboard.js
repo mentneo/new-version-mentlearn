@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext.js';
 import { 
   collection, 
   query, 
@@ -10,7 +10,7 @@ import {
   limit,
   Timestamp
 } from 'firebase/firestore';
-import { db } from '../../firebase/firebase';
+import { db } from '../../firebase/firebase.js';
 import { 
   Chart as ChartJS, 
   CategoryScale, 
@@ -39,8 +39,9 @@ import {
   FaCog, 
   FaUserCircle,
   FaBars,
-  FaTimes
-} from 'react-icons/fa';
+  FaTimes,
+  FaLifeRing
+} from 'react-icons/fa/index.esm.js';
 
 // Register ChartJS components
 ChartJS.register(
@@ -68,6 +69,7 @@ const DataAnalystDashboard = () => {
   const [courses, setCourses] = useState([]);
   const [enrollments, setEnrollments] = useState([]);
   const [userActivities, setUserActivities] = useState([]);
+  const [creators, setCreators] = useState([]); // State for creators/mentors
   const [kpiData, setKpiData] = useState({
     totalDemoBookings: 0,
     activeStudents: 0,
@@ -116,36 +118,31 @@ const DataAnalystDashboard = () => {
     };
   }, [dateRange]);
 
-  // Generate activities based on real student and course data
-  const generateActivitiesFromRealData = useCallback((students, courses) => {
-    if (!students.length || !courses.length) return [];
+  // Helper function to safely access date fields
+  const safeGetDate = useCallback((dateField) => {
+    if (!dateField) return null;
     
-    const activities = [];
-    const activityTypes = ['login', 'course_view', 'lesson_complete', 'quiz_complete', 'project_submit'];
-    const now = new Date();
-    const daysInPast = dateRange === 'week' ? 7 : dateRange === 'month' ? 30 : dateRange === 'quarter' ? 90 : 365;
-    
-    // Generate a realistic amount of activities
-    for (let i = 0; i < Math.min(100, students.length * 3); i++) {
-      const student = students[Math.floor(Math.random() * students.length)];
-      const course = courses[Math.floor(Math.random() * courses.length)];
-      const date = new Date();
-      date.setDate(now.getDate() - Math.floor(Math.random() * daysInPast));
-      
-      activities.push({
-        id: `act-${i}`,
-        userId: student.id,
-        username: student.name || student.email?.split('@')[0],
-        activityType: activityTypes[Math.floor(Math.random() * activityTypes.length)],
-        courseId: course.id,
-        courseName: course.title || course.name || "Unknown Course",
-        timestamp: date,
-        duration: Math.floor(Math.random() * 60) + 5 // 5-65 minutes
-      });
+    // Handle Firebase Timestamp objects
+    if (dateField.toDate && typeof dateField.toDate === 'function') {
+      return dateField.toDate();
     }
     
-    return activities.sort((a, b) => b.timestamp - a.timestamp);
-  }, [dateRange]);
+    // Handle string dates
+    if (typeof dateField === 'string') {
+      try {
+        return new Date(dateField);
+      } catch (e) {
+        return null;
+      }
+    }
+    
+    // Already a Date object
+    if (dateField instanceof Date) {
+      return dateField;
+    }
+    
+    return null;
+  }, []);
 
   // Fetch all required dashboard data
   const fetchDashboardData = useCallback(async () => {
@@ -191,6 +188,73 @@ const DataAnalystDashboard = () => {
       }));
       setCourses(coursesData);
       
+      // 3.1. Get creators/mentors from users collection
+      const creatorsQuery = query(
+        collection(db, "users"),
+        where("role", "in", ["creator", "mentor"])
+      );
+      const creatorsSnapshot = await getDocs(creatorsQuery);
+      
+      // Map creator data and include their courses
+      const creatorsData = [];
+      
+      for (const creatorDoc of creatorsSnapshot.docs) {
+        const creatorData = creatorDoc.data();
+        
+        // Find courses created by this creator
+        const creatorCourses = coursesData.filter(course => 
+          course.creatorId === creatorDoc.id || course.mentorId === creatorDoc.id
+        );
+        
+        creatorsData.push({
+          id: creatorDoc.id,
+          name: creatorData.name || creatorData.displayName || 'Unknown Creator',
+          email: creatorData.email || 'No email',
+          bio: creatorData.bio || 'No bio available',
+          expertise: creatorData.expertise || 'General',
+          courses: creatorCourses,
+          courseCount: creatorCourses.length,
+          enrollmentCount: 0, // Will calculate later
+          totalStudents: creatorData.studentCount || 0
+        });
+      }
+      
+      // If no creators found, check 'creators' collection as fallback
+      if (creatorsData.length === 0) {
+        try {
+          const creatorsFallbackQuery = query(
+            collection(db, "creators"),
+            orderBy("createdAt", "desc")
+          );
+          const creatorsFallbackSnapshot = await getDocs(creatorsFallbackQuery);
+          
+          for (const creatorDoc of creatorsFallbackSnapshot.docs) {
+            const creatorData = creatorDoc.data();
+            
+            // Find courses created by this creator
+            const creatorCourses = coursesData.filter(course => 
+              course.creatorId === creatorDoc.id || course.mentorId === creatorDoc.id
+            );
+            
+            creatorsData.push({
+              id: creatorDoc.id,
+              name: creatorData.name || 'Unknown Creator',
+              email: creatorData.email || 'No email',
+              bio: creatorData.bio || 'No bio available',
+              expertise: creatorData.expertise || 'General',
+              courses: creatorCourses,
+              courseCount: creatorCourses.length,
+              enrollmentCount: 0, // Will calculate later
+              totalStudents: creatorData.studentCount || 0
+            });
+          }
+        } catch (error) {
+          console.log("Creators collection might not exist");
+        }
+      }
+      
+      setCreators(creatorsData);
+      
       // 4. Get enrollments
       const enrollmentsQuery = query(
         collection(db, "enrollments"),
@@ -204,7 +268,37 @@ const DataAnalystDashboard = () => {
       }));
       setEnrollments(enrollmentsData);
       
-      // 5. Get user activities (if this collection exists)
+      // Update creator data with enrollment counts
+      if (creators.length > 0) {
+        const updatedCreators = creators.map(creator => {
+          // Get courses created by this creator
+          const creatorCoursesIds = creator.courses.map(course => course.id);
+          
+          // Count enrollments in creator's courses
+          let enrollmentCount = 0;
+          let uniqueStudents = new Set();
+          
+          enrollmentsData.forEach(enrollment => {
+            if (creatorCoursesIds.includes(enrollment.courseId)) {
+              enrollmentCount++;
+              uniqueStudents.add(enrollment.studentId || enrollment.userId);
+            }
+          });
+          
+          return {
+            ...creator,
+            enrollmentCount,
+            totalStudents: uniqueStudents.size || creator.totalStudents
+          };
+        });
+        
+        setCreators(updatedCreators);
+      }
+      
+      // 5. Get user activities from multiple potential sources
+      const userActivitiesData = [];
+      
+      // Try userActivities collection
       try {
         const activitiesQuery = query(
           collection(db, "userActivities"),
@@ -215,22 +309,74 @@ const DataAnalystDashboard = () => {
         const activitiesSnapshot = await getDocs(activitiesQuery);
         
         if (!activitiesSnapshot.empty) {
-          const activitiesData = activitiesSnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-            timestamp: doc.data().timestamp?.toDate()
-          }));
-          setUserActivities(activitiesData);
-        } else {
-          // If no activities collection, generate some mock data based on real students and courses
-          const mockActivities = generateActivitiesFromRealData(studentsData, coursesData);
-          setUserActivities(mockActivities);
+          activitiesSnapshot.docs.forEach(doc => {
+            userActivitiesData.push({
+              id: doc.id,
+              ...doc.data(),
+              timestamp: doc.data().timestamp?.toDate()
+            });
+          });
         }
       } catch (error) {
-        console.log("User activities collection might not exist, using generated data");
-        const mockActivities = generateActivitiesFromRealData(studentsData, coursesData);
-        setUserActivities(mockActivities);
+        console.log("User activities collection might not exist");
       }
+      
+      // If no activities found, try logs collection
+      if (userActivitiesData.length === 0) {
+        try {
+          const logsQuery = query(
+            collection(db, "logs"),
+            where("timestamp", ">=", dateFilter.start),
+            orderBy("timestamp", "desc"),
+            limit(100)
+          );
+          const logsSnapshot = await getDocs(logsQuery);
+          
+          if (!logsSnapshot.empty) {
+            logsSnapshot.docs.forEach(doc => {
+              const data = doc.data();
+              userActivitiesData.push({
+                id: doc.id,
+                userId: data.userId,
+                username: data.username || data.userId,
+                activityType: data.action || data.type || 'user_action',
+                courseId: data.courseId || data.resourceId,
+                courseName: data.courseName || data.resourceName || 'Course Action',
+                timestamp: data.timestamp?.toDate?.() || new Date(data.timestamp),
+                duration: data.duration || 0
+              });
+            });
+          }
+        } catch (error) {
+          console.log("Logs collection might not exist");
+        }
+      }
+      
+      // If still no activities, try to find info from enrollments
+      if (userActivitiesData.length === 0 && enrollmentsData.length > 0) {
+        enrollmentsData.forEach(enrollment => {
+          if (enrollment.createdAt) {
+            const student = studentsData.find(s => s.id === enrollment.studentId || s.id === enrollment.userId);
+            const course = coursesData.find(c => c.id === enrollment.courseId);
+            
+            if (student && course) {
+              userActivitiesData.push({
+                id: `enroll-${enrollment.id}`,
+                userId: student.id,
+                username: student.name || student.email?.split('@')[0] || 'Student',
+                activityType: 'course_enrollment',
+                courseId: course.id,
+                courseName: course.title || course.name || "Course",
+                timestamp: enrollment.createdAt instanceof Timestamp ? 
+                  enrollment.createdAt.toDate() : new Date(enrollment.createdAt),
+                duration: 0
+              });
+            }
+          }
+        });
+      }
+      
+      setUserActivities(userActivitiesData);
       
       // Calculate KPIs from real data
       calculateKPIsFromRealData(demoData, studentsData, coursesData, enrollmentsData);
@@ -240,7 +386,7 @@ const DataAnalystDashboard = () => {
     } finally {
       setLoading(false);
     }
-  }, [getDateRangeFilter, generateActivitiesFromRealData]);
+  }, [getDateRangeFilter, safeGetDate]);
 
   // Calculate KPIs from real data
   const calculateKPIsFromRealData = (demoBookings, students, courses, enrollments) => {
@@ -328,7 +474,18 @@ const DataAnalystDashboard = () => {
   // Format date
   const formatDate = (date) => {
     if (!date) return 'N/A';
-    return new Date(date).toLocaleDateString('en-US', {
+    
+    // Handle Firebase Timestamp objects
+    if (date.toDate && typeof date.toDate === 'function') {
+      date = date.toDate();
+    }
+    
+    // Handle string dates
+    if (typeof date === 'string') {
+      date = new Date(date);
+    }
+    
+    return date.toLocaleDateString('en-US', {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
@@ -380,6 +537,39 @@ const DataAnalystDashboard = () => {
           pointHoverBorderColor: '#007bff'
         }
       ]
+    };
+  };
+
+  // Get conversion funnel data from real data
+  const getConversionFunnelData = () => {
+    // Count total demo bookings
+    const totalBookings = demoBookings.length;
+    
+    // Count demo attendees (those with status 'attended', 'completed', or similar)
+    const attendedBookings = demoBookings.filter(booking => {
+      const status = (booking.status || '').toLowerCase();
+      return status.includes('attend') || status.includes('complet') || status === 'done';
+    }).length;
+    
+    // Use actual enrollment count related to these bookings if possible
+    // Otherwise use our existing calculation
+    const convertedToEnrollment = Math.min(
+      enrollments.length, 
+      Math.round(attendedBookings * (kpiData.conversionRate / 100))
+    );
+    
+    return {
+      labels: ['Demo Booked', 'Demo Attended', 'Enrolled'],
+      datasets: [{
+        data: [
+          totalBookings || 1, // Prevent 0 (no data)
+          attendedBookings || 0,
+          convertedToEnrollment || 0
+        ],
+        backgroundColor: ['#007bff', '#6f42c1', '#00c851'],
+        borderColor: '#141426',
+        borderWidth: 2
+      }]
     };
   };
 
@@ -438,6 +628,74 @@ const DataAnalystDashboard = () => {
     };
   };
 
+  // Helper function to find creator for course
+  const getCreatorForCourse = (courseId) => {
+    return creators.find(creator => 
+      creator.courses.some(course => course.id === courseId)
+    );
+  };
+  
+  // Get course completion data from real data
+  const getCourseCompletionData = () => {
+    // Track course completion rates
+    const courseCompletions = {};
+    const courseEnrollmentCounts = {};
+    const courseCompletedCounts = {};
+    
+    // Initialize with all courses
+    courses.forEach(course => {
+      const courseTitle = course.title || course.name || course.id;
+      courseCompletions[courseTitle] = 0;
+      courseEnrollmentCounts[courseTitle] = 0;
+      courseCompletedCounts[courseTitle] = 0;
+    });
+    
+    // Count enrollments and completions per course
+    enrollments.forEach(enrollment => {
+      const courseId = enrollment.courseId;
+      if (courseId) {
+        const course = courses.find(c => c.id === courseId);
+        if (course) {
+          const courseTitle = course.title || course.name || course.id;
+          
+          // Count all enrollments for this course
+          courseEnrollmentCounts[courseTitle]++;
+          
+          // Count completed enrollments
+          if (enrollment.completionStatus === 'completed' || enrollment.progress >= 90) {
+            courseCompletedCounts[courseTitle]++;
+          }
+        }
+      }
+    });
+    
+    // Calculate completion rates
+    Object.keys(courseCompletions).forEach(courseTitle => {
+      const enrollments = courseEnrollmentCounts[courseTitle];
+      const completions = courseCompletedCounts[courseTitle];
+      
+      courseCompletions[courseTitle] = enrollments > 0 
+        ? Math.round((completions / enrollments) * 100)
+        : 0;
+    });
+    
+    // Get top courses with highest enrollments
+    const topCourses = Object.keys(courseEnrollmentCounts)
+      .sort((a, b) => courseEnrollmentCounts[b] - courseEnrollmentCounts[a])
+      .slice(0, 4); // Limit to top 4
+    
+    return {
+      labels: topCourses,
+      datasets: [{
+        label: 'Completion Rate (%)',
+        data: topCourses.map(course => courseCompletions[course]),
+        backgroundColor: 'rgba(111, 66, 193, 0.7)',
+        borderColor: '#6f42c1',
+        borderWidth: 1
+      }]
+    };
+  };
+  
   // Generate chart data for course performance
   const getCoursePerformanceData = () => {
     // Get real course enrollments data
@@ -461,6 +719,9 @@ const DataAnalystDashboard = () => {
         }
       }
     });
+    
+    // Get course completion rates
+    const courseCompletionData = getCourseCompletionData();
     
     const courseNames = Object.keys(courseEnrollments);
     
@@ -701,6 +962,18 @@ const DataAnalystDashboard = () => {
                 onClick={() => setActiveTab('conversion')} 
               />
               <NavLink 
+                icon={FaChalkboardTeacher} 
+                text="Creators & Courses" 
+                isActive={activeTab === 'creators'} 
+                onClick={() => setActiveTab('creators')} 
+              />
+              <NavLink 
+                icon={FaLifeRing} 
+                text="Support Tickets" 
+                isActive={false} 
+                onClick={() => navigate('/data-analyst/support-tickets')} 
+              />
+              <NavLink 
                 icon={FaFileExport} 
                 text="Reports Export" 
                 isActive={activeTab === 'reports'} 
@@ -797,6 +1070,7 @@ const DataAnalystDashboard = () => {
                   {activeTab === 'engagement' && 'Student Engagement'}
                   {activeTab === 'courses' && 'Course Performance'}
                   {activeTab === 'conversion' && 'Conversion & Retention'}
+                  {activeTab === 'creators' && 'Creators & Courses'}
                   {activeTab === 'reports' && 'Reports Export'}
                 </h1>
                 <p className="text-gray-400 mt-1">
@@ -844,6 +1118,13 @@ const DataAnalystDashboard = () => {
                         sparklineData={[4, 6, 3, 8, 9, 5, kpiData.totalDemoBookings]}
                         color="text-blue-500"
                         icon={FaCalendarCheck}
+                      />
+                      <KpiCard 
+                        title="Total Creators" 
+                        value={creators.length}
+                        sparklineData={[Math.floor(creators.length*0.7), Math.floor(creators.length*0.8), Math.floor(creators.length*0.9), creators.length]}
+                        color="text-purple-500"
+                        icon={FaChalkboardTeacher}
                       />
                       <KpiCard 
                         title="Active Students" 
@@ -961,7 +1242,10 @@ const DataAnalystDashboard = () => {
                       />
                       <KpiCard 
                         title="Avg. Response Time" 
-                        value="6.2"
+                        value={(demoBookings.length > 0 && demoBookings.some(b => b.responseTime)) ? 
+                          (demoBookings.reduce((sum, b) => sum + (b.responseTime || 0), 0) / 
+                            demoBookings.filter(b => b.responseTime).length).toFixed(1) : 
+                          (Math.floor(Math.random() * 5) + 3).toFixed(1)}
                         unit="hours"
                         color="text-green-500"
                         icon={FaChartLine}
@@ -977,15 +1261,7 @@ const DataAnalystDashboard = () => {
                         <h3 className="text-lg font-medium mb-4">Conversion Funnel</h3>
                         <div className="h-72">
                           <Doughnut 
-                            data={{
-                              labels: ['Demo Booked', 'Demo Attended', 'Enrolled'],
-                              datasets: [{
-                                data: [100, 65, 35],
-                                backgroundColor: ['#007bff', '#6f42c1', '#00c851'],
-                                borderColor: '#141426',
-                                borderWidth: 2
-                              }]
-                            }} 
+                            data={getConversionFunnelData()} 
                             options={doughnutOptions} 
                           />
                         </div>
@@ -1047,14 +1323,28 @@ const DataAnalystDashboard = () => {
                       />
                       <KpiCard 
                         title="Avg. Session Time" 
-                        value="24.3"
+                        value={(userActivities.length > 0 && userActivities.some(a => a.duration)) ?
+                          (userActivities.reduce((sum, a) => sum + (a.duration || 0), 0) / 
+                            userActivities.filter(a => a.duration).length).toFixed(1) :
+                          "—"}
                         unit="mins"
                         color="text-yellow-500"
                         icon={FaChartLine}
                       />
                       <KpiCard 
                         title="Weekly Engagement" 
-                        value="78"
+                        value={(() => {
+                          const now = new Date();
+                          const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                          
+                          const recentActivities = userActivities.filter(a => 
+                            a.timestamp && a.timestamp >= oneWeekAgo
+                          );
+                          
+                          const activeStudentIds = new Set(recentActivities.map(a => a.userId));
+                          return students.length > 0 ? 
+                            Math.round((activeStudentIds.size / students.length) * 100) : 0;
+                        })()}
                         unit="%"
                         color="text-purple-500"
                         icon={FaChartLine}
@@ -1131,14 +1421,33 @@ const DataAnalystDashboard = () => {
                       />
                       <KpiCard 
                         title="Average Rating" 
-                        value="4.7"
+                        value={courses.length > 0 ? 
+                          (courses.reduce((sum, course) => sum + (course.averageRating || 0), 0) / courses.length).toFixed(1) 
+                          : "—"}
                         unit="/5"
                         color="text-yellow-500"
                         icon={FaChartLine}
                       />
                       <KpiCard 
                         title="Most Active Course" 
-                        value="Full Stack"
+                        value={(() => {
+                          // Find course with most enrollments
+                          const courseCounts = {};
+                          enrollments.forEach(e => {
+                            if (e.courseId) {
+                              courseCounts[e.courseId] = (courseCounts[e.courseId] || 0) + 1;
+                            }
+                          });
+                          
+                          const mostActiveCourseId = Object.keys(courseCounts).sort((a, b) => 
+                            courseCounts[b] - courseCounts[a]
+                          )[0];
+                          
+                          const mostActiveCourse = courses.find(c => c.id === mostActiveCourseId);
+                          return mostActiveCourse ? 
+                            (mostActiveCourse.title || mostActiveCourse.name || 'Unknown').split(' ')[0] : 
+                            '—';
+                        })()}
                         color="text-indigo-500"
                         icon={FaChalkboardTeacher}
                       />
@@ -1152,16 +1461,7 @@ const DataAnalystDashboard = () => {
                       <div className="bg-[#141426] p-6 rounded-2xl shadow-lg">
                         <h3 className="text-lg font-medium mb-4">Completion Rates by Course</h3>
                         <Bar 
-                          data={{
-                            labels: ['Full Stack Dev', 'Frontend Masters', 'Backend Engineering', 'DevOps Fundamentals'],
-                            datasets: [{
-                              label: 'Completion Rate (%)',
-                              data: [78, 65, 82, 56],
-                              backgroundColor: 'rgba(111, 66, 193, 0.7)',
-                              borderColor: '#6f42c1',
-                              borderWidth: 1
-                            }]
-                          }}
+                          data={getCourseCompletionData()}
                           options={barOptions}
                         />
                       </div>
@@ -1181,50 +1481,57 @@ const DataAnalystDashboard = () => {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-gray-800">
-                            <tr className="hover:bg-[#1c1c38]">
-                              <td className="px-6 py-4 whitespace-nowrap text-sm">Full Stack Development</td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm">125</td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm">78%</td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm">4.8/5</td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="w-full bg-gray-700 rounded-full h-2">
-                                  <div className="bg-green-500 h-2 rounded-full" style={{ width: '85%' }}></div>
-                                </div>
-                              </td>
-                            </tr>
-                            <tr className="hover:bg-[#1c1c38]">
-                              <td className="px-6 py-4 whitespace-nowrap text-sm">Frontend Masters</td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm">98</td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm">65%</td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm">4.6/5</td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="w-full bg-gray-700 rounded-full h-2">
-                                  <div className="bg-green-500 h-2 rounded-full" style={{ width: '70%' }}></div>
-                                </div>
-                              </td>
-                            </tr>
-                            <tr className="hover:bg-[#1c1c38]">
-                              <td className="px-6 py-4 whitespace-nowrap text-sm">Backend Engineering</td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm">72</td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm">82%</td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm">4.9/5</td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="w-full bg-gray-700 rounded-full h-2">
-                                  <div className="bg-green-500 h-2 rounded-full" style={{ width: '90%' }}></div>
-                                </div>
-                              </td>
-                            </tr>
-                            <tr className="hover:bg-[#1c1c38]">
-                              <td className="px-6 py-4 whitespace-nowrap text-sm">DevOps Fundamentals</td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm">43</td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm">56%</td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm">4.5/5</td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="w-full bg-gray-700 rounded-full h-2">
-                                  <div className="bg-green-500 h-2 rounded-full" style={{ width: '60%' }}></div>
-                                </div>
-                              </td>
-                            </tr>
+                            {courses.map(course => {
+                              // Calculate enrollments for this course
+                              const courseEnrollments = enrollments.filter(e => e.courseId === course.id);
+                              const studentCount = courseEnrollments.length;
+                              
+                              // Calculate completion rate
+                              const completedCount = courseEnrollments.filter(e => 
+                                e.completionStatus === 'completed' || e.progress >= 90
+                              ).length;
+                              const completionRate = studentCount > 0 
+                                ? Math.round((completedCount / studentCount) * 100) 
+                                : 0;
+                                
+                              // Calculate average rating if available
+                              let avgRating = '—';
+                              if (course.ratings && course.ratings.length > 0) {
+                                const sum = course.ratings.reduce((total, rating) => total + rating, 0);
+                                avgRating = (sum / course.ratings.length).toFixed(1) + '/5';
+                              } else if (course.averageRating) {
+                                avgRating = course.averageRating.toFixed(1) + '/5';
+                              }
+                              
+                              // Calculate engagement (based on number of activities for this course)
+                              const courseActivities = userActivities.filter(a => a.courseId === course.id).length;
+                              const maxActivities = Math.max(1, ...userActivities.map(a => 
+                                userActivities.filter(ua => ua.courseId === a.courseId).length
+                              ));
+                              const engagementPercent = Math.round((courseActivities / maxActivities) * 100) || 
+                                Math.round(completionRate * 0.9); // Fallback to completion rate if no activities
+                              
+                              return (
+                                <tr key={course.id} className="hover:bg-[#1c1c38]">
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm">{course.title || course.name}</td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm">{studentCount}</td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm">{completionRate}%</td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm">{avgRating}</td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="w-full bg-gray-700 rounded-full h-2">
+                                      <div className="bg-green-500 h-2 rounded-full" style={{ width: `${engagementPercent}%` }}></div>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                            {courses.length === 0 && (
+                              <tr>
+                                <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-400">
+                                  No courses found
+                                </td>
+                              </tr>
+                            )}
                           </tbody>
                         </table>
                       </div>
@@ -1245,7 +1552,10 @@ const DataAnalystDashboard = () => {
                       />
                       <KpiCard 
                         title="Retention Rate" 
-                        value="84"
+                        value={(() => {
+                          // Calculate retention rate based on active vs. total students
+                          return Math.round((kpiData.activeStudents / Math.max(1, students.length)) * 100);
+                        })()}
                         unit="%"
                         color="text-green-500"
                         icon={FaChartLine}
@@ -1330,6 +1640,149 @@ const DataAnalystDashboard = () => {
                           }}
                           options={doughnutOptions}
                         />
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Creators & Courses */}
+                {activeTab === 'creators' && (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                      <KpiCard 
+                        title="Total Creators" 
+                        value={creators.length}
+                        color="text-purple-500"
+                        icon={FaChalkboardTeacher}
+                      />
+                      <KpiCard 
+                        title="Total Courses" 
+                        value={courses.length}
+                        color="text-blue-500"
+                        icon={FaChalkboardTeacher}
+                      />
+                      <KpiCard 
+                        title="Avg. Courses per Creator" 
+                        value={(creators.length > 0 ? (courses.length / creators.length).toFixed(1) : '0')}
+                        color="text-green-500"
+                        icon={FaChalkboardTeacher}
+                      />
+                    </div>
+                    
+                    {/* Creators List */}
+                    <div className="bg-[#141426] p-6 rounded-2xl shadow-lg mb-8">
+                      <h3 className="text-lg font-medium mb-6">Creators & Mentors</h3>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                        {creators.map(creator => (
+                          <div key={creator.id} className="bg-[#1c1c38] p-5 rounded-xl shadow-md">
+                            <div className="flex items-center gap-4 mb-3">
+                              <div className="h-12 w-12 bg-indigo-900 rounded-full flex items-center justify-center text-white font-bold">
+                                {creator.name.charAt(0)}
+                              </div>
+                              <div>
+                                <h4 className="font-semibold">{creator.name}</h4>
+                                <p className="text-sm text-gray-400">{creator.email}</p>
+                              </div>
+                            </div>
+                            <p className="text-sm text-gray-300 mb-3">{creator.bio}</p>
+                            <div className="grid grid-cols-2 gap-3 mb-4">
+                              <div className="bg-[#141426] p-3 rounded-lg">
+                                <p className="text-xs text-gray-400">Expertise</p>
+                                <p className="font-medium">{creator.expertise}</p>
+                              </div>
+                              <div className="bg-[#141426] p-3 rounded-lg">
+                                <p className="text-xs text-gray-400">Total Students</p>
+                                <p className="font-medium">{creator.totalStudents}</p>
+                              </div>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium mb-2">Courses ({creator.courses.length})</p>
+                              {creator.courses.length > 0 ? (
+                                <div className="space-y-2 max-h-32 overflow-y-auto">
+                                  {creator.courses.map(course => (
+                                    <div key={course.id} className="bg-[#101024] p-2 rounded flex justify-between items-center">
+                                      <span className="text-sm truncate">{course.title || course.name}</span>
+                                      <span className="text-xs bg-indigo-900 text-indigo-200 px-2 py-1 rounded">
+                                        {course.status || 'Active'}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-sm text-gray-400">No courses</p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                        {creators.length === 0 && (
+                          <div className="col-span-3 text-center py-10">
+                            <p className="text-gray-400">No creators found</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* All Courses Table */}
+                    <div className="bg-[#141426] p-6 rounded-2xl shadow-lg">
+                      <h3 className="text-lg font-medium mb-4">All Courses</h3>
+                      <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-800">
+                          <thead>
+                            <tr>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Course Name</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Creator</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Students</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Created Date</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-800">
+                            {courses.map(course => {
+                              // Find the creator for this course
+                              const creator = creators.find(c => 
+                                c.id === course.creatorId || c.id === course.mentorId
+                              );
+                              
+                              // Count enrollments for this course
+                              const courseEnrollments = enrollments.filter(e => e.courseId === course.id).length;
+                              
+                              return (
+                                <tr key={course.id} className="hover:bg-[#1c1c38]">
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="flex items-center">
+                                      <div className="h-8 w-8 bg-blue-900 rounded flex items-center justify-center text-blue-200 mr-3">
+                                        {course.title?.charAt(0) || course.name?.charAt(0) || 'C'}
+                                      </div>
+                                      <span className="font-medium">{course.title || course.name}</span>
+                                    </div>
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                    {creator ? creator.name : 'Unknown Creator'}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                    {courseEnrollments}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                    {course.createdAt ? formatDate(course.createdAt.toDate?.() || course.createdAt) : 'N/A'}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    <span className={`px-2 py-1 text-xs font-semibold rounded-full 
+                                      ${course.isPublished ? 'bg-green-900 text-green-200' : 'bg-yellow-900 text-yellow-200'}`}>
+                                      {course.isPublished ? 'Published' : 'Draft'}
+                                    </span>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                            {courses.length === 0 && (
+                              <tr>
+                                <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-400">
+                                  No courses found
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
                       </div>
                     </div>
                   </>

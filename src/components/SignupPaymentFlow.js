@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import RazorpayService from '../utils/RazorpayService';
+import { useAuth } from '../contexts/AuthContext.js';
+import RazorpayService from '../utils/RazorpayService.js';
 import { Button, Spinner, Alert, Container, Card, Row, Col, Badge, ListGroup } from 'react-bootstrap';
 import { collection, getDocs, query, where, limit } from 'firebase/firestore';
-import { db } from '../firebase/firebase';
+import { db } from '../firebase/firebase.js';
 import '../styles/PaymentStyles.css';
 
 const SignupPaymentFlow = () => {

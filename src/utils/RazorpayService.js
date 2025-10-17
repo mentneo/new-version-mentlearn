@@ -1,4 +1,4 @@
-import { db } from "../firebase/firebase";
+import { db } from "../firebase/firebase.js";
 import { doc, collection, addDoc, serverTimestamp, getDoc } from "firebase/firestore";
 
 // Razorpay Production API key

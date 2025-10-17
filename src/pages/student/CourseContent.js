@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Card, ListGroup, Nav, Button, Spinner } from 'react-bootstrap';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../../firebase/firebase';
-import { useAuth } from '../../contexts/AuthContext';
+import { db } from '../../firebase/firebase.js';
+import { useAuth } from '../../contexts/AuthContext.js';
 
 const CourseContent = () => {
   const { courseId } = useParams();

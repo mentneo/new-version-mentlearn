@@ -10,12 +10,15 @@
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
+    "ajv": "^8.17.1",
     "bootstrap": "^5.3.6",
     "chart.js": "^4.3.0",
     "cloudinary-core": "^2.11.3",
     "cloudinary-react": "^1.7.0",
+    "date-fns": "^4.1.0",
     "dotenv": "^17.2.2",
     "firebase": "^9.22.1",
+    "firebase-admin": "^13.5.0",
     "formik": "^2.2.9",
     "framer-motion": "^12.23.12",
     "react": "^18.2.0",
@@ -62,5 +65,6 @@
   "devDependencies": {
     "autoprefixer": "^10.4.14",
     "postcss": "^8.4.24"
-  }
+  },
+  "proxy": "http://localhost:5000"
 }

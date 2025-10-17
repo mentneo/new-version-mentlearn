@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../../firebase/firebase';
-import { useAuth } from '../../contexts/AuthContext';
-import Navbar from '../../components/student/Navbar';
-import { FaGraduationCap, FaCalendarAlt, FaUserGraduate, FaRupeeSign, FaCheckCircle } from 'react-icons/fa';
+import { db } from '../../firebase/firebase.js';
+import { useAuth } from '../../contexts/AuthContext.js';
+import Navbar from '../../components/student/Navbar.js';
+import { FaGraduationCap, FaCalendarAlt, FaUserGraduate, FaRupeeSign, FaCheckCircle } from 'react-icons/fa/index.esm.js';
 
 export default function CourseEnrollment() {
   const { courseId } = useParams();

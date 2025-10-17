@@ -1,7 +1,7 @@
-import { cloudinaryConfig } from '../../firebase/firebase';
+import { cloudinaryConfig } from '../../firebase/firebase.js';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
-import { auth, db } from '../../firebase/firebase';
+import { auth, db } from '../../firebase/firebase.js';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 

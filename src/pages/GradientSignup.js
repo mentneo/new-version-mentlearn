@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext.js';
 import { motion } from 'framer-motion';
 import { 
   FaEye, 
@@ -12,8 +12,8 @@ import {
   FaCheckCircle,
   FaUserGraduate,
   FaRocket
-} from 'react-icons/fa';
-import MenteoLogo from '../components/MenteoLogo';
+} from 'react-icons/fa/index.esm.js';
+import MenteoLogo from '../components/MenteoLogo.js';
 
 const GradientSignup = () => {
   const [formData, setFormData] = useState({

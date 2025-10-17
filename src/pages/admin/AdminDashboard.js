@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import ManageDataAnalysts from './ManageDataAnalysts';
+import { useAuth } from '../../contexts/AuthContext.js';
+import ManageDataAnalysts from './ManageDataAnalysts.js';
 import {
   FaUsers,
   FaUserGraduate,
@@ -10,7 +10,7 @@ import {
   FaCog,
   FaBars,
   FaTimes
-} from 'react-icons/fa';
+} from 'react-icons/fa/index.esm.js';
 
 const AdminDashboard = () => {
   const { userRole } = useAuth(); // Remove unused currentUser

@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Container, Card, Button, Alert } from 'react-bootstrap';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { db } from '../../firebase/firebase';
-import { useAuth } from '../../contexts/AuthContext';
+import { db } from '../../firebase/firebase.js';
+import { useAuth } from '../../contexts/AuthContext.js';
 
 const PaymentSuccess = () => {
   const { courseId } = useParams();

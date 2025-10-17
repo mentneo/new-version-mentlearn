@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom'; // Remove unused useLocation
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext.js';
 
 // Protected route - requires authentication
 export function ProtectedRoute({ children }) {

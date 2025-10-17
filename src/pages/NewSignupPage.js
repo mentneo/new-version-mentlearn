@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { FaEnvelope, FaLock, FaUser, FaEye, FaEyeSlash, FaArrowLeft, FaCheckCircle, FaGift } from 'react-icons/fa';
+import { useAuth } from '../contexts/AuthContext.js';
+import { FaEnvelope, FaLock, FaUser, FaEye, FaEyeSlash, FaArrowLeft, FaCheckCircle, FaGift } from 'react-icons/fa/index.esm.js';
 
 export default function NewSignupPage() {
   const [firstName, setFirstName] = useState('');

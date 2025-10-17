@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../../firebase/firebase';
+import { db } from '../../firebase/firebase.js';
 
 const PaymentSuccessPage = () => {
   const { courseId } = useParams();

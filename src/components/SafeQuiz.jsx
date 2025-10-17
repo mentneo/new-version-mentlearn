@@ -1,5 +1,5 @@
 import React from 'react';
-import { SafeRenderer } from '../utils/reactPatcher';
+import { SafeRenderer } from '../utils/reactPatcher.js';
 
 /**
  * A safe wrapper component for quiz display

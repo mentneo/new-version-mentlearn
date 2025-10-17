@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useAuth } from '../../contexts/AuthContext.js';
+import { useTheme } from '../../contexts/ThemeContext.js';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../../firebase/firebase';
+import { db } from '../../firebase/firebase.js';
 import { 
   FaHome as HomeIcon,
   FaBook as BookOpenIcon,
@@ -17,6 +17,7 @@ import {
   FaMoon,
   FaEllipsisV
 } from 'react-icons/fa';
+import MenteoLogo from '../MenteoLogo.js';
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(' ');
@@ -89,7 +90,7 @@ export default function NewStudentNavbar() {
           <div className="flex-1 h-0 pt-5 pb-4 overflow-y-auto">
             <div className="flex-shrink-0 flex items-center px-6 mb-5">
               <Link to="/student/new-dashboard" onClick={() => setSidebarOpen(false)}>
-                <img className="h-10 w-auto" src="/logo.png" alt="Mentneo" />
+                <MenteoLogo size="medium" />
               </Link>
             </div>
             <nav className="mt-5 px-4 space-y-3">
@@ -178,7 +179,7 @@ export default function NewStudentNavbar() {
           <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
             <div className="flex items-center flex-shrink-0 px-6 mb-5">
               <Link to="/student/new-dashboard">
-                <img className="h-10 w-auto" src="/logo.png" alt="Mentneo" />
+                <MenteoLogo size="medium" />
               </Link>
             </div>
             <nav className={`mt-5 flex-1 px-4 ${darkMode ? 'bg-gray-900' : 'bg-white'} space-y-3`}>
@@ -271,7 +272,7 @@ export default function NewStudentNavbar() {
             </button>
             
             <Link to="/student/new-dashboard" className="flex items-center">
-              <img className="h-8 w-auto" src="/logo.png" alt="Mentneo" />
+              <MenteoLogo size="small" />
               <span className={`ml-2 text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Mentneo</span>
             </Link>
             

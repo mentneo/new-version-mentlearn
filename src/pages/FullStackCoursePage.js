@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FaHtml5, FaCss3Alt, FaJs, FaReact, FaPython, FaDatabase, FaGithub, FaGraduationCap, FaClock, FaCertificate, FaPhone, FaWhatsapp, FaStar, FaQuoteLeft } from 'react-icons/fa';
-import { SiMongodb, SiDjango, SiFlask } from 'react-icons/si';
-import { useTheme } from '../contexts/ThemeContext';
-import MenteoLogo from '../components/MenteoLogo';
+import { FaHtml5, FaCss3Alt, FaJs, FaReact, FaPython, FaDatabase, FaGithub, FaGraduationCap, FaClock, FaCertificate, FaPhone, FaWhatsapp, FaStar, FaQuoteLeft } from 'react-icons/fa/index.esm.js';
+import { SiMongodb, SiDjango, SiFlask } from 'react-icons/si/index.esm.js';
+import { useTheme } from '../contexts/ThemeContext.js';
+import MenteoLogo from '../components/MenteoLogo.js';
 
 export default function FullStackCoursePage() {
   const { darkMode, toggleDarkMode } = useTheme();

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext.js';
 
 export default function CreatorRoute({ children }) {
   const { currentUser, loading } = useAuth();
@@ -21,10 +21,15 @@ export default function CreatorRoute({ children }) {
   }
 
   // Check if the user is a creator
-  // Temporarily allow access for testing
-  // if (currentUser.role !== 'creator') {
-  //   return <Navigate to="/unauthorized" replace />;
-  // }
+  if (currentUser.role !== 'creator') {
+    console.log("Unauthorized access attempt to creator page. User details:", {
+      uid: currentUser.uid,
+      email: currentUser.email,
+      role: currentUser.role,
+      name: currentUser.name
+    });
+    return <Navigate to="/unauthorized" replace />;
+  }
 
   return children;
 }

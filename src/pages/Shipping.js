@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FaArrowLeft, FaTruck, FaBox, FaGlobe, FaCalendarAlt, FaInfoCircle } from 'react-icons/fa';
+import { FaArrowLeft, FaTruck, FaBox, FaGlobe, FaCalendarAlt, FaInfoCircle } from 'react-icons/fa/index.esm.js';
 
 export default function Shipping() {
   return (

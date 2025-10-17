@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext.js';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../firebase/firebase';
+import { db } from '../firebase/firebase.js';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { auth } from '../firebase/firebase';
-import { FaArrowLeft } from 'react-icons/fa';
+import { auth } from '../firebase/firebase.js';
+import { FaArrowLeft } from 'react-icons/fa/index.esm.js';
 
 export default function Signup() {
   const [email, setEmail] = useState('');

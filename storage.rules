@@ -40,6 +40,12 @@ service firebase.storage {
       allow write: if isAuthenticated() && request.auth.uid == userId;
     }
     
+    // Legacy profile photos path (for backward compatibility)
+    match /profilePhotos/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+    
     // Generic rule - deny by default
     match /{allPaths=**} {
       allow read, write: if false;

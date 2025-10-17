@@ -3,12 +3,14 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'r
 import ErrorBoundary from './components/ErrorBoundary';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import LearnIQRoutes from './LearnIQRoutes';
 // Import protected route components
 import { ProtectedRoute, PaymentProtectedRoute } from './components/ProtectedRoutes';
 import CreatorRoute from './components/CreatorRoute';
 import AdminLayout from './components/layouts/AdminLayout';
 import CreatorLayout from './components/layouts/CreatorLayout';
 import ExternalRedirect from './components/ExternalRedirect';
+import RoleBasedRedirect from './components/RoleBasedRedirect';
 
 // Public pages
 import Home from './pages/Home';
@@ -40,10 +42,12 @@ import Academy from './pages/Academy'; // <-- Add this import
 import TechWave from './pages/TechWave'; // Import TechWave page
 import ChatUs from './pages/ChatUs'; // Import ChatUs page
 import TechCareer from './pages/TechCareer'; // Import TechCareer page
+import CreateTestCreator from './pages/CreateTestCreator'; // Import Create Test Creator page
+import CreateTestCreatorDirect from './pages/CreateTestCreatorDirect'; // Import Direct Test Creator page
 
 // Admin pages
 import AdminDashboard from './pages/admin/AdminDashboard';
-import NewDashboard from './pages/admin/NewDashboard';
+import NewDashboard from './pages/admin/NewDashboard.js';
 import ManageCreators from './pages/admin/ManageCreators';
 import ManageCourses from './pages/admin/ManageCourses';
 import ManageStudents from './pages/admin/ManageStudents';
@@ -51,14 +55,10 @@ import ManageMentors from './pages/admin/ManageMentors';
 import ManageEnrollments from './pages/admin/ManageEnrollments';
 import VerifyPayments from './pages/admin/VerifyPayments';
 import DataAnalystDashboard from './pages/admin/DataAnalystDashboard';
+import SupportTickets from './pages/admin/SupportTickets';
 
-// Student pages
-import StudentDashboard from './pages/student/Dashboard';
-import StudentNewDashboard from './pages/student/NewDashboard';
-import SimplifiedDashboard from './pages/student/SimplifiedDashboard';
-import CourseView from './pages/student/CourseView';
-import CourseDetail from './pages/student/CourseDetail';
-import Progress from './pages/student/Progress';
+// Student pages - Modern LearnIQ Templates Only
+// Old pages have been removed - using LearnIQ templates from LearnIQRoutes.js
 import InterviewPrep from './pages/student/InterviewPrep';
 import QuizAttempt from './pages/student/QuizAttempt';
 import StudentQuizzes from './pages/student/StudentQuizzes';
@@ -66,11 +66,13 @@ import ReferAndEarn from './pages/student/ReferAndEarn';
 import TakeQuiz from './pages/student/TakeQuiz';
 import QuizResults from './pages/student/QuizResults';
 import StudentCourses from './pages/student/StudentCourses';
-import StudentProfile from './pages/student/StudentProfile'; // Import the new profile page
-import CourseContent from './pages/student/CourseContent'; // Add missing import
+import CourseContent from './pages/student/CourseContent';
 import PaymentSuccessPage from './pages/payment/PaymentSuccessPage';
 import CourseEnrollment from './pages/student/CourseEnrollment';
 import CoursePaymentSuccess from './pages/student/CoursePaymentSuccess';
+import LearnIQSupport from './pages/student/LearnIQSupport';
+import LearnIQSettings from './pages/student/LearnIQSettings';
+import CourseDebugger from './pages/student/CourseDebugger';
 
 // Mentor pages
 import MentorDashboard from './pages/mentor/Dashboard';
@@ -80,8 +82,13 @@ import ManageQuizzes from './pages/mentor/ManageQuizzes';
 import QuizSubmissions from './pages/mentor/QuizSubmissions';
 import CreateQuiz from './pages/mentor/CreateQuiz';
 import AssignToStudents from './pages/mentor/AssignToStudents';
-import InterviewPreparation from './pages/mentor/InterviewPreparation';
-import Interviews from './pages/mentor/Interviews';
+// New mentor pages with student-like features
+import MentorAssignments from './pages/mentor/MentorAssignments';
+import MentorAssignmentDetail from './pages/mentor/AssignmentDetail';
+import MentorNotifications from './pages/mentor/MentorNotifications';
+import MentorCalendar from './pages/mentor/MentorCalendar';
+import MentorProgress from './pages/mentor/MentorProgress';
+import StudentAssignmentDetail from './pages/student/AssignmentDetail';
 
 // Creator pages
 import CreatorDashboard from './pages/creator/Dashboard';
@@ -177,6 +184,8 @@ function App() {
               <Route path="/courses/techwave" element={<TechWave />} />
               <Route path="/courses/tech-career" element={<TechCareer />} />
               <Route path="/chat-us" element={<ChatUs />} />
+              <Route path="/create-test-creator" element={<CreateTestCreator />} />
+              <Route path="/create-test-creator-direct" element={<CreateTestCreatorDirect />} />
               
               {/* Emergency Admin Access */}
               <Route path="/emergency-admin" element={<DirectAdminAccess />} />
@@ -212,25 +221,28 @@ function App() {
                 <Route path="profile" element={<CreatorProfile />} />
               </Route>
             
-            {/* Student Routes with protection */}
-            <Route path="/student/dashboard" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />
-            <Route path="/student/new-dashboard" element={<ProtectedRoute><StudentNewDashboard /></ProtectedRoute>} />
-            <Route path="/student/simple-dashboard" element={<ProtectedRoute><SimplifiedDashboard /></ProtectedRoute>} />
+            {/* Student Routes - Using Modern LearnIQ Templates */}
+            {/* LearnIQ Dashboard Routes */}
+            <Route path="/student/*" element={<LearnIQRoutes />} />
+            
+            {/* Legacy redirects to LearnIQ templates */}
+            <Route path="/student/dashboard" element={<Navigate to="/student/student-dashboard" replace />} />
+            <Route path="/student/new-dashboard" element={<Navigate to="/student/student-dashboard" replace />} />
+            <Route path="/student/simple-dashboard" element={<Navigate to="/student/student-dashboard" replace />} />
+            
+            {/* Keep essential functional pages */}
             <Route path="/student/courses" element={<ProtectedRoute><StudentCourses /></ProtectedRoute>} />
-            <Route path="/student/course/:courseId" element={<ProtectedRoute><CourseView /></ProtectedRoute>} />
-            <Route path="/student/course-details/:courseId" element={<ProtectedRoute><CourseDetail /></ProtectedRoute>} />
             <Route path="/student/enroll/:courseId" element={<ProtectedRoute><CourseEnrollment /></ProtectedRoute>} />
             <Route path="/payment/success" element={<ProtectedRoute><CoursePaymentSuccess /></ProtectedRoute>} />
-            <Route path="/student/progress" element={<ProtectedRoute><Progress /></ProtectedRoute>} />
             <Route path="/student/interview-prep" element={<ProtectedRoute><InterviewPrep /></ProtectedRoute>} />
             <Route path="/student/refer-and-earn" element={<ProtectedRoute><ReferAndEarn /></ProtectedRoute>} />
             <Route path="/student/quiz/:quizId" element={<ProtectedRoute><QuizAttempt /></ProtectedRoute>} />
             <Route path="/student/quizzes" element={<ProtectedRoute><StudentQuizzes /></ProtectedRoute>} />
             <Route path="/student/quizzes/:quizId/take/:assignmentId" element={<ProtectedRoute><TakeQuiz /></ProtectedRoute>} />
             <Route path="/student/quizzes/:quizId/results/:assignmentId" element={<ProtectedRoute><QuizResults /></ProtectedRoute>} />
-            
-            {/* Add the new profile settings route */}
-            <Route path="/student/profile" element={<ProtectedRoute><StudentProfile /></ProtectedRoute>} />
+            <Route path="/student/support" element={<ProtectedRoute><LearnIQSupport /></ProtectedRoute>} />
+            <Route path="/student/settings" element={<ProtectedRoute><LearnIQSettings /></ProtectedRoute>} />
+            <Route path="/student/debug-courses" element={<ProtectedRoute><CourseDebugger /></ProtectedRoute>} />
             
             {/* Mentor Routes with protection */}
             <Route path="/mentor/dashboard" element={<MentorDashboard />} />
@@ -240,8 +252,12 @@ function App() {
             <Route path="/mentor/create-quiz" element={<CreateQuiz />} />
             <Route path="/mentor/quiz-submissions/:quizId" element={<QuizSubmissions />} />
             <Route path="/mentor/assign-to-students" element={<AssignToStudents />} />
-            <Route path="/mentor/interviews" element={<Interviews />} />
-            <Route path="/mentor/interviews/create" element={<InterviewPreparation />} />
+            {/* New Mentor Routes with student-like features */}
+            <Route path="/mentor/assignments" element={<MentorAssignments />} />
+            <Route path="/mentor/assignments/:id" element={<MentorAssignmentDetail />} />
+            <Route path="/mentor/notifications" element={<MentorNotifications />} />
+            <Route path="/mentor/calendar" element={<MentorCalendar />} />
+            <Route path="/mentor/progress" element={<MentorProgress />} />
             
             {/* Auth Routes */}
             
@@ -255,24 +271,12 @@ function App() {
               } 
             />
             <Route path="/course/:courseId/success" element={<ProtectedRoute><PaymentSuccessPage /></ProtectedRoute>} />
-            <Route path="/payment-flow" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/payment-flow" element={<RoleBasedRedirect />} />
             
-            {/* Protected routes - No longer require payment */}
-            <Route path="/dashboard" element={
-              <PaymentProtectedRoute>
-                <StudentDashboard />
-              </PaymentProtectedRoute>
-            } />
-            <Route path="/course/:courseId" element={
-              <PaymentProtectedRoute>
-                <CourseView />
-              </PaymentProtectedRoute>
-            } />
-            <Route path="/course/:courseId/learn" element={
-              <PaymentProtectedRoute>
-                <CourseContent />
-              </PaymentProtectedRoute>
-            } />
+            {/* Legacy dashboard routes - use role-based redirect */}
+            <Route path="/dashboard" element={<RoleBasedRedirect />} />
+            <Route path="/course/:courseId" element={<Navigate to="/student/student-dashboard/course/:courseId" replace />} />
+            <Route path="/course/:courseId/learn" element={<Navigate to="/student/student-dashboard/course/:courseId" replace />} />
             
             {/* Admin Dashboard */}
             <Route path="/admin/dashboard" element={
@@ -292,8 +296,20 @@ function App() {
               </ProtectedRoute>
             } />
             
+            {/* Data Analyst Support Tickets */}
+            <Route path="/data-analyst/support-tickets" element={
+              <ProtectedRoute>
+                <DataAnalystRoute>
+                  <SupportTickets />
+                </DataAnalystRoute>
+              </ProtectedRoute>
+            } />
+            
             {/* Add easy access route for analytics */}
             <Route path="/analytics" element={<AnalyticsRedirect />} />
+
+            {/* LearnIQ Dashboard Routes */}
+            <Route path="/*" element={<LearnIQRoutes />} />
             
             {/* Redirect unknown routes to home */}
             <Route path="*" element={<Navigate to="/" />} />

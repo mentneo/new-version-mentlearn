@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
-import { db } from '../../firebase/firebase';
+import { db } from '../../firebase/firebase.js';
 
 const AdminPaymentNotifications = () => {
   const [notifications, setNotifications] = useState([]);

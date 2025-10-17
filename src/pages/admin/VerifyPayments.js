@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Table, Button, Badge, Card, Alert, Spinner, Form, InputGroup } from 'react-bootstrap';
 import { collection, query, where, getDocs, doc, updateDoc, getDoc, orderBy, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../firebase/firebase';
-import AdminNavbar from '../../components/admin/AdminNavbar';
+import { db } from '../../firebase/firebase.js';
+import AdminNavbar from '../../components/admin/AdminNavbar.js';
 import '../../styles/PaymentStyles.css';
 
 const VerifyPayments = () => {

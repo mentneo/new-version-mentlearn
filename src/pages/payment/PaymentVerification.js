@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Container, Card, Button, Alert } from 'react-bootstrap';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../../firebase/firebase';
-import { useAuth } from '../../contexts/AuthContext';
+import { db } from '../../firebase/firebase.js';
+import { useAuth } from '../../contexts/AuthContext.js';
 // Import the CSS
 import '../../styles/PaymentStyles.css';
 

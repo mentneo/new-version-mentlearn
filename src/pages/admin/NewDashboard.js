@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { collection, getDocs, query, where, limit, orderBy } from 'firebase/firestore';
-import { db } from '../../firebase/firebase';
-import { useAuth } from '../../contexts/AuthContext';
-import { useTheme } from '../../contexts/ThemeContext';
+import { db } from '../../firebase/firebase.js';
+import { useAuth } from '../../contexts/AuthContext.js';
+import { useTheme } from '../../contexts/ThemeContext.js';
 import { Chart as ChartJS, ArcElement, CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import { Pie, Bar, Line } from 'react-chartjs-2';
 import { 
@@ -19,7 +19,7 @@ import {
   FaChartPie,
   FaChartLine,
   FaTimes
-} from 'react-icons/fa';
+} from 'react-icons/fa/index.esm.js';
 
 // Register ChartJS components
 ChartJS.register(

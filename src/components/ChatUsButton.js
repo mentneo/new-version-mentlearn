@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FaComments } from 'react-icons/fa';
+import { FaComments } from 'react-icons/fa/index.esm.js';
 
 const ChatUsButton = () => {
   return (

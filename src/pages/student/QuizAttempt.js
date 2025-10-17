@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { doc, getDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../firebase/firebase';
-import { useAuth } from '../../contexts/AuthContext';
-import Navbar from '../../components/student/Navbar';
-import { FaArrowLeft, FaCheck, FaTimes, FaRedo } from 'react-icons/fa';
+import { db } from '../../firebase/firebase.js';
+import { useAuth } from '../../contexts/AuthContext.js';
+import Navbar from '../../components/student/Navbar.js';
+import { FaArrowLeft, FaCheck, FaTimes, FaRedo } from 'react-icons/fa/index.esm.js';
 
 export default function QuizAttempt() {
   const { quizId } = useParams();

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext.js';
+import { useTheme } from '../contexts/ThemeContext.js';
 
 // This component displays comprehensive debugging information
 // to help troubleshoot the white page issue

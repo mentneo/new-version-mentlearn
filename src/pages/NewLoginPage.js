@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaArrowLeft } from 'react-icons/fa';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../firebase/firebase';
+import { useAuth } from '../contexts/AuthContext.js';
+import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaArrowLeft } from 'react-icons/fa/index.esm.js';
 
 export default function NewLoginPage() {
   const [email, setEmail] = useState('');
@@ -24,34 +22,13 @@ export default function NewLoginPage() {
     try {
       setError('');
       setLoading(true);
-      const userCredential = await login(email, password);
       
-      // Get the user role from Firebase - check both users and creators collections
-      let userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
-      let userRole = 'student'; // default role
-      let isCreator = false;
+      // Use AuthContext's login function which properly sets userRole state
+      await login(email, password);
       
-      if (userDoc.exists()) {
-        userRole = userDoc.data().role || 'student';
-      } else {
-        // Check creators collection
-        const creatorDoc = await getDoc(doc(db, "creators", userCredential.user.uid));
-        if (creatorDoc.exists()) {
-          userRole = 'creator';
-          isCreator = true;
-        }
-      }
-      
-      // Redirect based on user role
-      if (userRole === 'admin') {
-        navigate('/admin/dashboard');
-      } else if (userRole === 'creator') {
-        navigate('/creator/dashboard');
-      } else if (userRole === 'mentor') {
-        navigate('/mentor/dashboard');
-      } else {
-        navigate('/student/dashboard');
-      }
+      console.log("Login successful, redirecting to dashboard");
+      // Navigate to /dashboard and let RoleBasedRedirect handle the role-based routing
+      navigate('/dashboard');
     } catch (err) {
       console.error('Login error:', err);
       setError('Failed to sign in. Please check your credentials.');

@@ -10,7 +10,7 @@ import {
   doc, getDoc, setDoc, collection, getDocs,
   query, where, updateDoc, arrayUnion, increment
 } from 'firebase/firestore';
-import { auth, db } from '../firebase/firebase';
+import { auth, db } from '../firebase/firebase.js';
 
 const AuthContext = createContext();
 
@@ -62,7 +62,34 @@ export function AuthProvider({ children }) {
       };
 
       await setDoc(doc(db, "users", userCredential.user.uid), userData);
-      
+      // Attempt to sync the newly created user to the Mongo backend
+      (async () => {
+        try {
+          const apiBase = process.env.REACT_APP_API_BASE || 'http://localhost:5001/api';
+          // try to get an ID token to send for optional server verification
+          let idToken = null;
+          try { idToken = await userCredential.user.getIdToken(); } catch (e) { /* ignore */ }
+
+          await fetch(`${apiBase}/students`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(idToken ? { Authorization: 'Bearer ' + idToken } : {})
+            },
+            body: JSON.stringify({
+              uid: userData.uid,
+              email: userData.email,
+              name: userData.name,
+              avatar: userData.avatar || null,
+              metadata: userData.metadata || {}
+            })
+          });
+        } catch (err) {
+          console.error('Failed to sync user to Mongo backend:', err);
+          // Add more detailed logging here
+        }
+      })();
+
       // Handle referral if present
       if (extraData.referredBy) {
         await handleReferral(userCredential.user.uid, extraData.referredBy);
@@ -125,8 +152,18 @@ export function AuthProvider({ children }) {
     }
   }
 
-  function login(email, password) {
-    return signInWithEmailAndPassword(auth, email, password);
+  async function login(email, password) {
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      // Make sure we fetch and set the user role immediately after login
+      if (userCredential.user) {
+        await fetchUserData(userCredential.user.uid);
+      }
+      return userCredential;
+    } catch (error) {
+      console.error("Login error:", error);
+      throw error;
+    }
   }
 
   function logout() {
@@ -187,26 +224,32 @@ export function AuthProvider({ children }) {
   // Consolidated function to fetch user data
   async function fetchUserData(uid) {
     try {
-      // First check users collection
+      // Always check both collections and prioritize creator role
       let userDoc = await getDoc(doc(db, 'users', uid));
+      let creatorDoc = await getDoc(doc(db, 'creators', uid));
       let userData = null;
       let isCreator = false;
       
-      if (userDoc.exists()) {
+      // Check if user exists in creators collection first (priority)
+      if (creatorDoc.exists()) {
+        userData = creatorDoc.data();
+        isCreator = true;
+        console.log("Found user in creators collection:", userData);
+      } 
+      // If not found in creators, check users collection
+      else if (userDoc.exists()) {
         userData = userDoc.data();
-      } else {
-        // Check creators collection
-        const creatorDoc = await getDoc(doc(db, 'creators', uid));
-        if (creatorDoc.exists()) {
-          userData = creatorDoc.data();
-          isCreator = true;
-        }
+        console.log("Found user in users collection:", userData);
       }
       
       if (userData) {
+        // Ensure role is set correctly with creator taking precedence
+        const userRole = isCreator ? 'creator' : (userData.role || 'student');
+        console.log("Setting user role to:", userRole);
+        
         // Update user states
         setUserDetails(userData);
-        setUserRole(isCreator ? 'creator' : (userData.role || 'student'));
+        setUserRole(userRole);
         setOnboardingComplete(userData.onboardingComplete || false);
         
         // Set payment status
@@ -223,7 +266,7 @@ export function AuthProvider({ children }) {
         return {
           uid: uid,
           email: userData.email,
-          role: isCreator ? 'creator' : (userData.role || 'student'),
+          role: userRole,
           ...userData
         };
       }
@@ -252,10 +295,132 @@ export function AuthProvider({ children }) {
       };
 
       await setDoc(doc(db, "users", userCredential.user.uid), userData);
-      
+      // sync to Mongo backend
+      (async () => {
+        try {
+          const apiBase = process.env.REACT_APP_API_BASE || 'http://localhost:5001/api';
+          let idToken = null;
+          try { idToken = await userCredential.user.getIdToken(); } catch (e) { }
+          await fetch(`${apiBase}/students`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(idToken ? { Authorization: 'Bearer ' + idToken } : {})
+            },
+            body: JSON.stringify({ uid: userData.uid, email: userData.email, name: userData.name, avatar: userData.avatar || null, metadata: userData.metadata || {} })
+          });
+        } catch (err) {
+          console.warn('Failed to sync data analyst to Mongo backend:', err);
+        }
+      })();
+
       return userCredential;
     } catch (error) {
       console.error("Error creating data analyst:", error);
+      throw error;
+    }
+  }
+
+  // Add a function to create a test creator user
+  async function createTestCreator() {
+    try {
+      const email = 'test.creator@mentneo.com';
+      const password = 'TestPass123!';
+      
+      let userCredential;
+      let userUid;
+      
+      // First check if the test creator document already exists in Firestore
+      // This avoids triggering Firebase Auth rate limits
+      console.log("Checking if test creator already exists in Firestore...");
+      const testCreatorQuery = query(
+        collection(db, "users"),
+        where("email", "==", email),
+        where("role", "==", "creator")
+      );
+      
+      const existingCreatorSnapshot = await getDocs(testCreatorQuery);
+      
+      if (!existingCreatorSnapshot.empty) {
+        // Test creator exists in Firestore
+        userUid = existingCreatorSnapshot.docs[0].id;
+        console.log("Test creator already exists in Firestore, updating documents...");
+      } else {
+        // Try to sign in first to check if user exists in Auth
+        try {
+          userCredential = await signInWithEmailAndPassword(auth, email, password);
+          userUid = userCredential.user.uid;
+          console.log("Test creator exists in Auth, updating documents...");
+        } catch (signInError) {
+          // If user doesn't exist or other auth error
+          if (signInError.code === 'auth/user-not-found' || signInError.code === 'auth/wrong-password') {
+            try {
+              userCredential = await createUserWithEmailAndPassword(auth, email, password);
+              userUid = userCredential.user.uid;
+              console.log("New test creator account created");
+            } catch (createError) {
+              console.error("Error creating new user:", createError);
+              
+              if (createError.code === 'auth/too-many-requests') {
+                throw {
+                  code: 'auth/too-many-requests',
+                  message: 'Firebase has temporarily blocked sign-in attempts due to too many requests. Please wait a few minutes before trying again.'
+                };
+              }
+              throw createError;
+            }
+          } else if (signInError.code === 'auth/too-many-requests') {
+            throw {
+              code: 'auth/too-many-requests',
+              message: 'Firebase has temporarily blocked sign-in attempts due to too many requests. Please wait a few minutes before trying again.'
+            };
+          } else {
+            throw signInError;
+          }
+        }
+      }
+      
+      // Create or update user document with creator role
+      const userData = {
+        uid: userUid,
+        email: email,
+        role: 'creator',
+        name: 'Test Creator',
+        isTestUser: true,
+        createdAt: new Date().toISOString(),
+        onboardingComplete: true
+      };
+      
+      await setDoc(doc(db, "users", userUid), userData);
+      
+      // Create or update creator document in creators collection
+      const creatorData = {
+        uid: userUid,
+        email: email,
+        name: 'Test Creator',
+        displayName: 'Test Creator',
+        bio: 'This is a test creator account for development and testing purposes.',
+        expertise: ['Web Development', 'JavaScript', 'React'],
+        isTestUser: true,
+        createdAt: new Date().toISOString(),
+        profileComplete: true,
+        status: 'active',
+        courses: [], // No courses initially
+        totalStudents: 0,
+        totalRevenue: 0,
+        rating: 5.0
+      };
+      
+      await setDoc(doc(db, "creators", userUid), creatorData);
+      
+      // Return credentials for UI notification
+      return {
+        email: email,
+        password: password,
+        uid: userUid
+      };
+    } catch (error) {
+      console.error("Error creating test creator:", error);
       throw error;
     }
   }
@@ -265,12 +430,15 @@ export function AuthProvider({ children }) {
       setLoading(true);
       
       if (user) {
+        console.log("Auth state changed, user is logged in:", user.uid);
         try {
           const userData = await fetchUserData(user.uid);
           
           if (userData) {
+            console.log("User data fetched successfully, role:", userData.role);
             setCurrentUser(userData);
           } else {
+            console.warn("No user document found in Firestore for:", user.uid);
             // No user document found, create default user object
             setCurrentUser({
               uid: user.uid,
@@ -292,6 +460,7 @@ export function AuthProvider({ children }) {
           setOnboardingComplete(false);
         }
       } else {
+        console.log("Auth state changed, user is logged out");
         setCurrentUser(null);
         setOnboardingComplete(null);
         setUserDetails(null);
@@ -319,7 +488,8 @@ export function AuthProvider({ children }) {
     userDetails,
     paymentStatus,
     subscriptionPlan,
-    createDataAnalyst // Add the new function to the context value
+    createDataAnalyst,
+    createTestCreator // Add the test creator function to the context value
   };
 
   return (

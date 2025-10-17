@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useAuth } from '../../contexts/AuthContext.js';
+import { useTheme } from '../../contexts/ThemeContext.js';
 import { 
   FaUserGraduate, 
   FaChalkboardTeacher, 
@@ -16,7 +16,7 @@ import {
   FaCog,
   FaMoon,
   FaSun
-} from 'react-icons/fa';
+} from 'react-icons/fa/index.esm.js';
 import Logo from '../common/Logo';
 
 export default function SideNav() {

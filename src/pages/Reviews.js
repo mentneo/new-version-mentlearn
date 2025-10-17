@@ -5,8 +5,8 @@ import {
   FaStar, 
   FaSearch, 
   FaArrowLeft 
-} from 'react-icons/fa';
-import MenteoLogo from '../components/MenteoLogo';
+} from 'react-icons/fa/index.esm.js';
+import MenteoLogo from '../components/MenteoLogo.js';
 
 const Reviews = () => {
   const [searchTerm, setSearchTerm] = useState('');

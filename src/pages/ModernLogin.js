@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { auth, db } from '../firebase/firebase';
-import { handleFirebaseError } from '../utils/errorHandler';
-import { useTheme } from '../contexts/ThemeContext';
-import { FaFacebookF, FaTwitter, FaInstagram, FaYoutube, FaMoon, FaSun, FaEnvelope, FaLock } from 'react-icons/fa';
+import { useAuth } from '../contexts/AuthContext.js';
+import { handleFirebaseError } from '../utils/errorHandler.js';
+import { useTheme } from '../contexts/ThemeContext.js';
+import { FaFacebookF, FaTwitter, FaInstagram, FaYoutube, FaMoon, FaSun, FaEnvelope, FaLock } from 'react-icons/fa/index.esm.js';
 
 export default function ModernLogin() {
   const [email, setEmail] = useState('');
@@ -14,6 +12,7 @@ export default function ModernLogin() {
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const { darkMode, toggleDarkMode } = useTheme();
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   async function handleSubmit(e) {
@@ -25,63 +24,12 @@ export default function ModernLogin() {
       
       console.log("Attempting login for:", email);
       
-      // Sign in user with Firebase Auth
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      console.log("Login successful for UID:", user.uid);
+      // Use AuthContext's login function which properly sets userRole state
+      await login(email, password);
       
-      // Check if user document exists in users collection
-      const userDocRef = doc(db, "users", user.uid);
-      let userDoc = await getDoc(userDocRef);
-      let userData = null;
-      let isCreator = false;
-      
-      if (userDoc.exists()) {
-        userData = userDoc.data();
-      } else {
-        // Check creators collection
-        const creatorDocRef = doc(db, "creators", user.uid);
-        const creatorDoc = await getDoc(creatorDocRef);
-        
-        if (creatorDoc.exists()) {
-          userData = creatorDoc.data();
-          isCreator = true;
-        }
-      }
-      
-      if (!userData) {
-        console.log("Creating new user document with admin role");
-        // First user gets admin role - this is for initial setup
-        await setDoc(userDocRef, {
-          uid: user.uid,
-          email: user.email,
-          name: email.split('@')[0], // Default name from email
-          role: 'admin', // First login user is admin
-          createdAt: new Date().toISOString()
-        });
-        
-        console.log("Admin user document created successfully");
-        navigate('/admin/dashboard');
-        return;
-      }
-      
-      const userRole = isCreator ? 'creator' : (userData.role || 'student');
-      console.log("User role from Firestore:", userRole);
-      
-      // Redirect based on role
-      if (userRole === 'admin') {
-        navigate('/admin/dashboard');
-      } else if (userRole === 'creator') {
-        navigate('/creator/dashboard');
-      } else if (userRole === 'mentor') {
-        navigate('/mentor/dashboard');
-      } else if (userRole === 'student') {
-        navigate('/student/dashboard');
-      } else {
-        // For safety, if role is undefined, treat as student
-        console.log("Unknown or missing role, treating as student");
-        navigate('/student/dashboard');
-      }
+      console.log("Login successful, redirecting to dashboard");
+      // Navigate to /dashboard and let RoleBasedRedirect handle the role-based routing
+      navigate('/dashboard');
     } catch (error) {
       console.error('Error signing in:', error);
       setError(handleFirebaseError(error));

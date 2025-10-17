@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { collection, query, where, getDocs, addDoc, doc, updateDoc, deleteDoc, getFirestore } from 'firebase/firestore';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext.js';
 import { Formik, Field, ErrorMessage, FieldArray } from 'formik';
 import * as Yup from 'yup';
-import { FaPlus, FaEdit, FaTrash, FaUpload } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaUpload } from 'react-icons/fa/index.esm.js';
 
 const CourseSchema = Yup.object().shape({
   title: Yup.string().required('Title is required'),

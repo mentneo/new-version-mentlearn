@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
-import { db } from '../../firebase/firebase';
-import { useAuth } from '../../contexts/AuthContext';
-import Navbar from '../../components/student/Navbar';
-import { FaChevronDown, FaChevronUp, FaStar, FaRegStar, FaGraduationCap } from 'react-icons/fa';
-import { safeRender } from '../../utils/renderUtils';
+import { db } from '../../firebase/firebase.js';
+import { useAuth } from '../../contexts/AuthContext.js';
+import Navbar from '../../components/student/Navbar.js';
+import { FaChevronDown, FaChevronUp, FaStar, FaRegStar, FaGraduationCap } from 'react-icons/fa/index.esm.js';
+import { safeRender } from '../../utils/renderUtils.js';
 
 export default function InterviewPrep() {
   const { currentUser } = useAuth();

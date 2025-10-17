@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { db } from '../../firebase/firebase';
+import { db } from '../../firebase/firebase.js';
 import { doc, getDoc } from 'firebase/firestore';
-import RazorpayService from '../../utils/RazorpayService';
-import { useAuth } from '../../contexts/AuthContext';
+import RazorpayService from '../../utils/RazorpayService.js';
+import { useAuth } from '../../contexts/AuthContext.js';
 
 const MentneoPaymentPage = () => {
   const { courseId } = useParams();

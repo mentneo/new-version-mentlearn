@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import CourseCard from '../../components/CourseCard';
+import CourseCard from '../../components/CourseCard.js';
 
 const Courses = () => {
   const [courses, setCourses] = useState([]);

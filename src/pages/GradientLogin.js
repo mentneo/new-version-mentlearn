@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { auth } from '../firebase/firebase'; // Add missing import
+import { useAuth } from '../contexts/AuthContext.js';
 import { motion } from 'framer-motion';
 import { 
   FaEye, 
@@ -12,8 +11,8 @@ import {
   FaShieldAlt,
   FaCheckCircle,
   FaUserGraduate
-} from 'react-icons/fa';
-import MenteoLogo from '../components/MenteoLogo';
+} from 'react-icons/fa/index.esm.js';
+import MenteoLogo from '../components/MenteoLogo.js';
 
 const GradientLogin = () => {
   const [email, setEmail] = useState('');
@@ -21,7 +20,7 @@ const GradientLogin = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { login, getUserRole } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -36,21 +35,12 @@ const GradientLogin = () => {
     setError('');
 
     try {
+      // Use AuthContext's login function which properly sets userRole state
       await login(email, password);
       
-      // Get user role and redirect accordingly
-      const user = auth.currentUser;
-      if (user) {
-        const role = await getUserRole(user.uid);
-        
-        if (role === 'data_analyst') {
-          navigate('/data-analyst/dashboard');
-        } else if (role === 'admin') {
-          navigate('/admin/dashboard');
-        } else {
-          navigate('/dashboard');
-        }
-      }
+      console.log("Login successful, redirecting to dashboard");
+      // Navigate to /dashboard and let RoleBasedRedirect handle the role-based routing
+      navigate('/dashboard');
     } catch (error) {
       console.error('Login error:', error);
       setError('Invalid email or password. Please try again.');

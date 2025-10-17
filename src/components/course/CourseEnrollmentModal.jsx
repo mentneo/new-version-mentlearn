@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db } from '../../firebase/firebase';
+import { db } from '../../firebase/firebase.js';
 import { doc, getDoc } from 'firebase/firestore';
 import razorpayService from '../../utils/RazorpayService';
 

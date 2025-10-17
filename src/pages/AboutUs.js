@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useTheme } from '../contexts/ThemeContext';
+import { useTheme } from '../contexts/ThemeContext.js';
 import { 
   FaGraduationCap, 
   FaLaptopCode, 
@@ -17,7 +17,7 @@ import {
   FaEnvelope,
   FaSignInAlt,
   FaUserPlus
-} from 'react-icons/fa';
+} from 'react-icons/fa/index.esm.js';
 import { motion } from 'framer-motion';
 
 const AboutUs = () => {

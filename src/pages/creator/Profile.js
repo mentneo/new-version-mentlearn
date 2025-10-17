@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getFirestore, doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext.js';
 import { Formik, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
-import { FaEdit, FaCamera, FaTrash, FaUpload } from 'react-icons/fa';
-import { uploadImageWithFallback } from '../../utils/cloudinary';
+import { FaEdit, FaCamera, FaTrash, FaUpload } from 'react-icons/fa/index.esm.js';
+import { uploadImageWithFallback } from '../../utils/cloudinary.js';
 
 const ProfileSchema = Yup.object().shape({
   name: Yup.string().required('Name is required'),

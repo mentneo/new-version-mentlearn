@@ -15,20 +15,20 @@ import {
   FaBars,
   FaTimes,
   FaArrowRight
-} from 'react-icons/fa';
+} from 'react-icons/fa/index.esm.js';
 
 // Tech icons for learning path
 import { 
   SiHtml5, 
   SiCss3, 
   SiJavascript, 
-  SiReact, 
-  SiFirebase, 
-  SiNodedotjs 
-} from 'react-icons/si';
+  SiReact,
+  SiNodedotjs,
+  SiFirebase
+} from 'react-icons/si/index.esm.js';
 
-import MenteoLogo from '../components/MenteoLogo';
-import ChatUsButton from '../components/ChatUsButton';
+import MenteoLogo from '../components/MenteoLogo.js';
+import ChatUsButton from '../components/ChatUsButton.js';
 
 const LandingPage = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

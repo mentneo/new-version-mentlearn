@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaArrowLeft, FaCheck, FaWhatsapp } from 'react-icons/fa';
+import { FaArrowLeft, FaCheck, FaWhatsapp } from 'react-icons/fa/index.esm.js';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../firebase/firebase';
+import { db } from '../firebase/firebase.js';
 
 const BookDemo = () => {
   const [formData, setFormData] = useState({

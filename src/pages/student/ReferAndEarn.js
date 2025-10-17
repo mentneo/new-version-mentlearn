@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
-import { db } from '../../firebase/firebase';
-import { useAuth } from '../../contexts/AuthContext';
-import Navbar from '../../components/student/Navbar';
-import { FaWhatsapp, FaFacebook, FaTwitter, FaLinkedin, FaCopy, FaInstagram, FaRegCheckCircle } from 'react-icons/fa';
+import { db } from '../../firebase/firebase.js';
+import { useAuth } from '../../contexts/AuthContext.js';
+import Navbar from '../../components/student/Navbar.js';
+import { FaWhatsapp, FaFacebook, FaTwitter, FaLinkedin, FaCopy, FaInstagram, FaRegCheckCircle } from 'react-icons/fa/index.esm.js';
 
 export default function ReferAndEarn() {
   const { currentUser } = useAuth();

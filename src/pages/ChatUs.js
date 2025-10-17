@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FaArrowLeft, FaUser, FaEnvelope, FaPhone, FaGraduationCap, FaMapMarkerAlt, FaComment, FaWhatsapp } from 'react-icons/fa';
-import MenteoLogo from '../components/MenteoLogo';
+import { FaArrowLeft, FaUser, FaEnvelope, FaPhone, FaGraduationCap, FaMapMarkerAlt, FaComment, FaWhatsapp } from 'react-icons/fa/index.esm.js';
+import MenteoLogo from '../components/MenteoLogo.js';
 
 const ChatUs = () => {
   const navigate = useNavigate();

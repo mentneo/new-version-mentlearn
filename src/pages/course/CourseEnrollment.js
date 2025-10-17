@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db } from '../firebase/firebase';
+import { db } from '../firebase/firebase.js';
 import { doc, getDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 
 const CourseEnrollment = ({ courseId, userId }) => {

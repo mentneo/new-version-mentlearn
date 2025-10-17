@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import { useTheme } from '../../contexts/ThemeContext';
-import { FaBook, FaChartLine, FaBriefcase, FaUser, FaSignOutAlt, FaBars, FaTimes, FaMoon, FaSun } from 'react-icons/fa';
+import { useAuth } from '../../contexts/AuthContext.js';
+import { useTheme } from '../../contexts/ThemeContext.js';
+import { FaBook, FaChartLine, FaBriefcase, FaUser, FaSignOutAlt, FaBars, FaTimes, FaMoon, FaSun, FaClipboardList, FaCog, FaLifeRing } from 'react-icons/fa/index.esm.js';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -38,6 +38,12 @@ export default function Navbar() {
                   <FaBook className="inline-block mr-1" /> Courses
                 </Link>
                 <Link
+                  to="/student/quizzes"
+                  className="text-white hover:bg-indigo-500 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  <FaClipboardList className="inline-block mr-1" /> Quizzes
+                </Link>
+                <Link
                   to="/student/progress"
                   className="text-white hover:bg-indigo-500 px-3 py-2 rounded-md text-sm font-medium"
                 >
@@ -60,6 +66,20 @@ export default function Navbar() {
           </div>
           <div className="hidden md:block">
             <div className="ml-4 flex items-center md:ml-6">
+              <Link
+                to="/student/support"
+                className="text-white hover:bg-indigo-500 px-3 py-2 rounded-md text-sm font-medium mr-2"
+                title="Help & Support"
+              >
+                <FaLifeRing className="inline-block" />
+              </Link>
+              <Link
+                to="/student/settings"
+                className="text-white hover:bg-indigo-500 px-3 py-2 rounded-md text-sm font-medium mr-2"
+                title="Settings"
+              >
+                <FaCog className="inline-block" />
+              </Link>
               <button
                 onClick={toggleDarkMode}
                 className="text-white hover:bg-indigo-500 px-3 py-2 rounded-md text-sm font-medium mr-2"
@@ -113,6 +133,13 @@ export default function Navbar() {
               <FaBook className="inline-block mr-2" /> Courses
             </Link>
             <Link
+              to="/student/quizzes"
+              className="text-white hover:bg-indigo-500 block px-3 py-3 rounded-md text-base font-medium touch-manipulation"
+              onClick={() => setIsOpen(false)}
+            >
+              <FaClipboardList className="inline-block mr-2" /> Quizzes
+            </Link>
+            <Link
               to="/student/progress"
               className="text-white hover:bg-indigo-500 block px-3 py-3 rounded-md text-base font-medium touch-manipulation"
               onClick={() => setIsOpen(false)}
@@ -134,6 +161,20 @@ export default function Navbar() {
               <FaUser className="inline-block mr-2" /> Profile
             </Link>
             <div className="border-t border-indigo-500 pt-2 mt-2">
+              <Link
+                to="/student/support"
+                className="text-white hover:bg-indigo-500 block px-3 py-3 rounded-md text-base font-medium touch-manipulation"
+                onClick={() => setIsOpen(false)}
+              >
+                <FaLifeRing className="inline-block mr-2" /> Help & Support
+              </Link>
+              <Link
+                to="/student/settings"
+                className="text-white hover:bg-indigo-500 block px-3 py-3 rounded-md text-base font-medium touch-manipulation"
+                onClick={() => setIsOpen(false)}
+              >
+                <FaCog className="inline-block mr-2" /> Settings
+              </Link>
               <button
                 onClick={toggleDarkMode}
                 className="text-white hover:bg-indigo-500 block w-full text-left px-3 py-3 rounded-md text-base font-medium touch-manipulation"

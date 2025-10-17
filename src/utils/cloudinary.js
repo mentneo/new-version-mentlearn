@@ -1,4 +1,4 @@
-import { cloudinaryConfig } from '../firebase/firebase';
+import { cloudinaryConfig } from '../firebase/firebase.js';
 import { uploadToFirebaseStorage } from './storage';
 
 /**

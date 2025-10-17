@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import SimpleNavbar from '../student/SimpleNavbar';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useTheme } from '../../contexts/ThemeContext.js';
 
 const SimpleLayout = ({ children }) => {
   const { darkMode, forceThemeRefresh } = useTheme();

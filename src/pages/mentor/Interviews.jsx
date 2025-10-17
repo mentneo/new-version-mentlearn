@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { collection, query, where, getDocs, deleteDoc, doc, orderBy } from 'firebase/firestore';
-import { db } from '../../firebase/firebase';
-import { useAuth } from '../../contexts/AuthContext';
+import { db } from '../../firebase/firebase.js';
+import { useAuth } from '../../contexts/AuthContext.js';
 import Navbar from '../../components/mentor/Navbar';
-import { FaEye, FaEdit, FaTrash, FaUserPlus } from 'react-icons/fa';
+import { FaEye, FaEdit, FaTrash, FaUserPlus } from 'react-icons/fa/index.esm.js';
 
 export default function Interviews() {
   const { currentUser } = useAuth();

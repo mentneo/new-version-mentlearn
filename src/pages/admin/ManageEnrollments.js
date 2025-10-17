@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, getDocs, doc, getDoc, addDoc, deleteDoc, where } from 'firebase/firestore';
-import { db } from '../../firebase/firebase';
-import Navbar from '../../components/admin/Navbar';
-import { FaPlus, FaTrash, FaBookOpen } from 'react-icons/fa';
+import { db } from '../../firebase/firebase.js';
+import Navbar from '../../components/admin/Navbar.js';
+import { FaPlus, FaTrash, FaBookOpen } from 'react-icons/fa/index.esm.js';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 

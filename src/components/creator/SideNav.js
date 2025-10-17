@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useTheme } from '../../contexts/ThemeContext.js';
 import { 
   FaBook, 
   FaUserGraduate,
@@ -54,7 +54,8 @@ export default function SideNav() {
     { path: '/creator/dashboard', icon: <FaTachometerAlt />, label: 'Dashboard' },
     { path: '/creator/courses', icon: <FaBook />, label: 'My Courses' },
     { path: '/creator/enrollments', icon: <FaUserGraduate />, label: 'Enrollments' },
-    { path: '/creator/profile', icon: <FaUser />, label: 'Profile' }
+    { path: '/creator/profile', icon: <FaUser />, label: 'Profile' },
+    { path: '/creator/new-profile', icon: <FaUser />, label: 'New Profile' }
   ];
 
   return (

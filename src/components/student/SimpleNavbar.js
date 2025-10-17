@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import { useTheme } from '../../contexts/ThemeContext';
-import { FaSun, FaMoon, FaBars, FaTimes, FaSignOutAlt } from 'react-icons/fa';
+import { useAuth } from '../../contexts/AuthContext.js';
+import { useTheme } from '../../contexts/ThemeContext.js';
+import { FaSun, FaMoon, FaBars, FaTimes, FaSignOutAlt } from 'react-icons/fa/index.esm.js';
+import MenteoLogo from '../MenteoLogo.js';
 
 const SimpleNavbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -26,11 +27,7 @@ const SimpleNavbar = () => {
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
               <Link to="/">
-                <img
-                  className="h-8 w-auto"
-                  src="/logo.png"
-                  alt="Mentneo"
-                />
+                <MenteoLogo size="small" />
               </Link>
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">

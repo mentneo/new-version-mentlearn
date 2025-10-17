@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { uploadImage, uploadImageWithFallback } from '../../utils/cloudinary';
+import { uploadImage, uploadImageWithFallback } from '../../utils/cloudinary.js';
 import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '../../firebase/firebase';
-import { useAuth } from '../../contexts/AuthContext';
-import { useTheme } from '../../contexts/ThemeContext';
-import { FaUser, FaCamera, FaSpinner } from 'react-icons/fa';
+import { db } from '../../firebase/firebase.js';
+import { useAuth } from '../../contexts/AuthContext.js';
+import { useTheme } from '../../contexts/ThemeContext.js';
+import { FaUser, FaCamera, FaSpinner } from 'react-icons/fa/index.esm.js';
 
 const ProfileImageUpload = ({ currentImageUrl, onImageUpdate }) => {
   const [image, setImage] = useState(null);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Card, ListGroup, Button, Form, Alert } from 'react-bootstrap';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext.js';
 import RazorpayService from '../../utils/RazorpayService';
 
 const RazorpayDebug = () => {

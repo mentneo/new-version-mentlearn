@@ -56,6 +56,27 @@ REACT_APP_FIREBASE_APP_ID=your_app_id
 npm start
 ```
 
+### LearnIQ Dashboard Setup
+
+The LearnIQ Dashboard is a new, modern student experience with advanced features. To set up and run the LearnIQ Dashboard:
+
+1. Run the setup script:
+```bash
+./scripts/run-learniq-dashboard.sh
+```
+
+This script will:
+- Install required dependencies
+- Fix import paths in the components
+- Start the development server
+
+2. Access the dashboard at:
+```
+http://localhost:3000/student-dashboard
+```
+
+For more details about the LearnIQ Dashboard, check the [LearnIQ Documentation](./docs/LearnIQ-README.md)
+
 The application will be available at `http://localhost:3000`.
 
 ### Firebase Setup

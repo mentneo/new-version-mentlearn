@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import CreatorSideNav from '../creator/SideNav';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useTheme } from '../../contexts/ThemeContext.js';
 
 export default function CreatorLayout() {
   const { darkMode } = useTheme();

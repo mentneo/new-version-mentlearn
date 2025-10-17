@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { doc, getDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
-import { db } from '../../firebase/firebase';
-import { useAuth } from '../../contexts/AuthContext';
-import Navbar from '../../components/mentor/Navbar';
-import { FaArrowLeft, FaCalendarAlt, FaChartLine, FaBookOpen, FaFileAlt } from 'react-icons/fa';
+import { db } from '../../firebase/firebase.js';
+import { useAuth } from '../../contexts/AuthContext.js';
+import Navbar from '../../components/mentor/Navbar.js';
+import { FaArrowLeft, FaCalendarAlt, FaChartLine, FaBookOpen, FaFileAlt } from 'react-icons/fa/index.esm.js';
 
 export default function StudentView() {
   const { studentId } = useParams();

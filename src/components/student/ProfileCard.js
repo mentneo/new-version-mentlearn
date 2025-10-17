@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FaUser, FaEdit, FaGraduationCap, FaCalendarAlt, FaEnvelope, FaPhone, FaMapMarkerAlt } from 'react-icons/fa';
+import { FaUser, FaEdit, FaGraduationCap, FaCalendarAlt, FaEnvelope, FaPhone, FaMapMarkerAlt } from 'react-icons/fa/index.esm.js';
 
 const ProfileCard = ({ userData, loading, darkMode, currentUser }) => {
   // Default image if no profile image is available

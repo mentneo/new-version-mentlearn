@@ -1,8 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FaArrowRight, FaRocket, FaBookOpen, FaUserGraduate, FaLaptopCode } from 'react-icons/fa';
-import MenteoLogo from '../components/MenteoLogo';
+import { FaArrowRight, FaRocket, FaBookOpen, FaUserGraduate, FaLaptopCode } from 'react-icons/fa/index.esm.js';
+import MenteoLogo from '../components/MenteoLogo.js';
 
 const programs = [
   {

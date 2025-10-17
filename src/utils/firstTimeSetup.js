@@ -1,5 +1,5 @@
 import { doc, getDoc, setDoc, getDocs, collection } from 'firebase/firestore';
-import { db } from '../firebase/firebase';
+import { db } from '../firebase/firebase.js';
 
 /**
  * Runs initial setup procedures for a fresh installation

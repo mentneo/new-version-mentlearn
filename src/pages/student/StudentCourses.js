@@ -1,61 +1,64 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
-import { db } from '../../firebase/firebase';
-import { useAuth } from '../../contexts/AuthContext';
-import StudentLayout from '../../components/layouts/StudentLayout';
-import LoadingSpinner from '../../components/common/LoadingSpinner';
+import { useAuth } from '../../contexts/AuthContext.js';
+import { db } from '../../firebase/firebase.js';
+import { collection, getDocs, query, where, addDoc } from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { FiBook, FiCheckCircle, FiClock, FiPlay, FiSearch, FiLock } from 'react-icons/fi/index.js';
+import LearnIQNavbar from '../../components/student/LearnIQNavbar.js';
+import LoadingSpinner from '../../components/common/LoadingSpinner.js';
 
 const StudentCourses = () => {
   const { currentUser } = useAuth();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('enrolled');
   const [enrolledCourses, setEnrolledCourses] = useState([]);
   const [availableCourses, setAvailableCourses] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        setLoading(true);
-        
-        // Fetch all published courses
-        const coursesCollection = collection(db, 'courses');
-        const coursesQuery = query(coursesCollection, where('status', '==', 'published'));
-        const coursesSnapshot = await getDocs(coursesQuery);
-        const allCourses = coursesSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        
-        // Fetch enrolled courses
-        const enrollmentsCollection = query(
-          collection(db, 'enrollments'),
-          where('userId', '==', currentUser.uid)
-        );
-        const enrollmentsSnapshot = await getDocs(enrollmentsCollection);
-        
-        const enrolledCourseIds = enrollmentsSnapshot.docs.map(doc => doc.data().courseId);
-        
-        // Filter enrolled and available courses
-        const enrolled = allCourses.filter(course => enrolledCourseIds.includes(course.id));
-        const available = allCourses.filter(course => !enrolledCourseIds.includes(course.id));
-        
-        setEnrolledCourses(enrolled);
-        setAvailableCourses(available);
-      } catch (err) {
-        console.error('Error fetching courses:', err);
-        setError('Failed to load courses. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
-    
     fetchCourses();
   }, [currentUser]);
-  
+
+  const fetchCourses = async () => {
+    try {
+      setLoading(true);
+      
+      const coursesRef = collection(db, 'courses');
+      const coursesQuery = query(coursesRef, where('published', '==', true));
+      const coursesSnapshot = await getDocs(coursesQuery);
+      const allCourses = coursesSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      const enrollmentsRef = collection(db, 'enrollments');
+      const enrollmentsQuery = query(
+        enrollmentsRef,
+        where('userId', '==', currentUser.uid),
+        where('status', '==', 'active')
+      );
+      const enrollmentsSnapshot = await getDocs(enrollmentsQuery);
+      const enrolledCourseIds = enrollmentsSnapshot.docs.map(doc => doc.data().courseId);
+
+      const enrolled = allCourses.filter(course => enrolledCourseIds.includes(course.id));
+      const available = allCourses.filter(course => !enrolledCourseIds.includes(course.id));
+
+      setEnrolledCourses(enrolled);
+      setAvailableCourses(available);
+    } catch (error) {
+      console.error('Error fetching courses:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleContinueLearning = (courseId) => {
+    navigate(`/student/student-dashboard/course/${courseId}`);
+  };
+
   const handleRequestAccess = async (courseId) => {
     try {
-      // Create a request document in Firestore
       await addDoc(collection(db, 'courseRequests'), {
         courseId,
         userId: currentUser.uid,
@@ -63,134 +66,225 @@ const StudentCourses = () => {
         status: 'pending',
         requestedAt: new Date()
       });
-      
-      // Show success message
-      alert('Your request has been submitted. You will be notified when access is granted.');
+      alert('Access requested successfully!');
     } catch (error) {
-      console.error('Error requesting course access:', error);
-      alert('Failed to submit request. Please try again later.');
+      console.error('Error requesting access:', error);
+      alert('Failed to submit request. Please try again.');
     }
   };
 
+  const CourseCard = ({ course, isEnrolled }) => (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -8 }}
+      className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300"
+    >
+      <div className="relative h-48 overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600">
+        {course.thumbnail ? (
+          <img 
+            src={course.thumbnail} 
+            alt={course.title}
+            className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <FiBook className="text-white text-6xl opacity-50" />
+          </div>
+        )}
+        
+        {isEnrolled && (
+          <div className="absolute top-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1 shadow-lg">
+            <FiCheckCircle className="text-sm" />
+            Enrolled
+          </div>
+        )}
+        
+        {!isEnrolled && course.price && (
+          <div className="absolute top-4 right-4 bg-white text-gray-800 px-3 py-1 rounded-full text-sm font-bold shadow-lg">
+            ${course.price}
+          </div>
+        )}
+      </div>
+
+      <div className="p-6">
+        <h3 className="text-xl font-bold text-gray-800 mb-2 line-clamp-2">
+          {course.title}
+        </h3>
+        <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+          {course.description || 'No description available'}
+        </p>
+
+        <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
+          <div className="flex items-center gap-1">
+            <FiBook className="text-blue-500" />
+            <span>{course.modules?.length || 0} Modules</span>
+          </div>
+          {course.duration && (
+            <div className="flex items-center gap-1">
+              <FiClock className="text-purple-500" />
+              <span>{course.duration}</span>
+            </div>
+          )}
+        </div>
+
+        {isEnrolled ? (
+          <button
+            onClick={() => handleContinueLearning(course.id)}
+            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2 hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-md hover:shadow-lg"
+          >
+            <FiPlay />
+            Continue Learning
+          </button>
+        ) : (
+          <button
+            onClick={() => handleRequestAccess(course.id)}
+            className="w-full bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-200 transition-all duration-300 border border-gray-300"
+          >
+            Request Access
+          </button>
+        )}
+      </div>
+    </motion.div>
+  );
+
   if (loading) {
     return (
-      <StudentLayout>
-        <div className="py-6">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-center py-12">
-              <LoadingSpinner size="lg" />
-            </div>
-          </div>
+      <div className="flex h-screen">
+        <LearnIQNavbar />
+        <div className="flex-1 flex items-center justify-center">
+          <LoadingSpinner />
         </div>
-      </StudentLayout>
+      </div>
     );
   }
 
   return (
-    <StudentLayout>
-      <div className="py-6">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-2xl font-semibold text-gray-900">My Courses</h1>
-          
-          {error && (
-            <div className="mt-4 bg-red-50 border-l-4 border-red-400 p-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm text-red-700">{error}</p>
-                </div>
-              </div>
+    <div className="flex h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <LearnIQNavbar />
+      
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold text-gray-800 mb-2">My Courses</h1>
+            <p className="text-gray-600">Explore and manage your learning journey</p>
+          </div>
+
+          <div className="mb-8">
+            <div className="flex gap-4 border-b border-gray-200">
+              <button
+                onClick={() => setActiveTab('enrolled')}
+                className={`relative px-6 py-3 font-semibold transition-colors duration-300 ${
+                  activeTab === 'enrolled'
+                    ? 'text-blue-600'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Enrolled Courses ({enrolledCourses.length})
+                {activeTab === 'enrolled' && (
+                  <motion.div
+                    layoutId="activeTab"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-600 to-purple-600"
+                  />
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab('available')}
+                className={`relative px-6 py-3 font-semibold transition-colors duration-300 ${
+                  activeTab === 'available'
+                    ? 'text-blue-600'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Available Courses ({availableCourses.length})
+                {activeTab === 'available' && (
+                  <motion.div
+                    layoutId="activeTab"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-600 to-purple-600"
+                  />
+                )}
+              </button>
             </div>
+          </div>
+
+          {activeTab === 'enrolled' && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              {enrolledCourses.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {enrolledCourses.map((course, index) => (
+                    <motion.div
+                      key={course.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <CourseCard course={course} isEnrolled={true} />
+                    </motion.div>
+                  ))}
+                </div>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="text-center py-20"
+                >
+                  <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <FiSearch className="text-blue-600 text-4xl" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-800 mb-3">No Enrolled Courses</h3>
+                  <p className="text-gray-600 mb-6">Start your learning journey by enrolling in a course</p>
+                  <button
+                    onClick={() => setActiveTab('available')}
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-md hover:shadow-lg"
+                  >
+                    Browse Available Courses
+                  </button>
+                </motion.div>
+              )}
+            </motion.div>
           )}
-          
-          <div className="mt-6">
-            <h2 className="text-lg font-medium text-gray-900">Enrolled Courses</h2>
-            {enrolledCourses.length === 0 ? (
-              <p className="mt-2 text-gray-500">You haven't enrolled in any courses yet.</p>
-            ) : (
-              <div className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {enrolledCourses.map((course) => (
-                  <div key={course.id} className="bg-white overflow-hidden shadow rounded-lg">
-                    <div className="relative h-48">
-                      {course.imageUrl ? (
-                        <img 
-                          src={course.imageUrl}
-                          alt={course.title}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-indigo-100 flex items-center justify-center">
-                          <svg className="h-12 w-12 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                          </svg>
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-4">
-                      <h3 className="text-lg font-medium text-gray-900">{course.title}</h3>
-                      <p className="mt-2 text-sm text-gray-500 line-clamp-3">{course.description}</p>
-                    </div>
-                    <div className="border-t border-gray-200 bg-gray-50 p-4">
-                      <Link
-                        to={`/student/course/${course.id}`}
-                        className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
-                      >
-                        Continue Learning →
-                      </Link>
-                    </div>
+
+          {activeTab === 'available' && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              {availableCourses.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {availableCourses.map((course, index) => (
+                    <motion.div
+                      key={course.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <CourseCard course={course} isEnrolled={false} />
+                    </motion.div>
+                  ))}
+                </div>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="text-center py-20"
+                >
+                  <div className="w-24 h-24 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <FiBook className="text-purple-600 text-4xl" />
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-          
-          <div className="mt-12">
-            <h2 className="text-lg font-medium text-gray-900">Available Courses</h2>
-            {availableCourses.length === 0 ? (
-              <p className="mt-2 text-gray-500">No additional courses available at this time.</p>
-            ) : (
-              <div className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {availableCourses.map((course) => (
-                  <div key={course.id} className="bg-white overflow-hidden shadow rounded-lg">
-                    <div className="relative h-48">
-                      {course.imageUrl ? (
-                        <img 
-                          src={course.imageUrl}
-                          alt={course.title}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-indigo-100 flex items-center justify-center">
-                          <svg className="h-12 w-12 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                          </svg>
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-4">
-                      <h3 className="text-lg font-medium text-gray-900">{course.title}</h3>
-                      <p className="mt-2 text-sm text-gray-500 line-clamp-3">{course.description}</p>
-                    </div>
-                    <div className="border-t border-gray-200 bg-gray-50 p-4">
-                      <button
-                        onClick={() => handleRequestAccess(course.id)}
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                      >
-                        Request Access
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+                  <h3 className="text-2xl font-bold text-gray-800 mb-3">No Available Courses</h3>
+                  <p className="text-gray-600">All courses are currently enrolled or unavailable</p>
+                </motion.div>
+              )}
+            </motion.div>
+          )}
         </div>
       </div>
-    </StudentLayout>
+    </div>
   );
 };
 

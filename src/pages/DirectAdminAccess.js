@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { doc, setDoc } from 'firebase/firestore';
-import { db, auth } from '../firebase/firebase';
+import { db, auth } from '../firebase/firebase.js';
 import { useNavigate } from 'react-router-dom';
 
 export default function DirectAdminAccess() {
