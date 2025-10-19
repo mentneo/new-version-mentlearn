@@ -5,6 +5,7 @@ import { db } from '../../firebase/firebase.js';
 import { useAuth } from '../../contexts/AuthContext.js';
 import { FiBookOpen, FiClock, FiCheckCircle, FiPlay, FiFileText, FiUsers, FiMessageSquare, FiChevronRight, FiLock, FiAlertTriangle, FiChevronDown, FiExternalLink, FiDownload, FiBook } from 'react-icons/fi/index.js';
 import { motion } from 'framer-motion';
+import DiscussionForum from '../../components/student/DiscussionForum.js';
 
 export default function LearnIQCourseView() {
   const { courseId } = useParams();
@@ -13,9 +14,10 @@ export default function LearnIQCourseView() {
   const [course, setCourse] = useState(null);
   const [progress, setProgress] = useState(0);
   const [modules, setModules] = useState([]);
-  const [activeModuleIndex, setActiveModuleIndex] = useState(0);
+  const [activeModuleIndex, setActiveModuleIndex] = useState(null); // Changed to null - no module expanded by default
   const [instructor, setInstructor] = useState(null);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('content'); // content, discussion, resources
   
   useEffect(() => {
     const fetchCourseData = async () => {
@@ -48,7 +50,7 @@ export default function LearnIQCourseView() {
           }
         }
         
-        // Fetch progress data
+        // Fetch progress data - check both 'progress' and 'enrollment' collections
         const progressQuery = query(
           collection(db, "progress"),
           where("studentId", "==", currentUser.uid),
@@ -56,10 +58,29 @@ export default function LearnIQCourseView() {
         );
         
         const progressSnapshot = await getDocs(progressQuery);
+        let progressData = null;
+        
         if (!progressSnapshot.empty) {
-          const progressData = progressSnapshot.docs[0].data();
+          progressData = progressSnapshot.docs[0].data();
           setProgress(progressData.percentComplete || progressData.progress || 0);
-          console.log("Progress data:", progressData);
+          console.log("✅ Progress data from 'progress' collection:", progressData);
+        } else {
+          // Also check enrollments collection for progress
+          console.log("⚠️ No progress record found in 'progress' collection, checking 'enrollments'...");
+          const enrollmentQuery = query(
+            collection(db, "enrollments"),
+            where("studentId", "==", currentUser.uid),
+            where("courseId", "==", courseId)
+          );
+          const enrollmentSnapshot = await getDocs(enrollmentQuery);
+          
+          if (!enrollmentSnapshot.empty) {
+            const enrollmentData = enrollmentSnapshot.docs[0].data();
+            setProgress(enrollmentData.progress || 0);
+            console.log("✅ Progress data from 'enrollments' collection:", enrollmentData);
+          } else {
+            console.log("⚠️ No progress data found in either collection");
+          }
         }
         
         // Fetch modules and lessons - Try different collection names
@@ -167,7 +188,7 @@ export default function LearnIQCourseView() {
         
         console.log("Modules with lessons:", modulesWithLessons);
         
-        // Fetch completed lessons
+        // Fetch completed lessons - check both studentId and userId fields for backward compatibility
         const completedLessonsQuery = query(
           collection(db, "completedLessons"),
           where("studentId", "==", currentUser.uid),
@@ -175,27 +196,67 @@ export default function LearnIQCourseView() {
         );
         
         const completedLessonsSnapshot = await getDocs(completedLessonsQuery);
-        const completedLessons = completedLessonsSnapshot.docs.map(doc => doc.data().lessonId);
+        let completedLessons = completedLessonsSnapshot.docs.map(doc => doc.data().lessonId);
         
-        console.log("Completed lessons:", completedLessons);
+        // Also check for userId field if no results with studentId
+        if (completedLessons.length === 0) {
+          console.log("⚠️ No completed lessons found with 'studentId', checking 'userId' field...");
+          const completedLessonsQuery2 = query(
+            collection(db, "completedLessons"),
+            where("userId", "==", currentUser.uid),
+            where("courseId", "==", courseId)
+          );
+          const completedLessonsSnapshot2 = await getDocs(completedLessonsQuery2);
+          const additionalCompletedLessons = completedLessonsSnapshot2.docs.map(doc => doc.data().lessonId);
+          completedLessons = [...completedLessons, ...additionalCompletedLessons];
+        }
+        
+        console.log(`✅ Found ${completedLessons.length} completed lessons:`, completedLessons);
         
         // Mark completed lessons
-        const updatedModules = modulesWithLessons.map(module => {
+        const updatedModules = modulesWithLessons.map((module, index) => {
           const updatedLessons = module.lessons.map(lesson => ({
             ...lesson,
             isCompleted: completedLessons.includes(lesson.id)
           }));
           
+          const completedCount = updatedLessons.filter(lesson => lesson.isCompleted).length;
+          const totalCount = updatedLessons.length;
+          const isModuleCompleted = totalCount > 0 && completedCount === totalCount;
+          
+          // Lock module if previous module is not completed (except first module)
+          let isLocked = false;
+          if (index > 0) {
+            const previousModule = modulesWithLessons[index - 1];
+            const previousModuleLessons = previousModule.lessons || [];
+            const previousCompletedCount = previousModuleLessons.filter(
+              lesson => completedLessons.includes(lesson.id)
+            ).length;
+            const previousTotalCount = previousModuleLessons.length;
+            
+            // Lock if previous module is not fully completed
+            isLocked = previousTotalCount === 0 || previousCompletedCount < previousTotalCount;
+          }
+          
           return {
             ...module,
             lessons: updatedLessons,
-            completedCount: updatedLessons.filter(lesson => lesson.isCompleted).length,
-            totalCount: updatedLessons.length
+            completedCount,
+            totalCount,
+            isCompleted: isModuleCompleted,
+            isLocked
           };
         });
         
         setModules(updatedModules);
-        console.log("Final modules data:", updatedModules);
+        console.log("Final modules data with lock status:", updatedModules);
+        
+        // Auto-expand the first unlocked module
+        const firstUnlockedIndex = updatedModules.findIndex(m => !m.isLocked);
+        if (firstUnlockedIndex !== -1) {
+          setActiveModuleIndex(firstUnlockedIndex);
+        }
+        
         setLoading(false);
       } catch (error) {
         console.error("Error fetching course data:", error);
@@ -326,38 +387,51 @@ export default function LearnIQCourseView() {
           </div>
         </div>
         
-        {/* Course actions */}
-        <div className="px-6 py-4 flex flex-wrap gap-3">
-          <Link
-            to={`/student/course/${courseId}/learn`}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            <FiPlay size={18} className="mr-2 -ml-1" />
-            Continue Learning
-          </Link>
-          
-          <Link
-            to={`/student/course/${courseId}/resources`}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            <FiDownload size={18} className="mr-2 -ml-1" />
-            Resources
-          </Link>
-          
-          <Link
-            to={`/student/course/${courseId}/discussion`}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            <FiMessageSquare size={18} className="mr-2 -ml-1" />
-            Discussion Forum
-          </Link>
+        {/* Tab Navigation */}
+        <div className="border-b border-gray-200">
+          <nav className="flex space-x-8 px-6" aria-label="Tabs">
+            <button
+              onClick={() => setActiveTab('content')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'content'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <FiBookOpen className="inline-block mr-2" size={18} />
+              Course Content
+            </button>
+            <button
+              onClick={() => setActiveTab('discussion')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'discussion'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <FiMessageSquare className="inline-block mr-2" size={18} />
+              Discussion Forum
+            </button>
+            <button
+              onClick={() => setActiveTab('resources')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'resources'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <FiDownload className="inline-block mr-2" size={18} />
+              Resources
+            </button>
+          </nav>
         </div>
       </div>
       
-      {/* Course Content & Info */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main content - Course Curriculum */}
-        <div className="lg:col-span-2 space-y-6">
+      {/* Tab Content */}
+      {activeTab === 'content' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main content - Course Curriculum */}
+          <div className="lg:col-span-2 space-y-6">
           <div className="bg-white shadow rounded-2xl overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100">
               <h2 className="text-xl font-bold text-gray-900">Course Curriculum</h2>
@@ -366,6 +440,7 @@ export default function LearnIQCourseView() {
                   <>
                     {modules.reduce((acc, module) => acc + (module.lessons?.length || 0), 0)} lessons 
                     ({formatDuration(course.totalDuration || 0)} total length)
+                    <span className="ml-2 text-xs text-blue-600">• Click module to view lessons</span>
                   </>
                 ) : (
                   "No curriculum available yet"
@@ -384,15 +459,19 @@ export default function LearnIQCourseView() {
                 </div>
               ) : (
                 modules.map((module, index) => (
-                <div key={module.id} className="cursor-pointer">
+                <div key={module.id} className={`cursor-pointer ${module.isLocked ? 'opacity-60' : ''}`}>
                   <div 
-                    className="px-6 py-4 hover:bg-gray-50"
-                    onClick={() => toggleModule(index)}
+                    className={`px-6 py-4 ${module.isLocked ? 'cursor-not-allowed bg-gray-100' : 'hover:bg-gray-50'}`}
+                    onClick={() => !module.isLocked && toggleModule(index)}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
                         <div className="mr-3 flex-shrink-0">
-                          {module.completedCount === module.totalCount && module.totalCount > 0 ? (
+                          {module.isLocked ? (
+                            <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
+                              <FiLock size={16} className="text-gray-500" />
+                            </div>
+                          ) : module.completedCount === module.totalCount && module.totalCount > 0 ? (
                             <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
                               <FiCheckCircle size={16} className="text-green-600" />
                             </div>
@@ -405,27 +484,42 @@ export default function LearnIQCourseView() {
                           )}
                         </div>
                         <div>
-                          <h3 className="text-sm font-semibold text-gray-900">
-                            {module.title || 'Untitled Module'}
-                          </h3>
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-sm font-semibold text-gray-900">
+                              {module.title || 'Untitled Module'}
+                            </h3>
+                            {module.isLocked && (
+                              <span className="text-xs text-gray-500 bg-gray-200 px-2 py-0.5 rounded">
+                                Locked
+                              </span>
+                            )}
+                          </div>
                           <p className="text-xs text-gray-500 mt-1">
-                            {module.lessons?.length || 0} {module.lessons?.length === 1 ? 'lesson' : 'lessons'}
-                            {module.duration && module.duration > 0 && ` • ${formatDuration(module.duration)}`}
-                            {!module.duration && module.lessons?.length > 0 && (
-                              <span className="ml-1 text-orange-500">• Duration not set</span>
+                            {module.isLocked ? (
+                              <span className="text-orange-600">Complete the previous module to unlock</span>
+                            ) : (
+                              <>
+                                {module.lessons?.length || 0} {module.lessons?.length === 1 ? 'lesson' : 'lessons'}
+                                {module.duration && module.duration > 0 && ` • ${formatDuration(module.duration)}`}
+                                {!module.duration && module.lessons?.length > 0 && (
+                                  <span className="ml-1 text-orange-500">• Duration not set</span>
+                                )}
+                              </>
                             )}
                           </p>
                         </div>
                       </div>
-                      <FiChevronDown 
-                        size={20} 
-                        className={`text-gray-400 transition-transform duration-200 ${activeModuleIndex === index ? 'transform rotate-180' : ''}`} 
-                      />
+                      {!module.isLocked && (
+                        <FiChevronDown 
+                          size={20} 
+                          className={`text-gray-400 transition-transform duration-200 ${activeModuleIndex === index ? 'transform rotate-180' : ''}`} 
+                        />
+                      )}
                     </div>
                   </div>
                   
                   {/* Expanded module content */}
-                  {activeModuleIndex === index && (
+                  {activeModuleIndex === index && !module.isLocked && (
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}
@@ -595,6 +689,26 @@ export default function LearnIQCourseView() {
           </div>
         </div>
       </div>
+      )}
+
+      {/* Discussion Forum Tab */}
+      {activeTab === 'discussion' && (
+        <DiscussionForum courseId={courseId} />
+      )}
+
+      {/* Resources Tab */}
+      {activeTab === 'resources' && (
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Course Resources</h2>
+            <div className="text-center py-12">
+              <FiDownload size={48} className="mx-auto text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No resources yet</h3>
+              <p className="text-gray-600">Course materials and downloadable resources will appear here.</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

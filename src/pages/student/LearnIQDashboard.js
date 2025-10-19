@@ -11,7 +11,6 @@ import {
 // // import Calendar from 'react-calendar';
 // // import 'react-calendar/dist/Calendar.css';
 import { FiBookOpen, FiAward, FiClock, FiCalendar, FiBarChart2, FiUser, FiSettings, FiBell, FiFileText, FiGrid, FiList, FiChevronRight, FiStar, FiArrowRight, FiCheck, FiPlay, FiAlertTriangle, FiActivity, FiDownload, FiShare2, FiPlusCircle, FiBook } from 'react-icons/fi/index.js';
-import MenteoLogo from '../../components/MenteoLogo.js';
 
 const COLORS = ['#E4E0FF', '#CDE8E5', '#F9D6D6', '#FFE8C8'];
 
@@ -357,35 +356,6 @@ export default function LearnIQDashboard() {
 
   return (
     <div className="min-h-screen bg-[#F6F8FC] font-['Inter']">
-      {/* Top Navigation */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <MenteoLogo size="small" />
-            </div>
-            <div className="flex items-center space-x-4">
-              <button className="p-2 rounded-full text-gray-400 hover:text-gray-500">
-                <FiBell size={20} />
-              </button>
-              <button className="p-2 rounded-full text-gray-400 hover:text-gray-500">
-                <FiSettings size={20} />
-              </button>
-              <div className="flex items-center space-x-3">
-                <img 
-                  src={userData?.photoURL || "https://via.placeholder.com/40"} 
-                  alt="Profile" 
-                  className="h-8 w-8 rounded-full"
-                />
-                <span className="text-sm font-medium text-gray-700">
-                  {userData?.displayName || "Student"}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-      
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Dashboard Header */}

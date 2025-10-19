@@ -11,7 +11,8 @@ import {
   FaTimes,
   FaUser,
   FaMoon,
-  FaSun
+  FaSun,
+  FaClipboardCheck
 } from 'react-icons/fa';
 import Logo from '../common/Logo';
 
@@ -54,6 +55,7 @@ export default function SideNav() {
     { path: '/creator/dashboard', icon: <FaTachometerAlt />, label: 'Dashboard' },
     { path: '/creator/courses', icon: <FaBook />, label: 'My Courses' },
     { path: '/creator/enrollments', icon: <FaUserGraduate />, label: 'Enrollments' },
+    { path: '/creator/assignment-submissions', icon: <FaClipboardCheck />, label: 'Assignment Submissions' },
     { path: '/creator/profile', icon: <FaUser />, label: 'Profile' },
     { path: '/creator/new-profile', icon: <FaUser />, label: 'New Profile' }
   ];

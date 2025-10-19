@@ -332,7 +332,7 @@ export default function CreatorDashboard() {
         return {
           id: student.id,
           name: student.displayName || 'Anonymous Student',
-          avatar: student.photoURL || 'https://via.placeholder.com/50?text=Student',
+          avatar: student.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.displayName || 'Student')}&size=50&background=3B82F6&color=fff`,
           progress: Math.floor(Math.random() * 30) + 70, // Placeholder for actual progress
           course: course?.title || 'Unknown Course'
         };
@@ -380,7 +380,7 @@ export default function CreatorDashboard() {
         return {
           id: course.id,
           title: course.title || 'Untitled Course',
-          thumbnail: course.thumbnailUrl || 'https://via.placeholder.com/150',
+          thumbnail: course.thumbnailUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(course.title || 'Course')}&size=150&background=3B82F6&color=fff`,
           enrollments: courseEnrollments.length,
           rating: course.rating || 0,
           revenue: revenue,
@@ -559,6 +559,13 @@ export default function CreatorDashboard() {
     const q = query(coursesRef, where('creatorId', '==', user.uid));
     const unsub = onSnapshot(q, async (querySnapshot) => {
       const coursesList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+      // DEBUG: Log course published status
+      console.log('🔍 CREATOR DASHBOARD - Fetched courses:');
+      coursesList.forEach(course => {
+        console.log(`  📚 ${course.title}: published=${course.published}, status=${course.status}`);
+      });
+      
       setCourses(coursesList);
       
       // Calculate average rating
@@ -747,19 +754,34 @@ export default function CreatorDashboard() {
         creatorId: user.uid,
         creatorName: creatorProfile.name,
         createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
         thumbnailUrl: thumbnailUrl, // Now using the URL from the uploaded image
         enrollments: 0,
         rating: 0,
         reviews: [],
+        published: true, // Make course visible to students immediately
+        status: 'active', // Course is active and available
       };
+
+      // DEBUG: Log the course data before saving
+      console.log('🔍 CREATOR DASHBOARD - Saving course with data:', {
+        title: courseData.title,
+        published: courseData.published,
+        status: courseData.status,
+        creatorId: courseData.creatorId,
+        hasModules: !!courseData.modules,
+        moduleCount: courseData.modules?.length || 0
+      });
 
       if (editingCourse) {
         // Update existing course
         await updateDoc(doc(db, 'courses', editingCourse.id), courseData);
+        console.log('✅ Course updated in Firestore, ID:', editingCourse.id);
         setSuccess('Course updated successfully!');
       } else {
         // Create new course
-        await addDoc(collection(db, 'courses'), courseData);
+        const docRef = await addDoc(collection(db, 'courses'), courseData);
+        console.log('✅ New course created in Firestore, ID:', docRef.id);
         setSuccess('Course created successfully!');
       }
 
@@ -1179,8 +1201,11 @@ export default function CreatorDashboard() {
                                 <div className="flex-shrink-0 h-10 w-10">
                                   <img 
                                     className="h-10 w-10 rounded-md object-cover" 
-                                    src={course.thumbnail || 'https://via.placeholder.com/150'} 
-                                    alt={course.title} 
+                                    src={course.thumbnail || `https://ui-avatars.com/api/?name=${encodeURIComponent(course.title || 'Course')}&size=150&background=3B82F6&color=fff`} 
+                                    alt={course.title}
+                                    onError={(e) => {
+                                      e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(course.title || 'Course')}&size=150&background=3B82F6&color=fff`;
+                                    }}
                                   />
                                 </div>
                                 <div className="ml-4">
@@ -1231,28 +1256,28 @@ export default function CreatorDashboard() {
                               </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                              <div className="flex space-x-2">
-                                <Link 
-                                  to={`/creator/course/${course.id}/edit`} 
-                                  className="text-blue-600 hover:text-blue-900"
+                              <div className="flex space-x-3">
+                                <button
+                                  onClick={() => handleEditCourse(course)} 
+                                  className="text-blue-600 hover:text-blue-900 transition-colors"
                                   title="Edit Course"
                                 >
-                                  <FaEdit />
-                                </Link>
-                                <Link 
-                                  to={`/creator/course/${course.id}/analytics`}
-                                  className="text-green-600 hover:text-green-900"
-                                  title="Course Analytics"
-                                >
-                                  <FaChartLine />
-                                </Link>
-                                <button
-                                  onClick={() => handleSendNotification(course.id, course.title)} 
-                                  className="text-purple-600 hover:text-purple-900"
-                                  title="Send Notification"
-                                >
-                                  <FaBell />
+                                  <FaEdit className="h-4 w-4" />
                                 </button>
+                                <button
+                                  onClick={() => handleDeleteCourse(course.id)}
+                                  className="text-red-600 hover:text-red-900 transition-colors"
+                                  title="Delete Course"
+                                >
+                                  <FaTrash className="h-4 w-4" />
+                                </button>
+                                <Link 
+                                  to={`/creator/courses`}
+                                  className="text-green-600 hover:text-green-900 transition-colors"
+                                  title="View All Courses"
+                                >
+                                  <FaEye className="h-4 w-4" />
+                                </Link>
                               </div>
                             </td>
                           </tr>
@@ -1338,7 +1363,14 @@ export default function CreatorDashboard() {
                     <div className="space-y-4">
                       {topRevenueCourses.map(course => (
                         <div key={course.id} className="flex items-center p-3 bg-gray-50 rounded-lg">
-                          <img src={course.thumbnail || 'https://via.placeholder.com/150'} alt={course.title} className="w-12 h-12 rounded-md object-cover" />
+                          <img 
+                            src={course.thumbnail || `https://ui-avatars.com/api/?name=${encodeURIComponent(course.title || 'Course')}&size=150&background=3B82F6&color=fff`} 
+                            alt={course.title} 
+                            className="w-12 h-12 rounded-md object-cover"
+                            onError={(e) => {
+                              e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(course.title || 'Course')}&size=150&background=3B82F6&color=fff`;
+                            }}
+                          />
                           <div className="ml-4 flex-1">
                             <p className="text-sm font-medium text-gray-900">{course.title}</p>
                             <div className="flex text-xs text-gray-500 mt-1">

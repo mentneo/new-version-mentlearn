@@ -52,7 +52,7 @@ const LandingPage = () => {
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-8">
-              <Link to="/courses" className="text-gray-600 hover:text-[#007bff] px-3 py-2 text-sm font-medium">Courses</Link>
+              <Link to="/courses" className="text-gray-600 hover:text-[#007bff] px-3 py-2 text-sm font-medium">Our Courses</Link>
               <Link to="/about" className="text-gray-600 hover:text-[#007bff] px-3 py-2 text-sm font-medium">About</Link>
               {/* Program dropdown */}
               <div className="relative group">
@@ -64,6 +64,9 @@ const LandingPage = () => {
                 </button>
                 {/* Make dropdown visible on hover and focus */}
                 <div className="absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-all duration-200 z-50">
+                  <Link to="/courses" className="block px-4 py-3 text-gray-700 hover:bg-[#f0f4ff] hover:text-[#007bff] text-sm font-semibold border-b border-gray-200">
+                    All Courses
+                  </Link>
                   <Link to="/courses/academy" className="block px-4 py-3 text-gray-700 hover:bg-[#f0f4ff] hover:text-[#007bff] text-sm">
                     Academy
                   </Link>
@@ -141,6 +144,13 @@ const LandingPage = () => {
                   <Link to="/" className="block px-6 py-4 text-base font-medium text-white border-b border-gray-700 hover:bg-blue-900/20">
                     <div className="flex items-center justify-between">
                       <span>Home</span>
+                      <FaArrowRight className="h-4 w-4 opacity-70" />
+                    </div>
+                  </Link>
+                  {/* Our Courses menu item */}
+                  <Link to="/courses" className="block px-6 py-4 text-base font-medium text-white border-b border-gray-700 hover:bg-blue-900/20">
+                    <div className="flex items-center justify-between">
+                      <span>Our Courses</span>
                       <FaArrowRight className="h-4 w-4 opacity-70" />
                     </div>
                   </Link>

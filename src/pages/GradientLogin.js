@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.js';
+import { auth, db } from '../firebase/firebase.js'; // Add db import
+import { doc, getDoc } from 'firebase/firestore';
 import { motion } from 'framer-motion';
 import { 
   FaEye, 
@@ -20,7 +22,7 @@ const GradientLogin = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { login } = useAuth();
+  const { login, getUserRole } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -35,12 +37,51 @@ const GradientLogin = () => {
     setError('');
 
     try {
-      // Use AuthContext's login function which properly sets userRole state
-      await login(email, password);
+      const userCredential = await login(email, password);
       
-      console.log("Login successful, redirecting to dashboard");
-      // Navigate to /dashboard and let RoleBasedRedirect handle the role-based routing
-      navigate('/dashboard');
+      console.log('🔐 GradientLogin: Login successful for user:', userCredential.user.uid);
+      
+      // Get the user role from Firebase - check both users and creators collections
+      let userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
+      let userRole = 'student'; // default role
+      let isCreator = false;
+      
+      if (userDoc.exists()) {
+        userRole = userDoc.data().role || 'student';
+        console.log('👤 GradientLogin: User found in users collection. Role:', userRole);
+        console.log('📄 GradientLogin: Full user data:', userDoc.data());
+      } else {
+        console.log('⚠️ GradientLogin: User NOT found in users collection, checking creators...');
+        // Check creators collection
+        const creatorDoc = await getDoc(doc(db, "creators", userCredential.user.uid));
+        if (creatorDoc.exists()) {
+          userRole = 'creator';
+          isCreator = true;
+          console.log('🎨 GradientLogin: User found in creators collection');
+        } else {
+          console.log('❌ GradientLogin: User NOT found in creators collection either');
+        }
+      }
+      
+      console.log('🚀 GradientLogin: Redirecting user with role:', userRole);
+      
+      // Redirect based on user role
+      if (userRole === 'admin') {
+        console.log('➡️ GradientLogin: Redirecting to /admin/dashboard');
+        navigate('/admin/dashboard');
+      } else if (userRole === 'data_analyst') {
+        console.log('➡️ GradientLogin: Redirecting to /data-analyst/dashboard');
+        navigate('/data-analyst/dashboard');
+      } else if (userRole === 'creator') {
+        console.log('➡️ GradientLogin: Redirecting to /creator/dashboard');
+        navigate('/creator/dashboard');
+      } else if (userRole === 'mentor') {
+        console.log('➡️ GradientLogin: Redirecting to /mentor/dashboard');
+        navigate('/mentor/dashboard');
+      } else {
+        console.log('➡️ GradientLogin: Redirecting to /student/student-dashboard');
+        navigate('/student/student-dashboard');
+      }
     } catch (error) {
       console.error('Login error:', error);
       setError('Invalid email or password. Please try again.');

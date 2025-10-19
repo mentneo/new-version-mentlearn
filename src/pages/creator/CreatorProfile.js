@@ -1,331 +1,376 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { Link } from 'react-router-dom';
-import { AuthContext } from '../../contexts/AuthContext.js';
-import { db, storage } from '../../firebase/firebase.js';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-
-// Import icons from react-icons
+import { db } from '../../firebase/firebase.js';
+import { useAuth } from '../../contexts/AuthContext.js';
+import { uploadImageWithFallback } from '../../utils/cloudinary.js';
 import { 
-  FaEdit, 
-  FaBook, 
-  FaDollarSign, 
-  FaPuzzlePiece, 
-  FaCog, 
-  FaBell, 
-  FaUserPlus, 
-  FaSignOutAlt, 
-  FaHome, 
-  FaGraduationCap, 
-  FaChartBar, 
-  FaUser,
-  FaCheck,
-  FaArrowRight
-} from 'react-icons/fa';
+  FiMail, 
+  FiPhone, 
+  FiMapPin, 
+  FiGlobe, 
+  FiAward, 
+  FiEdit2, 
+  FiCheck, 
+  FiX, 
+  FiCamera, 
+  FiBook, 
+  FiUsers, 
+  FiDollarSign,
+  FiTrendingUp,
+  FiClock,
+  FiSettings,
+  FiHome,
+  FiBarChart,
+  FiUser,
+  FiArrowRight,
+  FiLogOut
+} from 'react-icons/fi';
 
-const CreatorProfile = () => {
-  const { currentUser, logout } = useContext(AuthContext);
-  const [profileData, setProfileData] = useState({
-    name: '',
-    email: '',
-    photoURL: '',
-    completionPercentage: 0,
-    isVerified: false,
+function CreatorProfile() {
+  const { currentUser, logout } = useAuth();
+  const navigate = useNavigate();
+  
+  const [loading, setLoading] = useState(true);
+  const [userData, setUserData] = useState(null);
+  const [createdCourses, setCreatedCourses] = useState([]);
+  const [editMode, setEditMode] = useState(false);
+  const [photoURL, setPhotoURL] = useState('');
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+  const fileInputRef = useRef(null);
+  const [stats, setStats] = useState({
     coursesCount: 0,
     studentsCount: 0,
     totalRevenue: 0,
-    createdCourses: []
+    totalLearningHours: 0
   });
-  const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [darkMode, setDarkMode] = useState(false);
-
-  // File input reference
-  const fileInputRef = React.useRef(null);
-
+  
+  // Form fields
+  const [formData, setFormData] = useState({
+    displayName: '',
+    bio: '',
+    phone: '',
+    address: '',
+    website: '',
+    expertise: '',
+    education: '',
+    skills: []
+  });
+  
   // Calculate profile completion percentage
-  const calculateProfileCompletion = (userData) => {
-    const fieldsToCheck = [
-      'displayName', 'email', 'photoURL', 'bio', 
-      'expertise', 'socialLinks', 'phone'
-    ];
-    
+  const calculateProfileCompletion = (data) => {
+    const fieldsToCheck = ['displayName', 'bio', 'phone', 'photoURL', 'expertise', 'education'];
     let filledFields = 0;
+    
     fieldsToCheck.forEach(field => {
-      if (userData[field] && 
-          (typeof userData[field] === 'object' ? Object.keys(userData[field]).length > 0 : userData[field].trim() !== '')) {
+      if (data[field] && data[field].toString().trim() !== '') {
         filledFields++;
       }
     });
     
     return Math.round((filledFields / fieldsToCheck.length) * 100);
   };
-
-  // Fetch user profile data
+  
+  // Fetch user data and related information
   useEffect(() => {
-    const fetchProfileData = async () => {
-      if (currentUser && currentUser.uid) {
-        try {
-          setLoading(true);
+    const fetchUserData = async () => {
+      if (!currentUser) {
+        navigate('/login');
+        return;
+      }
+      
+      try {
+        setLoading(true);
+        
+        // Fetch user data
+        const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          setUserData(data);
+          setPhotoURL(data.photoURL || '');
           
-          // First, check if there's a creator profile
-          let creatorData = null;
-          const creatorDocRef = doc(db, 'creators', currentUser.uid);
-          const creatorDoc = await getDoc(creatorDocRef);
-          
-          if (creatorDoc.exists()) {
-            creatorData = creatorDoc.data();
-          }
-          
-          // Then get user data
-          const userDocRef = doc(db, 'users', currentUser.uid);
-          const userDoc = await getDoc(userDocRef);
-          
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            
-            // Fetch courses created by this creator
-            const coursesQuery = query(
-              collection(db, 'courses'),
-              where('creatorId', '==', currentUser.uid)
-            );
-            
-            const coursesSnapshot = await getDocs(coursesQuery);
-            const createdCourses = [];
-            let totalStudents = 0;
-            let totalRevenueAmount = 0;
-            
-            coursesSnapshot.forEach(doc => {
-              const courseData = doc.data();
-              createdCourses.push({
-                id: doc.id,
-                ...courseData
-              });
-              
-              // Count enrolled students
-              const enrolledStudents = courseData.enrolledStudents || [];
-              totalStudents += enrolledStudents.length;
-              
-              // Calculate revenue
-              const coursePrice = parseFloat(courseData.price) || 0;
-              const enrolledCount = enrolledStudents.length;
-              totalRevenueAmount += coursePrice * enrolledCount;
-            });
-            
-            // Merge data from both creator and user collections
-            const mergedData = {
-              ...userData,
-              ...(creatorData || {}),
-            };
-            
-            // Calculate profile completion
-            const completionPercentage = calculateProfileCompletion(mergedData);
-            
-            // Check if creator is verified
-            const isVerified = mergedData.isVerified || mergedData.role === 'creator';
-            
-            console.log('Merged data:', mergedData);
-            console.log('Created courses:', createdCourses);
-            console.log('Total students:', totalStudents);
-            console.log('Total revenue:', totalRevenueAmount);
-            
-            setProfileData({
-              name: mergedData.displayName || currentUser.displayName || 'Creator',
-              email: mergedData.email || currentUser.email || '',
-              photoURL: mergedData.photoURL || currentUser.photoURL || '',
-              bio: mergedData.bio || '',
-              expertise: mergedData.expertise || '',
-              completionPercentage,
-              isVerified,
-              coursesCount: createdCourses.length,
-              studentsCount: totalStudents,
-              totalRevenue: totalRevenueAmount,
-              createdCourses
-            });
-          } else {
-            console.warn("No user document found for this creator");
-            // Set default values if no user document is found
-            setProfileData({
-              name: currentUser.displayName || 'Creator',
-              email: currentUser.email || '',
-              photoURL: currentUser.photoURL || '',
-              completionPercentage: 0,
-              isVerified: false,
-              coursesCount: 0,
-              studentsCount: 0,
-              totalRevenue: 0,
-              createdCourses: []
-            });
-          }
-        } catch (error) {
-          console.error("Error fetching profile data:", error);
-          // Set default values in case of error
-          setProfileData({
-            name: currentUser?.displayName || 'Creator',
-            email: currentUser?.email || '',
-            photoURL: currentUser?.photoURL || '',
-            completionPercentage: 0,
-            isVerified: false,
-            coursesCount: 0,
-            studentsCount: 0,
-            totalRevenue: 0,
-            createdCourses: []
+          // Initialize form data
+          setFormData({
+            displayName: data.displayName || '',
+            bio: data.bio || '',
+            phone: data.phone || '',
+            address: data.address || '',
+            website: data.website || '',
+            expertise: data.expertise || '',
+            education: data.education || '',
+            skills: data.skills || []
           });
-        } finally {
-          setLoading(false);
         }
+        
+        // Fetch created courses
+        const coursesQuery = query(
+          collection(db, "courses"),
+          where("creatorId", "==", currentUser.uid)
+        );
+        const coursesSnapshot = await getDocs(coursesQuery);
+        
+        const courses = [];
+        let totalStudents = 0;
+        let totalRevenue = 0;
+        
+        coursesSnapshot.forEach(courseDoc => {
+          const courseData = courseDoc.data();
+          courses.push({ 
+            id: courseDoc.id, 
+            ...courseData
+          });
+          
+          // Calculate stats
+          const enrolledStudents = courseData.enrolledStudents || [];
+          totalStudents += enrolledStudents.length;
+          
+          const coursePrice = parseFloat(courseData.price) || 0;
+          totalRevenue += coursePrice * enrolledStudents.length;
+        });
+        
+        setCreatedCourses(courses);
+        setStats({
+          coursesCount: courses.length,
+          studentsCount: totalStudents,
+          totalRevenue: totalRevenue,
+          totalLearningHours: userData?.totalLearningHours || 0
+        });
+        
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching profile data:", error);
+        setLoading(false);
       }
     };
+    
+    fetchUserData();
+  }, [currentUser, navigate]);
 
-    fetchProfileData();
-  }, [currentUser]);
-
+  // Handle form field changes
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prevData => ({
+      ...prevData,
+      [name]: value
+    }));
+  };
+  
+  // Handle skills input (comma-separated)
+  const handleSkillsChange = (e) => {
+    const skillsString = e.target.value;
+    const skillsArray = skillsString.split(',').map(skill => skill.trim()).filter(Boolean);
+    setFormData(prevData => ({
+      ...prevData,
+      skills: skillsArray
+    }));
+  };
+  
+  // Submit profile updates
+  const handleSubmit = async () => {
+    if (!currentUser) return;
+    
+    try {
+      await updateDoc(doc(db, "users", currentUser.uid), {
+        ...formData,
+        updatedAt: new Date()
+      });
+      
+      // Update local user data
+      setUserData(prev => ({
+        ...prev,
+        ...formData
+      }));
+      
+      setEditMode(false);
+      alert("Profile updated successfully!");
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      alert("Failed to update profile. Please try again.");
+    }
+  };
+  
+  // Handle profile photo upload
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file || !currentUser) return;
+    
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      alert("Please upload a valid image file (JPEG, PNG, GIF, or WebP)");
+      return;
+    }
+    
+    // Validate file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+    if (file.size > maxSize) {
+      alert("File size must be less than 5MB");
+      return;
+    }
+    
+    try {
+      setUploadingPhoto(true);
+      setUploading(true);
+      
+      console.log("Starting profile photo upload:", {
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type
+      });
+      
+      // Upload to Cloudinary with Firebase Storage fallback
+      const imageUrl = await uploadImageWithFallback(file, currentUser.uid);
+      
+      if (!imageUrl) {
+        throw new Error('Failed to get image URL from upload service');
+      }
+      
+      console.log("Upload successful, image URL:", imageUrl);
+      
+      // Update user document in Firestore
+      await updateDoc(doc(db, "users", currentUser.uid), {
+        photoURL: imageUrl,
+        updatedAt: new Date()
+      });
+      
+      console.log("Firestore user document updated successfully");
+      
+      // Update local state
+      setPhotoURL(imageUrl);
+      setUserData(prev => ({
+        ...prev,
+        photoURL: imageUrl
+      }));
+      
+      setUploadingPhoto(false);
+      setUploading(false);
+      alert("Profile photo uploaded successfully!");
+      
+    } catch (error) {
+      console.error("Error uploading photo:", error);
+      setUploadingPhoto(false);
+      setUploading(false);
+      
+      // Provide user-friendly error message
+      if (error.message.includes('Cloudinary')) {
+        alert(`Upload failed: ${error.message}. Please check your internet connection and try again.`);
+      } else if (error.message.includes('Firebase')) {
+        alert(`Storage error: ${error.message}. Please try again later.`);
+      } else {
+        alert(`Failed to upload photo: ${error.message}`);
+      }
+    }
+  };
+  
+  // Handle image upload button click
+  const handleImageUpload = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+  
+  // Handle file change
+  const onFileChange = (e) => {
+    handlePhotoUpload(e);
+  };
+  
+  // Toggle dark mode
+  const toggleDarkMode = () => {
+    setDarkMode(!darkMode);
+  };
+  
+  // Handle logout
   const handleLogout = async () => {
     try {
       await logout();
-      // Redirection will be handled by auth context/protected routes
+      navigate('/login');
     } catch (error) {
-      console.error("Error logging out:", error);
+      console.error('Logout error:', error);
+      alert('Failed to log out');
     }
   };
-
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-    // Here you would typically update this in a global context or local storage
+  
+  // Format date
+  const formatDate = (timestamp) => {
+    if (!timestamp) return '';
+    
+    const date = timestamp instanceof Date ? timestamp : timestamp.toDate?.();
+    if (!date) return '';
+    
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    }).format(date);
   };
-
-  const getMenuItems = () => [
-    { 
-      id: 1, 
-      icon: <FaEdit className="text-blue-500" />, 
-      text: "Edit Profile", 
-      description: "Update your personal information",
-      link: "/creator/edit-profile", 
-      color: "text-blue-600" 
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex justify-center items-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+  
+  const profileCompletion = calculateProfileCompletion(userData || {});
+  
+  // Profile data object
+  const profileData = {
+    name: userData?.displayName || userData?.name || 'Creator',
+    email: currentUser?.email || '',
+    photoURL: photoURL || userData?.photoURL || '',
+    isVerified: userData?.isVerified || false,
+    completionPercentage: profileCompletion,
+    coursesCount: stats.coursesCount,
+    studentsCount: stats.studentsCount,
+    totalRevenue: stats.totalRevenue,
+    createdCourses: createdCourses
+  };
+  
+  // Menu items
+  const menuItems = [
+    {
+      id: 'edit-profile',
+      text: 'Edit Profile',
+      description: 'Update your personal information',
+      icon: <FiEdit2 className="h-5 w-5 text-blue-500" />,
+      link: '/creator/profile/edit'
     },
-    { 
-      id: 2, 
-      icon: <FaBook className="text-indigo-500" />, 
-      text: "My Courses", 
-      description: loading ? "Loading courses..." : `${profileData.coursesCount} ${profileData.coursesCount === 1 ? 'course' : 'courses'} created`,
-      link: "/creator/courses", 
-      color: "text-blue-600" 
+    {
+      id: 'my-courses',
+      text: 'My Courses',
+      description: 'View and manage your courses',
+      icon: <FiBook className="h-5 w-5 text-green-500" />,
+      link: '/creator/courses'
     },
-    { 
-      id: 3, 
-      icon: <FaDollarSign className="text-green-500" />, 
-      text: "Revenue & Analytics", 
-      description: loading ? "Calculating revenue..." : `₹${profileData.totalRevenue.toLocaleString()} total revenue`,
-      link: "/creator/analytics", 
-      color: "text-blue-600" 
+    {
+      id: 'analytics',
+      text: 'Analytics',
+      description: 'Track your performance',
+      icon: <FiBarChart className="h-5 w-5 text-purple-500" />,
+      link: '/creator/analytics'
     },
-    { 
-      id: 4, 
-      icon: <FaPuzzlePiece className="text-purple-500" />, 
-      text: "Manage Quizzes & Assignments", 
-      description: loading ? "Loading content..." : "Create and edit course content",
-      link: "/creator/content", 
-      color: "text-blue-600" 
+    {
+      id: 'settings',
+      text: 'Settings',
+      description: 'Manage your preferences',
+      icon: <FiSettings className="h-5 w-5 text-gray-500" />,
+      link: '/creator/settings'
     },
-    { 
-      id: 5, 
-      icon: <FaCog className="text-gray-500" />, 
-      text: "Settings", 
-      description: "Notification, privacy, password reset",
-      link: "/creator/settings", 
-      color: "text-blue-600",
-      toggle: {
-        label: "Dark Mode",
-        checked: darkMode,
-        onChange: toggleDarkMode
-      }
-    },
-    { 
-      id: 6, 
-      icon: <FaBell className="text-yellow-500" />, 
-      text: "Notifications Sent", 
-      description: loading ? "Loading notifications..." : "Manage communications with students",
-      link: "/creator/notifications", 
-      color: "text-blue-600" 
-    },
-    { 
-      id: 7, 
-      icon: <FaUserPlus className="text-blue-400" />, 
-      text: "Invite a Friend / Collaborator", 
-      description: "Grow your teaching network",
-      link: "/creator/invite", 
-      color: "text-blue-600" 
-    },
-    { 
-      id: 8, 
-      icon: <FaSignOutAlt className="text-red-500" />, 
-      text: "Logout", 
-      description: "Sign out of your account",
-      action: handleLogout, 
-      color: "text-red-500" 
+    {
+      id: 'logout',
+      text: 'Logout',
+      description: 'Sign out of your account',
+      icon: <FiLogOut className="h-5 w-5 text-red-500" />,
+      color: 'text-red-500',
+      action: handleLogout
     }
   ];
   
-  // Get menu items with the latest data
-  const menuItems = getMenuItems();
-
-  const handleImageUpload = () => {
-    // Trigger the hidden file input click
-    fileInputRef.current.click();
-  };
-  
-  const onFileChange = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-    
-    try {
-      setUploading(true);
-      
-      // Create a reference to the storage location
-      const storageRef = ref(storage, `profile_images/${currentUser.uid}/${file.name}`);
-      
-      // Upload file with progress tracking
-      const uploadTask = uploadBytesResumable(storageRef, file);
-      
-      uploadTask.on('state_changed', 
-        (snapshot) => {
-          // Track upload progress
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          setUploadProgress(progress);
-        },
-        (error) => {
-          console.error("Error uploading image:", error);
-          setUploading(false);
-        },
-        async () => {
-          // Upload completed successfully
-          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          
-          // Update the user profile in Firestore
-          const userDocRef = doc(db, 'users', currentUser.uid);
-          await updateDoc(userDocRef, {
-            photoURL: downloadURL
-          });
-          
-          // Update local state
-          setProfileData({
-            ...profileData,
-            photoURL: downloadURL
-          });
-          
-          setUploading(false);
-          setUploadProgress(0);
-        }
-      );
-    } catch (error) {
-      console.error("Error handling file upload:", error);
-      setUploading(false);
-    }
-  };
-
   return (
-    <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-white' : 'bg-[#F2F6FC] text-gray-900'} pb-20 md:pb-0 font-['Inter',sans-serif]`}>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       {/* Hidden file input for profile image upload */}
       <input 
         type="file" 
@@ -344,19 +389,19 @@ const CreatorProfile = () => {
           <div className="mt-8 flex-grow flex flex-col">
             <nav className="flex-1 px-2 space-y-2">
               <Link to="/creator/dashboard" className={`group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg ${darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'} transition-colors duration-200`}>
-                <FaHome className="mr-3 flex-shrink-0 h-5 w-5 text-gray-400 group-hover:text-blue-500" />
+                <FiHome className="mr-3 flex-shrink-0 h-5 w-5 text-gray-400 group-hover:text-blue-500" />
                 Dashboard
               </Link>
               <Link to="/creator/courses" className={`group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg ${darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'} transition-colors duration-200`}>
-                <FaBook className="mr-3 flex-shrink-0 h-5 w-5 text-gray-400 group-hover:text-blue-500" />
+                <FiBook className="mr-3 flex-shrink-0 h-5 w-5 text-gray-400 group-hover:text-blue-500" />
                 My Courses
               </Link>
               <Link to="/creator/analytics" className={`group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg ${darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'} transition-colors duration-200`}>
-                <FaChartBar className="mr-3 flex-shrink-0 h-5 w-5 text-gray-400 group-hover:text-blue-500" />
+                <FiBarChart className="mr-3 flex-shrink-0 h-5 w-5 text-gray-400 group-hover:text-blue-500" />
                 Analytics
               </Link>
               <Link to="/creator/profile" className={`group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg bg-blue-50 text-blue-700 ${darkMode && 'bg-blue-900 bg-opacity-30'}`}>
-                <FaUser className="mr-3 flex-shrink-0 h-5 w-5 text-blue-500" />
+                <FiUser className="mr-3 flex-shrink-0 h-5 w-5 text-blue-500" />
                 Profile
               </Link>
             </nav>
@@ -388,7 +433,7 @@ const CreatorProfile = () => {
             <div className="hidden md:grid md:grid-cols-3 gap-5 mb-6">
               <div className={`flex items-center p-5 rounded-xl shadow-sm ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
                 <div className="p-3 rounded-full bg-blue-50 text-blue-500">
-                  <FaBook className="h-6 w-6" />
+                  <FiBook className="h-6 w-6" />
                 </div>
                 <div className="ml-4">
                   <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Courses Created</p>
@@ -402,7 +447,7 @@ const CreatorProfile = () => {
               
               <div className={`flex items-center p-5 rounded-xl shadow-sm ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
                 <div className="p-3 rounded-full bg-green-50 text-green-500">
-                  <FaGraduationCap className="h-6 w-6" />
+                  <FiUsers className="h-6 w-6" />
                 </div>
                 <div className="ml-4">
                   <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Students Enrolled</p>
@@ -416,7 +461,7 @@ const CreatorProfile = () => {
               
               <div className={`flex items-center p-5 rounded-xl shadow-sm ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
                 <div className="p-3 rounded-full bg-purple-50 text-purple-500">
-                  <FaDollarSign className="h-6 w-6" />
+                  <FiDollarSign className="h-6 w-6" />
                 </div>
                 <div className="ml-4">
                   <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Total Revenue</p>
@@ -479,9 +524,12 @@ const CreatorProfile = () => {
                         </div>
                       ) : (
                         <img 
-                          src={profileData.photoURL || "https://via.placeholder.com/150?text=Profile"} 
+                          src={profileData.photoURL || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Crect fill='%23e5e7eb' width='150' height='150'/%3E%3Ctext x='50%25' y='50%25' font-size='16' text-anchor='middle' dy='.3em' fill='%236b7280'%3EProfile%3C/text%3E%3C/svg%3E"} 
                           alt="Profile" 
                           className="h-24 w-24 rounded-full object-cover border-2 border-white shadow-md"
+                          onError={(e) => {
+                            e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Crect fill='%23e5e7eb' width='150' height='150'/%3E%3Ctext x='50%25' y='50%25' font-size='16' text-anchor='middle' dy='.3em' fill='%236b7280'%3EProfile%3C/text%3E%3C/svg%3E";
+                          }}
                         />
                       )}
                     </div>
@@ -492,7 +540,7 @@ const CreatorProfile = () => {
                       className="absolute bottom-1 right-1 bg-blue-500 rounded-full p-2 text-white border-2 border-white hover:bg-blue-600 transition-colors shadow-sm"
                       disabled={uploading}
                     >
-                      <FaEdit size={12} />
+                      <FiEdit2 size={12} />
                     </button>
                   </div>
                   
@@ -509,7 +557,7 @@ const CreatorProfile = () => {
                     {profileData.isVerified && (
                       <div className="flex items-center justify-center mt-3">
                         <span className="bg-gradient-to-r from-blue-500 to-blue-600 text-white text-xs px-3 py-1.5 rounded-full flex items-center shadow-sm">
-                          <FaCheck size={10} className="mr-1" />
+                          <FiCheck size={10} className="mr-1" />
                           Mentneo Verified Creator
                         </span>
                       </div>
@@ -556,7 +604,7 @@ const CreatorProfile = () => {
                               </div>
                             ) : (
                               <div className={`ml-2 ${darkMode ? 'text-gray-400' : 'text-gray-400'}`}>
-                                <FaArrowRight className="h-4 w-4 transform group-hover:translate-x-1 transition-transform" />
+                                <FiArrowRight className="h-4 w-4 transform group-hover:translate-x-1 transition-transform" />
                               </div>
                             )}
                           </Link>
@@ -574,7 +622,7 @@ const CreatorProfile = () => {
                               <p className={`text-xs mt-0.5 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{item.description}</p>
                             </div>
                             <div className="ml-2 text-gray-400">
-                              <FaArrowRight className="h-4 w-4 transform group-hover:translate-x-1 transition-transform" />
+                              <FiArrowRight className="h-4 w-4 transform group-hover:translate-x-1 transition-transform" />
                             </div>
                           </button>
                         )}
@@ -583,6 +631,7 @@ const CreatorProfile = () => {
                   </ul>
                 </div>
               </div>
+              )}
               
               {/* Recent Courses Section */}
               {!loading && (
@@ -607,12 +656,12 @@ const CreatorProfile = () => {
                                     className="h-12 w-12 object-cover rounded"
                                     onError={(e) => {
                                       e.target.onerror = null;
-                                      e.target.src = "https://via.placeholder.com/150?text=Course";
+                                      e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Crect fill='%23dbeafe' width='150' height='150'/%3E%3Ctext x='50%25' y='50%25' font-size='14' text-anchor='middle' dy='.3em' fill='%232563eb'%3ECourse%3C/text%3E%3C/svg%3E";
                                     }}
                                   />
                                 ) : (
                                   <div className={`flex-shrink-0 h-12 w-12 rounded ${darkMode ? 'bg-blue-900 bg-opacity-30' : 'bg-blue-100'} flex items-center justify-center`}>
-                                    <FaBook className={`h-5 w-5 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+                                    <FiBook className={`h-5 w-5 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
                                   </div>
                                 )}
                                 <div className="ml-4">
@@ -646,7 +695,7 @@ const CreatorProfile = () => {
                   ) : (
                     <div className={`shadow-lg rounded-xl overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'} mt-6 p-6 text-center`}>
                       <div className="inline-flex items-center justify-center p-4 bg-blue-50 rounded-full mb-4">
-                        <FaBook className="h-6 w-6 text-blue-500" />
+                        <FiBook className="h-6 w-6 text-blue-500" />
                       </div>
                       <h3 className={`text-lg font-medium mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>No courses yet</h3>
                       <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'} mb-4`}>Start creating your first course and sharing your knowledge</p>
@@ -666,21 +715,21 @@ const CreatorProfile = () => {
       <div className="fixed bottom-0 left-0 right-0 md:hidden">
         <div className={`flex items-center justify-around p-3 border-t ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-t-xl shadow-lg`}>
           <Link to="/creator/dashboard" className="flex flex-col items-center text-gray-500 hover:text-blue-500">
-            <FaHome className="h-6 w-6" />
+            <FiHome className="h-6 w-6" />
             <span className="text-xs mt-1">Dashboard</span>
           </Link>
           <Link to="/creator/courses" className="flex flex-col items-center text-gray-500 hover:text-blue-500">
-            <FaBook className="h-6 w-6" />
+            <FiBook className="h-6 w-6" />
             <span className="text-xs mt-1">Courses</span>
           </Link>
           <Link to="/creator/analytics" className="flex flex-col items-center text-gray-500 hover:text-blue-500">
-            <FaChartBar className="h-6 w-6" />
+            <FiBarChart className="h-6 w-6" />
             <span className="text-xs mt-1">Analytics</span>
           </Link>
           <Link to="/creator/profile" className="flex flex-col items-center">
             <div className="relative">
               <div className="h-6 w-6 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center">
-                <FaUser className="h-3 w-3 text-white" />
+                <FiUser className="h-3 w-3 text-white" />
               </div>
             </div>
             <span className="text-xs mt-1 text-blue-500 font-medium">Profile</span>
@@ -689,6 +738,6 @@ const CreatorProfile = () => {
       </div>
     </div>
   );
-};
+}
 
 export default CreatorProfile;

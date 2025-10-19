@@ -111,15 +111,15 @@ export default function ManageCourses() {
           // If no URL was returned, use a placeholder
           if (!thumbnailUrl) {
             console.warn("No URL returned from Cloudinary");
-            thumbnailUrl = "https://via.placeholder.com/300?text=No+Image";
+            thumbnailUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(values.title || 'Course')}&size=300&background=3B82F6&color=fff`;
           }
         } catch (uploadError) {
           console.error("Image upload failed:", uploadError);
-          thumbnailUrl = "https://via.placeholder.com/300?text=Upload+Failed";
+          thumbnailUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(values.title || 'Course')}&size=300&background=EF4444&color=fff`;
         }
       } else {
         console.log("No thumbnail file selected");
-        thumbnailUrl = "https://via.placeholder.com/300?text=No+Image";
+        thumbnailUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(values.title || 'Course')}&size=300&background=3B82F6&color=fff`;
       }
       
       console.log("Final thumbnail URL:", thumbnailUrl);
@@ -132,6 +132,11 @@ export default function ManageCourses() {
         thumbnailUrl: thumbnailUrl,  // Make sure we're using the thumbnailUrl
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        published: true,  // Make course visible to students immediately
+        status: 'active', // Course is active and available
+        enrollments: 0,   // Initialize enrollment count
+        rating: 0,        // Initialize rating
+        reviews: [],      // Initialize reviews array
         modules: values.modules.map((module, moduleIndex) => ({
           id: `module_${Date.now()}_${moduleIndex}`,
           title: module.title,
@@ -267,11 +272,11 @@ export default function ManageCourses() {
                         <div className="flex-shrink-0 h-16 w-16">
                           <img 
                             className="h-16 w-16 rounded-md object-cover" 
-                            src={course.thumbnailUrl || 'https://via.placeholder.com/150?text=No+Image'} 
+                            src={course.thumbnailUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(course.title || 'Course')}&size=150&background=3B82F6&color=fff`} 
                             alt={course.title}
                             onError={(e) => {
                               console.error("Image failed to load:", e.target.src);
-                              e.target.src = 'https://via.placeholder.com/150?text=Error';
+                              e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(course.title || 'Course')}&size=150&background=3B82F6&color=fff`;
                             }}
                             style={{ minWidth: '64px', minHeight: '64px' }}
                           />

@@ -10,7 +10,6 @@ import CreatorRoute from './components/CreatorRoute';
 import AdminLayout from './components/layouts/AdminLayout';
 import CreatorLayout from './components/layouts/CreatorLayout';
 import ExternalRedirect from './components/ExternalRedirect';
-import RoleBasedRedirect from './components/RoleBasedRedirect';
 
 // Public pages
 import Home from './pages/Home';
@@ -55,7 +54,6 @@ import ManageMentors from './pages/admin/ManageMentors';
 import ManageEnrollments from './pages/admin/ManageEnrollments';
 import VerifyPayments from './pages/admin/VerifyPayments';
 import DataAnalystDashboard from './pages/admin/DataAnalystDashboard';
-import SupportTickets from './pages/admin/SupportTickets';
 
 // Student pages - Modern LearnIQ Templates Only
 // Old pages have been removed - using LearnIQ templates from LearnIQRoutes.js
@@ -66,13 +64,11 @@ import ReferAndEarn from './pages/student/ReferAndEarn';
 import TakeQuiz from './pages/student/TakeQuiz';
 import QuizResults from './pages/student/QuizResults';
 import StudentCourses from './pages/student/StudentCourses';
+import StudentOurCourses from './pages/student/StudentOurCourses';
 import CourseContent from './pages/student/CourseContent';
 import PaymentSuccessPage from './pages/payment/PaymentSuccessPage';
 import CourseEnrollment from './pages/student/CourseEnrollment';
 import CoursePaymentSuccess from './pages/student/CoursePaymentSuccess';
-import LearnIQSupport from './pages/student/LearnIQSupport';
-import LearnIQSettings from './pages/student/LearnIQSettings';
-import CourseDebugger from './pages/student/CourseDebugger';
 
 // Mentor pages
 import MentorDashboard from './pages/mentor/Dashboard';
@@ -82,25 +78,59 @@ import ManageQuizzes from './pages/mentor/ManageQuizzes';
 import QuizSubmissions from './pages/mentor/QuizSubmissions';
 import CreateQuiz from './pages/mentor/CreateQuiz';
 import AssignToStudents from './pages/mentor/AssignToStudents';
-// New mentor pages with student-like features
-import MentorAssignments from './pages/mentor/MentorAssignments';
-import MentorAssignmentDetail from './pages/mentor/AssignmentDetail';
-import MentorNotifications from './pages/mentor/MentorNotifications';
-import MentorCalendar from './pages/mentor/MentorCalendar';
-import MentorProgress from './pages/mentor/MentorProgress';
-import StudentAssignmentDetail from './pages/student/AssignmentDetail';
+import InterviewPreparation from './pages/mentor/InterviewPreparation';
+import Interviews from './pages/mentor/Interviews';
+import MentorAssignmentSubmissions from './pages/mentor/AssignmentSubmissions';
 
 // Creator pages
 import CreatorDashboard from './pages/creator/Dashboard';
 import CreatorCourses from './pages/creator/Courses';
 import CreatorProfile from './pages/creator/Profile';
 import CreatorEnrollments from './pages/creator/Enrollments';
+import AssignmentSubmissions from './pages/creator/AssignmentSubmissions';
 
 // Create route protection components for different roles
 function AdminRoute({ children }) {
-  const { userRole } = useAuth();
+  const { userRole, loading, currentUser } = useAuth();
+  
+  console.log('🛡️ AdminRoute check:', { userRole, loading, currentUserExists: !!currentUser });
+  
+  if (loading) {
+    console.log('⏳ AdminRoute: Still loading authentication...');
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
   
   if (userRole !== 'admin') {
+    console.log('❌ AdminRoute: Access denied. User role is:', userRole, '(expected: admin)');
+    return <Navigate to="/unauthorized" />;
+  }
+  
+  console.log('✅ AdminRoute: Access granted for admin');
+  return children;
+}
+
+function MentorRoute({ children }) {
+  const { userRole, loading } = useAuth();
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (userRole !== 'mentor') {
     return <Navigate to="/unauthorized" />;
   }
   
@@ -108,7 +138,18 @@ function AdminRoute({ children }) {
 }
 
 function DataAnalystRoute({ children }) {
-  const { userRole } = useAuth();
+  const { userRole, loading } = useAuth();
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
   
   if (userRole !== 'data_analyst' && userRole !== 'admin') {
     return <Navigate to="/dashboard" />;
@@ -191,7 +232,7 @@ function App() {
               <Route path="/emergency-admin" element={<DirectAdminAccess />} />
               
               {/* Admin Routes with new layout */}
-              <Route path="/admin" element={<AdminLayout />}>
+              <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
                 <Route path="dashboard" element={<NewDashboard />} />
                 <Route path="courses" element={<ManageCourses />} />
                 <Route path="students" element={<ManageStudents />} />
@@ -205,19 +246,20 @@ function App() {
               </Route>
               
               {/* Legacy Admin Routes */}
-              <Route path="/admin-old/dashboard" element={<AdminDashboard />} />
-              <Route path="/admin-old/courses" element={<ManageCourses />} />
-              <Route path="/admin-old/students" element={<ManageStudents />} />
-              <Route path="/admin-old/mentors" element={<ManageMentors />} />
-              <Route path="/admin-old/enrollments" element={<ManageEnrollments />} />
-              <Route path="/admin-old/payments" element={<AdminDashboard />} />
-              <Route path="/admin-old/verify-payments" element={<VerifyPayments />} />
+              <Route path="/admin-old/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+              <Route path="/admin-old/courses" element={<AdminRoute><ManageCourses /></AdminRoute>} />
+              <Route path="/admin-old/students" element={<AdminRoute><ManageStudents /></AdminRoute>} />
+              <Route path="/admin-old/mentors" element={<AdminRoute><ManageMentors /></AdminRoute>} />
+              <Route path="/admin-old/enrollments" element={<AdminRoute><ManageEnrollments /></AdminRoute>} />
+              <Route path="/admin-old/payments" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+              <Route path="/admin-old/verify-payments" element={<AdminRoute><VerifyPayments /></AdminRoute>} />
 
               {/* Creator Routes */}
               <Route path="/creator" element={<CreatorRoute><CreatorLayout /></CreatorRoute>}>
                 <Route path="dashboard" element={<CreatorDashboard />} />
                 <Route path="courses" element={<CreatorCourses />} />
                 <Route path="enrollments" element={<CreatorEnrollments />} />
+                <Route path="assignment-submissions" element={<AssignmentSubmissions />} />
                 <Route path="profile" element={<CreatorProfile />} />
               </Route>
             
@@ -232,6 +274,7 @@ function App() {
             
             {/* Keep essential functional pages */}
             <Route path="/student/courses" element={<ProtectedRoute><StudentCourses /></ProtectedRoute>} />
+            <Route path="/student/our-courses" element={<ProtectedRoute><StudentOurCourses /></ProtectedRoute>} />
             <Route path="/student/enroll/:courseId" element={<ProtectedRoute><CourseEnrollment /></ProtectedRoute>} />
             <Route path="/payment/success" element={<ProtectedRoute><CoursePaymentSuccess /></ProtectedRoute>} />
             <Route path="/student/interview-prep" element={<ProtectedRoute><InterviewPrep /></ProtectedRoute>} />
@@ -240,24 +283,18 @@ function App() {
             <Route path="/student/quizzes" element={<ProtectedRoute><StudentQuizzes /></ProtectedRoute>} />
             <Route path="/student/quizzes/:quizId/take/:assignmentId" element={<ProtectedRoute><TakeQuiz /></ProtectedRoute>} />
             <Route path="/student/quizzes/:quizId/results/:assignmentId" element={<ProtectedRoute><QuizResults /></ProtectedRoute>} />
-            <Route path="/student/support" element={<ProtectedRoute><LearnIQSupport /></ProtectedRoute>} />
-            <Route path="/student/settings" element={<ProtectedRoute><LearnIQSettings /></ProtectedRoute>} />
-            <Route path="/student/debug-courses" element={<ProtectedRoute><CourseDebugger /></ProtectedRoute>} />
             
             {/* Mentor Routes with protection */}
-            <Route path="/mentor/dashboard" element={<MentorDashboard />} />
-            <Route path="/mentor/student/:studentId" element={<StudentView />} />
-            <Route path="/mentor/reports" element={<Reports />} />
-            <Route path="/mentor/quizzes" element={<ManageQuizzes />} />
-            <Route path="/mentor/create-quiz" element={<CreateQuiz />} />
-            <Route path="/mentor/quiz-submissions/:quizId" element={<QuizSubmissions />} />
-            <Route path="/mentor/assign-to-students" element={<AssignToStudents />} />
-            {/* New Mentor Routes with student-like features */}
-            <Route path="/mentor/assignments" element={<MentorAssignments />} />
-            <Route path="/mentor/assignments/:id" element={<MentorAssignmentDetail />} />
-            <Route path="/mentor/notifications" element={<MentorNotifications />} />
-            <Route path="/mentor/calendar" element={<MentorCalendar />} />
-            <Route path="/mentor/progress" element={<MentorProgress />} />
+            <Route path="/mentor/dashboard" element={<MentorRoute><MentorDashboard /></MentorRoute>} />
+            <Route path="/mentor/student/:studentId" element={<MentorRoute><StudentView /></MentorRoute>} />
+            <Route path="/mentor/reports" element={<MentorRoute><Reports /></MentorRoute>} />
+            <Route path="/mentor/quizzes" element={<MentorRoute><ManageQuizzes /></MentorRoute>} />
+            <Route path="/mentor/create-quiz" element={<MentorRoute><CreateQuiz /></MentorRoute>} />
+            <Route path="/mentor/quiz-submissions/:quizId" element={<MentorRoute><QuizSubmissions /></MentorRoute>} />
+            <Route path="/mentor/assign-to-students" element={<MentorRoute><AssignToStudents /></MentorRoute>} />
+            <Route path="/mentor/assignment-submissions" element={<MentorRoute><MentorAssignmentSubmissions /></MentorRoute>} />
+            <Route path="/mentor/interviews" element={<MentorRoute><Interviews /></MentorRoute>} />
+            <Route path="/mentor/interviews/create" element={<MentorRoute><InterviewPreparation /></MentorRoute>} />
             
             {/* Auth Routes */}
             
@@ -271,10 +308,10 @@ function App() {
               } 
             />
             <Route path="/course/:courseId/success" element={<ProtectedRoute><PaymentSuccessPage /></ProtectedRoute>} />
-            <Route path="/payment-flow" element={<RoleBasedRedirect />} />
+            <Route path="/payment-flow" element={<Navigate to="/student/student-dashboard" replace />} />
             
-            {/* Legacy dashboard routes - use role-based redirect */}
-            <Route path="/dashboard" element={<RoleBasedRedirect />} />
+            {/* Legacy dashboard routes - redirect to LearnIQ */}
+            <Route path="/dashboard" element={<Navigate to="/student/student-dashboard" replace />} />
             <Route path="/course/:courseId" element={<Navigate to="/student/student-dashboard/course/:courseId" replace />} />
             <Route path="/course/:courseId/learn" element={<Navigate to="/student/student-dashboard/course/:courseId" replace />} />
             
@@ -296,21 +333,9 @@ function App() {
               </ProtectedRoute>
             } />
             
-            {/* Data Analyst Support Tickets */}
-            <Route path="/data-analyst/support-tickets" element={
-              <ProtectedRoute>
-                <DataAnalystRoute>
-                  <SupportTickets />
-                </DataAnalystRoute>
-              </ProtectedRoute>
-            } />
-            
             {/* Add easy access route for analytics */}
             <Route path="/analytics" element={<AnalyticsRedirect />} />
 
-            {/* LearnIQ Dashboard Routes */}
-            <Route path="/*" element={<LearnIQRoutes />} />
-            
             {/* Redirect unknown routes to home */}
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>

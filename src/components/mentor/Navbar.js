@@ -9,7 +9,8 @@ import {
   FaBars, 
   FaTimes,
   FaUser,
-  FaBriefcase
+  FaBriefcase,
+  FaClipboardCheck
 } from 'react-icons/fa';
 
 export default function Navbar() {
@@ -63,10 +64,10 @@ export default function Navbar() {
                   <FaTachometerAlt className="inline-block mr-1" /> Dashboard
                 </Link>
                 <Link
-                  to="/mentor/assignments"
+                  to="/mentor/assignment-submissions"
                   className="text-white hover:bg-green-700 px-3 py-2 rounded-md text-sm font-medium"
                 >
-                  <FaClipboardList className="inline-block mr-1" /> Assignments
+                  <FaClipboardCheck className="inline-block mr-1" /> Assignments
                 </Link>
                 <Link
                   to="/mentor/quizzes"
@@ -75,10 +76,10 @@ export default function Navbar() {
                   <FaClipboardList className="inline-block mr-1" /> Quizzes
                 </Link>
                 <Link
-                  to="/mentor/calendar"
+                  to="/mentor/interviews"
                   className="text-white hover:bg-green-700 px-3 py-2 rounded-md text-sm font-medium"
                 >
-                  <FaTachometerAlt className="inline-block mr-1" /> Calendar
+                  <FaBriefcase className="inline-block mr-1" /> Interviews
                 </Link>
                 <Link
                   to="/mentor/reports"
@@ -136,11 +137,11 @@ export default function Navbar() {
               <FaTachometerAlt className="inline-block mr-1" /> Dashboard
             </Link>
             <Link
-              to="/mentor/assignments"
+              to="/mentor/assignment-submissions"
               className="text-white hover:bg-green-700 block px-3 py-2 rounded-md text-base font-medium"
               onClick={() => setIsOpen(false)}
             >
-              <FaClipboardList className="inline-block mr-1" /> Assignments
+              <FaClipboardCheck className="inline-block mr-1" /> Assignments
             </Link>
             <Link
               to="/mentor/quizzes"
@@ -150,11 +151,11 @@ export default function Navbar() {
               <FaClipboardList className="inline-block mr-1" /> Quizzes
             </Link>
             <Link
-              to="/mentor/calendar"
+              to="/mentor/interviews"
               className="text-white hover:bg-green-700 block px-3 py-2 rounded-md text-base font-medium"
               onClick={() => setIsOpen(false)}
             >
-              <FaTachometerAlt className="inline-block mr-1" /> Calendar
+              <FaBriefcase className="inline-block mr-1" /> Interviews
             </Link>
             <Link
               to="/mentor/reports"

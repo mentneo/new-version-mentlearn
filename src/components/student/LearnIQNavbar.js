@@ -18,6 +18,7 @@ export default function LearnIQNavbar() {
     const navigation = [
     { name: 'Dashboard', href: '/student/student-dashboard', icon: FiHome },
     { name: 'My Courses', href: '/student/courses', icon: FiBookOpen },
+    { name: 'Our Courses', href: '/student/our-courses', icon: FiBookOpen },
     { name: 'Progress', href: '/student/student-dashboard/progress', icon: FiBarChart2 },
     { name: 'Assignments', href: '/student/student-dashboard/assignments', icon: FiFileText },
     { name: 'Calendar', href: '/student/student-dashboard/calendar', icon: FiCalendar },
@@ -27,8 +28,8 @@ export default function LearnIQNavbar() {
   ];
   
   const bottomNavigation = [
-    { name: 'Settings', href: '/student/settings', icon: FiSettings },
-    { name: 'Help & Support', href: '/student/support', icon: FiHelpCircle },
+    { name: 'Settings', href: '/student/student-dashboard/settings', icon: FiSettings },
+    { name: 'Help & Support', href: '/student/student-dashboard/support', icon: FiHelpCircle },
   ];
 
   const handleLogout = async () => {
@@ -67,6 +68,16 @@ export default function LearnIQNavbar() {
 
   return (
     <>
+      {/* Hamburger Menu Button - Mobile Only */}
+      <button
+        type="button"
+        className="lg:hidden absolute top-4 left-4 z-50 p-2 rounded-lg bg-white shadow-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        onClick={() => setSidebarOpen(true)}
+      >
+        <span className="sr-only">Open sidebar</span>
+        <FiMenu className="h-6 w-6 text-gray-700" aria-hidden="true" />
+      </button>
+
       {/* Mobile menu */}
       <div className={`lg:hidden fixed inset-0 flex z-40 ${sidebarOpen ? '' : 'pointer-events-none'}`}>
         {/* Overlay */}
@@ -243,39 +254,6 @@ export default function LearnIQNavbar() {
                 Sign Out
               </button>
             </div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Mobile top navigation */}
-      <div className="lg:hidden">
-        <div className="flex items-center justify-between bg-white px-4 py-2 border-b border-gray-200">
-          <div>
-            <button
-              type="button"
-              className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
-              onClick={() => setSidebarOpen(true)}
-            >
-              <span className="sr-only">Open sidebar</span>
-              <FiMenu className="h-6 w-6" aria-hidden="true" />
-            </button>
-          </div>
-          <div>
-            <MenteoLogo size="small" />
-          </div>
-          <div>
-            <button
-              type="button"
-              className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
-            >
-              <span className="sr-only">View notifications</span>
-              <div className="relative">
-                <FiBell className="h-6 w-6" aria-hidden="true" />
-                {notifications > 0 && (
-                  <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-400 ring-2 ring-white" />
-                )}
-              </div>
-            </button>
           </div>
         </div>
       </div>

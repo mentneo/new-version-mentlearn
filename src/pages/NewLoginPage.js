@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.js';
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaArrowLeft } from 'react-icons/fa/index.esm.js';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase/firebase.js';
 
 export default function NewLoginPage() {
   const [email, setEmail] = useState('');
@@ -22,13 +24,48 @@ export default function NewLoginPage() {
     try {
       setError('');
       setLoading(true);
+      const userCredential = await login(email, password);
       
-      // Use AuthContext's login function which properly sets userRole state
-      await login(email, password);
+      console.log('🔐 Login successful for user:', userCredential.user.uid);
       
-      console.log("Login successful, redirecting to dashboard");
-      // Navigate to /dashboard and let RoleBasedRedirect handle the role-based routing
-      navigate('/dashboard');
+      // Get the user role from Firebase - check both users and creators collections
+      let userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
+      let userRole = 'student'; // default role
+      let isCreator = false;
+      
+      if (userDoc.exists()) {
+        userRole = userDoc.data().role || 'student';
+        console.log('👤 User found in users collection. Role:', userRole);
+        console.log('📄 Full user data:', userDoc.data());
+      } else {
+        console.log('⚠️ User NOT found in users collection, checking creators...');
+        // Check creators collection
+        const creatorDoc = await getDoc(doc(db, "creators", userCredential.user.uid));
+        if (creatorDoc.exists()) {
+          userRole = 'creator';
+          isCreator = true;
+          console.log('🎨 User found in creators collection');
+        } else {
+          console.log('❌ User NOT found in creators collection either');
+        }
+      }
+      
+      console.log('🚀 Redirecting user with role:', userRole);
+      
+      // Redirect based on user role
+      if (userRole === 'admin') {
+        console.log('➡️ Redirecting to /admin/dashboard');
+        navigate('/admin/dashboard');
+      } else if (userRole === 'creator') {
+        console.log('➡️ Redirecting to /creator/dashboard');
+        navigate('/creator/dashboard');
+      } else if (userRole === 'mentor') {
+        console.log('➡️ Redirecting to /mentor/dashboard');
+        navigate('/mentor/dashboard');
+      } else {
+        console.log('➡️ Redirecting to /student/dashboard');
+        navigate('/student/dashboard');
+      }
     } catch (err) {
       console.error('Login error:', err);
       setError('Failed to sign in. Please check your credentials.');

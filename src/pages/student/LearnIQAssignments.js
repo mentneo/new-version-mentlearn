@@ -19,26 +19,35 @@ export default function LearnIQAssignments() {
   // Fetch assignments and courses
   useEffect(() => {
     const fetchAssignments = async () => {
-      if (!currentUser) {
-        console.log('⚠️ No current user, skipping assignments fetch');
-        setLoading(false);
-        return;
-      }
+      if (!currentUser) return;
       
       try {
         setLoading(true);
         
-        console.log('🎓 Student fetching assignments for:', currentUser.uid);
+        // Fetch all assignments for the student
+        // Note: Try with orderBy first, if it fails due to missing index, fetch without ordering
+        let assignmentsQuery;
+        let assignmentsSnapshot;
         
-        // Fetch all assignments assigned to this student (removed orderBy to avoid index issues)
-        const assignmentsQuery = query(
-          collection(db, "assignments"),
-          where("studentIds", "array-contains", currentUser.uid)
-        );
+        try {
+          // Try with orderBy (requires composite index)
+          assignmentsQuery = query(
+            collection(db, "assignments"),
+            where("studentIds", "array-contains", currentUser.uid),
+            orderBy("dueDate")
+          );
+          assignmentsSnapshot = await getDocs(assignmentsQuery);
+        } catch (indexError) {
+          console.log("Composite index not available, fetching without orderBy:", indexError);
+          // Fallback: fetch without orderBy
+          assignmentsQuery = query(
+            collection(db, "assignments"),
+            where("studentIds", "array-contains", currentUser.uid)
+          );
+          assignmentsSnapshot = await getDocs(assignmentsQuery);
+        }
         
-        const assignmentsSnapshot = await getDocs(assignmentsQuery);
-        
-        console.log('📚 Found', assignmentsSnapshot.size, 'assignments for student');
+        console.log("Fetched assignments count:", assignmentsSnapshot.docs.length);
         
         // Create a set of course IDs to fetch course details
         const courseIds = new Set();
@@ -47,18 +56,8 @@ export default function LearnIQAssignments() {
         const assignmentsData = await Promise.all(
           assignmentsSnapshot.docs.map(async (docSnapshot) => {
             const data = docSnapshot.data();
-            
-            // Skip if studentIds is null or undefined
-            if (!data.studentIds || !Array.isArray(data.studentIds)) {
-              console.warn('⚠️ Assignment has invalid studentIds:', docSnapshot.id);
-              return null;
-            }
-            
-            if (data.courseId) {
-              courseIds.add(data.courseId);
-            }
-            
-            console.log('📝 Processing assignment:', data.title);
+            console.log("Assignment data:", docSnapshot.id, data);
+            courseIds.add(data.courseId);
             
             // Check if assignment is submitted
             let submissionData = null;
@@ -75,16 +74,27 @@ export default function LearnIQAssignments() {
                 submissionData = submissionsSnapshot.docs[0].data();
               }
             } catch (submissionError) {
-              console.warn('⚠️ Could not fetch submission for assignment:', docSnapshot.id, submissionError);
+              console.error("Error fetching submission:", submissionError);
             }
             
             // Calculate status
             let status = 'pending';
             const now = new Date();
-            let dueDate = new Date();
             
+            // Handle both Timestamp and regular date objects
+            let dueDate;
             if (data.dueDate) {
-              dueDate = data.dueDate.toDate ? data.dueDate.toDate() : new Date(data.dueDate.seconds * 1000);
+              if (data.dueDate.seconds) {
+                dueDate = new Date(data.dueDate.seconds * 1000);
+              } else if (data.dueDate instanceof Date) {
+                dueDate = data.dueDate;
+              } else if (typeof data.dueDate === 'string') {
+                dueDate = new Date(data.dueDate);
+              } else {
+                dueDate = new Date(); // Fallback to current date
+              }
+            } else {
+              dueDate = new Date(); // Fallback to current date
             }
             
             if (submissionData) {
@@ -106,12 +116,11 @@ export default function LearnIQAssignments() {
           })
         );
         
-        // Filter out null values and sort by due date (closest first)
-        const validAssignments = assignmentsData.filter(a => a !== null);
-        validAssignments.sort((a, b) => a.dueDate - b.dueDate);
+        // Sort by due date manually if we didn't use orderBy
+        assignmentsData.sort((a, b) => a.dueDate - b.dueDate);
         
-        setAssignments(validAssignments);
-        console.log('✅ Loaded', validAssignments.length, 'assignments for student');
+        console.log("Processed assignments:", assignmentsData);
+        setAssignments(assignmentsData);
         
         // Fetch course details
         const coursesData = [];
@@ -125,18 +134,16 @@ export default function LearnIQAssignments() {
               });
             }
           } catch (courseError) {
-            console.warn('⚠️ Could not fetch course:', courseId, courseError);
+            console.error("Error fetching course:", courseId, courseError);
           }
         }
         
+        console.log("Fetched courses:", coursesData);
         setCourses(coursesData);
         setLoading(false);
       } catch (error) {
-        console.error("❌ Error fetching assignments:", error);
-        console.error("Error details:", error.message);
-        console.error("Error stack:", error.stack);
+        console.error("Error fetching assignments:", error);
         setLoading(false);
-        setAssignments([]);
       }
     };
     
@@ -231,6 +238,53 @@ export default function LearnIQAssignments() {
         <p className="mt-1 text-sm text-gray-500">
           View and manage all your course assignments
         </p>
+      </div>
+
+      {/* Google Drive Submission Section */}
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl shadow-sm mb-6 overflow-hidden">
+        <div className="p-6">
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <div className="flex items-center justify-center h-12 w-12 rounded-xl bg-blue-600 text-white">
+                <FiUpload size={24} />
+              </div>
+            </div>
+            <div className="ml-4 flex-1">
+              <h3 className="text-lg font-semibold text-gray-900">Submit Your Assignments</h3>
+              <p className="mt-1 text-sm text-gray-600">
+                Upload your completed assignments to our Google Drive folder. All submissions are organized and reviewed by your instructors.
+              </p>
+              <div className="mt-4 flex flex-col sm:flex-row gap-3">
+                <a
+                  href="https://drive.google.com/drive/folders/1HSJata1zk7DVCefLGJYKaWei-CEriZd4?usp=share_link"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition-colors"
+                >
+                  <FiUpload size={18} className="mr-2" />
+                  Upload to Google Drive
+                  <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+                <a
+                  href="https://drive.google.com/drive/folders/1HSJata1zk7DVCefLGJYKaWei-CEriZd4?usp=share_link"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center px-6 py-3 border border-blue-300 text-sm font-medium rounded-lg text-blue-700 bg-white hover:bg-blue-50 transition-colors"
+                >
+                  View Submissions Folder
+                </a>
+              </div>
+              <div className="mt-3 flex items-start">
+                <FiAlertCircle size={16} className="text-blue-600 mt-0.5 flex-shrink-0" />
+                <p className="ml-2 text-xs text-gray-600">
+                  <strong>Important:</strong> Please name your files as "YourName_AssignmentTitle_Date" (e.g., JohnDoe_Module1Assignment_2025-10-19) for easy identification.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       
       {/* Filters and search */}
@@ -370,13 +424,10 @@ export default function LearnIQAssignments() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <Link
-                      to={`/student/assignments/${assignment.id}`}
-                      className="block hover:bg-gray-50"
-                    >
+                    <div className="block hover:bg-gray-50">
                       <div className="px-4 py-4 sm:px-6">
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center">
+                          <div className="flex items-center flex-1">
                             <div className="flex-shrink-0 mr-4">
                               <div className={`p-2 rounded-full ${
                                 assignment.status === 'submitted' ? 'bg-yellow-100' :
@@ -387,7 +438,7 @@ export default function LearnIQAssignments() {
                                 <StatusIcon status={assignment.status} />
                               </div>
                             </div>
-                            <div>
+                            <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-gray-900 truncate">
                                 {assignment.title}
                               </p>
@@ -397,38 +448,59 @@ export default function LearnIQAssignments() {
                             </div>
                           </div>
                           
-                          <div className="ml-2 flex items-center">
+                          <div className="ml-2 flex items-center gap-2">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(assignment.status)}`}>
                               {assignment.status.charAt(0).toUpperCase() + assignment.status.slice(1)}
                             </span>
-                            <FiChevronRight size={16} className="ml-2 text-gray-400" />
                           </div>
                         </div>
                         
-                        <div className="mt-2 sm:flex sm:justify-between">
-                          <div className="sm:flex">
+                        <div className="mt-2 sm:flex sm:justify-between sm:items-center">
+                          <div className="sm:flex sm:items-center gap-4">
                             {assignment.type && (
                               <p className="flex items-center text-xs text-gray-500">
                                 <FiFileText size={12} className="mr-1.5" />
                                 {assignment.type.charAt(0).toUpperCase() + assignment.type.slice(1)}
                               </p>
                             )}
+                            <div className="mt-2 flex items-center text-xs text-gray-500 sm:mt-0">
+                              <FiCalendar size={12} className="mr-1.5" />
+                              <p>
+                                Due {formatDate(assignment.dueDate)}
+                                <span className={`ml-2 font-medium ${
+                                  assignment.status === 'overdue' ? 'text-red-600' : 
+                                  new Date(assignment.dueDate) - new Date() < 24 * 60 * 60 * 1000 ? 'text-yellow-600' : 'text-gray-600'
+                                }`}>
+                                  {getDaysRemaining(assignment.dueDate)}
+                                </span>
+                              </p>
+                            </div>
                           </div>
-                          <div className="mt-2 flex items-center text-xs text-gray-500 sm:mt-0">
-                            <FiCalendar size={12} className="mr-1.5" />
-                            <p>
-                              Due {formatDate(assignment.dueDate)}
-                              <span className={`ml-2 font-medium ${
-                                assignment.status === 'overdue' ? 'text-red-600' : 
-                                new Date(assignment.dueDate) - new Date() < 24 * 60 * 60 * 1000 ? 'text-yellow-600' : 'text-gray-600'
-                              }`}>
-                                {getDaysRemaining(assignment.dueDate)}
-                              </span>
-                            </p>
+                          
+                          <div className="mt-3 sm:mt-0 flex items-center gap-2">
+                            {assignment.status !== 'submitted' && assignment.status !== 'graded' && (
+                              <a
+                                href="https://drive.google.com/drive/folders/1HSJata1zk7DVCefLGJYKaWei-CEriZd4?usp=share_link"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+                              >
+                                <FiUpload size={14} className="mr-1" />
+                                Submit
+                              </a>
+                            )}
+                            <Link
+                              to={`/student/student-dashboard/assignments/${assignment.id}`}
+                              className="inline-flex items-center text-xs font-medium text-blue-600 hover:text-blue-500"
+                            >
+                              View Details
+                              <FiChevronRight size={14} className="ml-1" />
+                            </Link>
                           </div>
                         </div>
                       </div>
-                    </Link>
+                    </div>
                   </motion.li>
                 );
               })}

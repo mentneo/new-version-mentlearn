@@ -266,6 +266,56 @@ service cloud.firestore {
     }
 
     // ============================================================================
+    // DISCUSSIONS COLLECTION (Discussion Forum)
+    // ============================================================================
+
+    match /discussions/{discussionId} {
+      // Authenticated users can read all discussions
+      allow read: if isAuthenticated();
+
+      // Users can create discussions
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.authorId;
+
+      // Users can update their own discussions
+      allow update: if isAuthenticated() && 
+        (request.auth.uid == resource.data.authorId || 
+         request.auth.uid == get(/databases/$(database)/documents/courses/$(resource.data.courseId)).data.creatorId);
+
+      // Users can delete their own discussions, or course creator can delete
+      allow delete: if isAuthenticated() && 
+        (request.auth.uid == resource.data.authorId || 
+         request.auth.uid == get(/databases/$(database)/documents/courses/$(resource.data.courseId)).data.creatorId);
+
+      // Admins can manage all discussions
+      allow read, write: if isAdmin();
+    }
+
+    // ============================================================================
+    // DISCUSSION REPLIES COLLECTION
+    // ============================================================================
+
+    match /discussionReplies/{replyId} {
+      // Authenticated users can read all replies
+      allow read: if isAuthenticated();
+
+      // Users can create replies
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.authorId;
+
+      // Users can update their own replies
+      allow update: if isAuthenticated() && 
+        (request.auth.uid == resource.data.authorId || 
+         request.auth.uid == get(/databases/$(database)/documents/courses/$(resource.data.courseId)).data.creatorId);
+
+      // Users can delete their own replies, or course creator can delete
+      allow delete: if isAuthenticated() && 
+        (request.auth.uid == resource.data.authorId || 
+         request.auth.uid == get(/databases/$(database)/documents/courses/$(resource.data.courseId)).data.creatorId);
+
+      // Admins can manage all replies
+      allow read, write: if isAdmin();
+    }
+
+    // ============================================================================
     // ANALYTICS/REPORTS COLLECTION
     // ============================================================================
 
