@@ -12,6 +12,29 @@ import * as Yup from 'yup';
 
 export default function ManageCourses() {
   const [courses, setCourses] = useState([]);
+  const [editingPriceCourseId, setEditingPriceCourseId] = useState(null);
+  const [newPrice, setNewPrice] = useState(0);
+  // Inline price edit handlers
+  const handleEditPrice = (courseId, currentPrice) => {
+    setEditingPriceCourseId(courseId);
+    setNewPrice(currentPrice);
+  };
+
+  const handlePriceChange = (e) => {
+    setNewPrice(e.target.value);
+  };
+
+  const handleSavePrice = async (courseId) => {
+    try {
+      await updateDoc(doc(db, "courses", courseId), { price: Number(newPrice) });
+      setEditingPriceCourseId(null);
+      setNewPrice(0);
+      setSuccess('Course price updated successfully!');
+      fetchCourses();
+    } catch (err) {
+      setError('Error updating price: ' + err.message);
+    }
+  };
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -111,15 +134,15 @@ export default function ManageCourses() {
           // If no URL was returned, use a placeholder
           if (!thumbnailUrl) {
             console.warn("No URL returned from Cloudinary");
-            thumbnailUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(values.title || 'Course')}&size=300&background=3B82F6&color=fff`;
+            thumbnailUrl = "https://via.placeholder.com/300?text=No+Image";
           }
         } catch (uploadError) {
           console.error("Image upload failed:", uploadError);
-          thumbnailUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(values.title || 'Course')}&size=300&background=EF4444&color=fff`;
+          thumbnailUrl = "https://via.placeholder.com/300?text=Upload+Failed";
         }
       } else {
         console.log("No thumbnail file selected");
-        thumbnailUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(values.title || 'Course')}&size=300&background=3B82F6&color=fff`;
+        thumbnailUrl = "https://via.placeholder.com/300?text=No+Image";
       }
       
       console.log("Final thumbnail URL:", thumbnailUrl);
@@ -132,11 +155,6 @@ export default function ManageCourses() {
         thumbnailUrl: thumbnailUrl,  // Make sure we're using the thumbnailUrl
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        published: true,  // Make course visible to students immediately
-        status: 'active', // Course is active and available
-        enrollments: 0,   // Initialize enrollment count
-        rating: 0,        // Initialize rating
-        reviews: [],      // Initialize reviews array
         modules: values.modules.map((module, moduleIndex) => ({
           id: `module_${Date.now()}_${moduleIndex}`,
           title: module.title,
@@ -272,11 +290,11 @@ export default function ManageCourses() {
                         <div className="flex-shrink-0 h-16 w-16">
                           <img 
                             className="h-16 w-16 rounded-md object-cover" 
-                            src={course.thumbnailUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(course.title || 'Course')}&size=150&background=3B82F6&color=fff`} 
+                            src={course.thumbnailUrl || 'https://via.placeholder.com/150?text=No+Image'} 
                             alt={course.title}
                             onError={(e) => {
                               console.error("Image failed to load:", e.target.src);
-                              e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(course.title || 'Course')}&size=150&background=3B82F6&color=fff`;
+                              e.target.src = 'https://via.placeholder.com/150?text=Error';
                             }}
                             style={{ minWidth: '64px', minHeight: '64px' }}
                           />
@@ -285,7 +303,20 @@ export default function ManageCourses() {
                           <h2 className="text-lg font-medium text-gray-900">{course.title}</h2>
                           <p className="text-sm text-gray-500 line-clamp-2">{course.description}</p>
                           <p className="text-sm text-gray-500 mt-1">
-                            {course.modules?.length || 0} modules | Price: ₹{course.price}
+                            {course.modules?.length || 0} modules | Price: ₹{
+                              editingPriceCourseId === course.id ? (
+                                <>
+                                  <input type="number" value={newPrice} min={0} onChange={handlePriceChange} className="border rounded px-2 py-1 w-20 mr-2" />
+                                  <button onClick={() => handleSavePrice(course.id)} className="bg-green-500 text-white px-2 py-1 rounded mr-1">Save</button>
+                                  <button onClick={() => setEditingPriceCourseId(null)} className="bg-gray-300 px-2 py-1 rounded">Cancel</button>
+                                </>
+                              ) : (
+                                <>
+                                  {course.price}
+                                  <button onClick={() => handleEditPrice(course.id, course.price)} className="ml-2 text-xs text-blue-600 underline">Edit Price</button>
+                                </>
+                              )
+                            }
                           </p>
                         </div>
                       </div>

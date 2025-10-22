@@ -221,7 +221,7 @@ export default function LearnIQNotifications() {
               <div className="relative">
                 <button
                   onClick={() => setFilter(filter === 'all' ? 'unread' : 'all')}
-                  className="px-4 py-2 text-sm flex items-center border border-gray-300 rounded-md hover:bg-gray-50"
+                  className={`px-4 py-2 text-sm flex items-center rounded-md ${filter === 'all' ? 'bg-blue-600 text-white' : 'border border-gray-300 text-gray-700 hover:bg-gray-50'}`}
                 >
                   <FiFilter size={16} className="mr-2" />
                   {filter === 'all' ? 'All' : filter === 'unread' ? 'Unread' : 'Read'}
@@ -230,7 +230,7 @@ export default function LearnIQNotifications() {
               
               <button
                 onClick={toggleSelectMode}
-                className="px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
+                className="px-4 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700"
               >
                 Select
               </button>
@@ -238,7 +238,7 @@ export default function LearnIQNotifications() {
               {unreadCount > 0 && (
                 <button
                   onClick={markAllAsRead}
-                  className="px-4 py-2 text-sm text-blue-700 border border-blue-700 rounded-md hover:bg-blue-50"
+                  className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700"
                 >
                   Mark all as read
                 </button>
@@ -288,7 +288,7 @@ export default function LearnIQNotifications() {
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
         </div>
       ) : notifications.length === 0 ? (
-        <div className="bg-white shadow rounded-xl p-8 text-center">
+        <div className="bg-[#EDE9FE] shadow rounded-xl p-8 text-center">
           <div className="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-blue-100">
             <FiBell size={32} className="text-blue-600" />
           </div>
@@ -312,7 +312,7 @@ export default function LearnIQNotifications() {
           )}
         </div>
       ) : (
-        <div className="bg-white shadow rounded-xl overflow-hidden">
+        <div className="bg-[#EDE9FE] shadow rounded-xl overflow-hidden">
           <div className="divide-y divide-gray-200">
             <AnimatePresence>
               {notifications.map((notification) => (
