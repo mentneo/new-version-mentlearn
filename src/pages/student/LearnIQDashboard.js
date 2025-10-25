@@ -11,6 +11,7 @@ import {
 // // import Calendar from 'react-calendar';
 // // import 'react-calendar/dist/Calendar.css';
 import { FiBookOpen, FiAward, FiClock, FiCalendar, FiBarChart2, FiUser, FiSettings, FiBell, FiFileText, FiGrid, FiList, FiChevronRight, FiStar, FiArrowRight, FiCheck, FiPlay, FiAlertTriangle, FiActivity, FiDownload, FiShare2, FiPlusCircle, FiBook } from 'react-icons/fi/index.js';
+import MenteoLogo from '../../components/MenteoLogo.js';
 
 const COLORS = ['#E4E0FF', '#CDE8E5', '#F9D6D6', '#FFE8C8'];
 
@@ -29,6 +30,7 @@ export default function LearnIQDashboard() {
   const [quizResults, setQuizResults] = useState([]);
   const [certificates, setCertificates] = useState([]);
   const [viewMode, setViewMode] = useState('grid');
+  const [showAppNotif, setShowAppNotif] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [value, onChange] = useState(new Date());
@@ -304,6 +306,14 @@ export default function LearnIQDashboard() {
     };
     
     fetchAllData();
+    // Show app download notification unless user dismissed it before
+    try {
+      const dismissed = localStorage.getItem('dash_app_download_dismissed');
+      if (!dismissed) setShowAppNotif(true);
+    } catch (e) {
+      // ignore localStorage errors
+      setShowAppNotif(true);
+    }
   }, [
     fetchUserData,
     fetchEnrolledCourses,
@@ -717,6 +727,52 @@ export default function LearnIQDashboard() {
           
           {/* Right Column - 1/3 width */}
           <div className="space-y-8">
+            {/* App download notification (dismissible) */}
+            {showAppNotif && (
+              <div className="bg-white rounded-2xl shadow-lg p-4 border border-blue-50">
+                <div className="flex items-center">
+                  <div className="mr-3">
+                    <MenteoLogo size="large" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-gray-900">Get the Mentneo Mobile App</p>
+                    <p className="text-xs text-gray-600 mt-1">
+                      Download the app now and enjoy the feature. If any drawbacks occur, inform us at <a href="mailto:official@mentlearn.in" className="text-blue-600">official@mentlearn.in</a>.
+                    </p>
+
+                    <div className="mt-3 flex items-center space-x-2">
+                      <a
+                        href="https://expo.dev/artifacts/eas/nNw7m5dHuiGsbHMoozH3Xj.apk"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700"
+                      >
+                        <FiDownload className="mr-2" /> Download APK
+                      </a>
+
+                      <button
+                        onClick={() => { localStorage.setItem('dash_app_download_dismissed','1'); setShowAppNotif(false); }}
+                        className="px-3 py-2 text-sm rounded-md border border-gray-200 bg-white hover:bg-gray-50"
+                      >
+                        Dismiss
+                      </button>
+
+                      <label className="ml-2 text-xs text-gray-500 flex items-center">
+                        <input
+                          type="checkbox"
+                          className="mr-1"
+                          onChange={(e) => {
+                            if (e.target.checked) localStorage.setItem('dash_app_download_dismissed','1');
+                            else localStorage.removeItem('dash_app_download_dismissed');
+                          }}
+                        />
+                        Don't show again
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
             {/* Profile Summary */}
             <motion.div 
               whileHover={{ y: -5 }}
