@@ -78,6 +78,22 @@ export default function LearnIQNavbar() {
         <FiMenu className="h-6 w-6 text-gray-700" aria-hidden="true" />
       </button>
 
+      {/* Mobile Profile in header (right side) */}
+      <Link
+        to="/student/student-dashboard/profile"
+        className="lg:hidden absolute top-4 right-4 z-50 flex items-center space-x-2 bg-white rounded-full px-2 py-1 shadow-md hover:shadow-lg"
+        title="View profile"
+      >
+        <img
+          src={userData?.photoURL || 'https://via.placeholder.com/40?text=U'}
+          alt={userData?.displayName || 'Profile'}
+          className="h-8 w-8 rounded-full object-cover"
+        />
+        <span className="text-sm font-medium text-gray-800 truncate max-w-[100px]">
+          {userData?.displayName || 'Profile'}
+        </span>
+      </Link>
+
       {/* Mobile menu */}
       <div className={`lg:hidden fixed inset-0 flex z-40 ${sidebarOpen ? '' : 'pointer-events-none'}`}>
         {/* Overlay */}
