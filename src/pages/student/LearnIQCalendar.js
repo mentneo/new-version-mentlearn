@@ -23,7 +23,7 @@ export default function LearnIQCalendar() {
     endTime: '10:00',
     type: 'study',
     reminder: '15',
-    color: '#2563EB'
+    color: '#7C3AED'
   });
   const [isEditing, setIsEditing] = useState(false);
   const [notification, setNotification] = useState(null);
@@ -38,15 +38,27 @@ export default function LearnIQCalendar() {
   
   // Color options for events
   const colorOptions = [
-    { value: '#2563EB', label: 'Blue' },
-    { value: '#2563EB', label: 'Blue' },
+    { value: '#7C3AED', label: 'Lavender (Violet)' },
+    { value: '#C4B5FD', label: 'Lavender Light' },
+    { value: '#EDE9FE', label: 'Lavender Pale' },
     { value: '#DC2626', label: 'Red' },
     { value: '#16A34A', label: 'Green' },
     { value: '#CA8A04', label: 'Yellow' },
     { value: '#9333EA', label: 'Purple' },
-    { value: '#EC4899', label: 'Pink' },
-    { value: '#0D9488', label: 'Teal' }
+    { value: '#EC4899', label: 'Pink' }
   ];
+
+  // Helper: convert hex color to rgba string (alpha 0-1)
+  const hexToRgba = (hex, alpha = 1) => {
+    if (!hex) return `rgba(0,0,0,${alpha})`;
+    const h = hex.replace('#', '');
+    const full = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
+    const bigint = parseInt(full, 16);
+    const r = (bigint >> 16) & 255;
+    const g = (bigint >> 8) & 255;
+    const b = bigint & 255;
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
   
   // Reminder options
   const reminderOptions = [
@@ -160,7 +172,7 @@ export default function LearnIQCalendar() {
       endTime: '10:00',
       type: 'study',
       reminder: '15',
-      color: '#2563EB'
+      color: '#7C3AED'
     });
     setShowModal(true);
   };
@@ -181,7 +193,7 @@ export default function LearnIQCalendar() {
       endTime: event.endTime || '10:00',
       type: event.type || 'study',
       reminder: event.reminder || '15',
-      color: event.color || '#2563EB'
+      color: event.color || '#7C3AED'
     });
     setShowModal(true);
   };
@@ -372,8 +384,8 @@ export default function LearnIQCalendar() {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Calendar */}
-          <div className="lg:col-span-2 bg-[#EDE9FE] shadow rounded-xl overflow-hidden">
-            <div className="p-4 bg-[#EDE9FE] border-b border-gray-200 flex items-center justify-between">
+          <div className="lg:col-span-2 bg-white shadow rounded-xl overflow-hidden">
+            <div className="p-4 bg-white border-b border-gray-200 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-900">
                 {format(currentMonth, 'MMMM yyyy')}
               </h2>
@@ -403,7 +415,7 @@ export default function LearnIQCalendar() {
               {/* Day names */}
               <div className="grid grid-cols-7 gap-1 mb-2">
                 {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                  <div key={day} className="text-center text-xs font-semibold text-gray-600 uppercase tracking-wider py-2">
+                  <div key={day} className="text-center text-sm font-medium text-gray-500 py-2">
                     {day}
                   </div>
                 ))}
@@ -425,31 +437,21 @@ export default function LearnIQCalendar() {
                     <div
                       key={day.toISOString()}
                       className={`aspect-square p-1 ${
-                        isSameDay(day, selectedDate)
-                          ? 'bg-blue-100 rounded-md'
-                          : isToday(day)
-                          ? 'bg-blue-50 rounded-md'
-                          : !isSameMonth(day, currentMonth)
-                          ? 'bg-gray-50 text-gray-400'
-                          : 'hover:bg-gray-100 cursor-pointer'
-                      }`}
+                          isSameDay(day, selectedDate)
+                            ? 'bg-[#EDE9FE] rounded-md'
+                            : isToday(day)
+                            ? 'bg-[#F3E8FF] rounded-md'
+                            : !isSameMonth(day, currentMonth)
+                            ? 'bg-gray-50 text-gray-400'
+                            : 'hover:bg-gray-100 cursor-pointer'
+                        }`}
                       onClick={() => handleDateSelect(day)}
                     >
                       <div className="h-full flex flex-col">
-                        <div className="text-center text-sm font-medium mb-1">
-                          {isSameDay(day, selectedDate) ? (
-                            <span className="inline-flex items-center justify-center w-8 h-8 bg-[#2563EB] text-white rounded-full">
-                              {format(day, 'd')}
-                            </span>
-                          ) : isToday(day) ? (
-                            <span className="inline-flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-700 rounded-full">
-                              {format(day, 'd')}
-                            </span>
-                          ) : (
-                            <span className={`${!isSameMonth(day, currentMonth) ? 'text-gray-400' : 'text-gray-700'}`}>
-                              {format(day, 'd')}
-                            </span>
-                          )}
+                        <div className={`text-center text-sm font-medium mb-1 ${
+                          isToday(day) ? 'text-[#6D28D9]' : 'text-gray-700'
+                        }`}>
+                          {format(day, 'd')}
                         </div>
                         
                         {/* Event indicators */}
@@ -458,7 +460,7 @@ export default function LearnIQCalendar() {
                             <div
                               key={event.id || `event-${index}`}
                               className="w-full h-1.5 rounded-full my-0.5"
-                              style={{ backgroundColor: event.color || '#2563EB' }}
+                              style={{ backgroundColor: event.color || '#7C3AED', border: '1px solid rgba(0,0,0,0.04)' }}
                             ></div>
                           ))}
                           
@@ -482,8 +484,8 @@ export default function LearnIQCalendar() {
           </div>
           
           {/* Selected Day Events */}
-          <div className="bg-[#EDE9FE] shadow rounded-xl overflow-hidden">
-            <div className="p-4 bg-[#EDE9FE] border-b border-gray-200">
+          <div className="bg-white shadow rounded-xl overflow-hidden">
+            <div className="p-4 bg-white border-b border-gray-200">
               <h2 className="text-lg font-semibold text-gray-900">
                 {format(selectedDate, 'EEEE, MMMM d, yyyy')}
                 {isToday(selectedDate) && (
@@ -517,11 +519,11 @@ export default function LearnIQCalendar() {
                       <div 
                         key={event.id}
                         className="p-3 rounded-lg border-l-4"
-                        style={{ borderLeftColor: event.color || '#2563EB', backgroundColor: `${event.color}10` }}
+                          style={{ borderLeftColor: event.color || '#7C3AED', backgroundColor: hexToRgba(event.color || '#7C3AED', 0.08) }}
                       >
                         <div className="flex justify-between items-start">
                           <div className="flex items-start">
-                            <span className="p-1.5 rounded-md mr-2" style={{ backgroundColor: `${event.color}30` }}>
+                              <span className="p-1.5 rounded-md mr-2" style={{ backgroundColor: hexToRgba(event.color || '#7C3AED', 0.18) }}>
                               {getEventIcon(event.type)}
                             </span>
                             <div>

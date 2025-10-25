@@ -12,29 +12,6 @@ import * as Yup from 'yup';
 
 export default function ManageCourses() {
   const [courses, setCourses] = useState([]);
-  const [editingPriceCourseId, setEditingPriceCourseId] = useState(null);
-  const [newPrice, setNewPrice] = useState(0);
-  // Inline price edit handlers
-  const handleEditPrice = (courseId, currentPrice) => {
-    setEditingPriceCourseId(courseId);
-    setNewPrice(currentPrice);
-  };
-
-  const handlePriceChange = (e) => {
-    setNewPrice(e.target.value);
-  };
-
-  const handleSavePrice = async (courseId) => {
-    try {
-      await updateDoc(doc(db, "courses", courseId), { price: Number(newPrice) });
-      setEditingPriceCourseId(null);
-      setNewPrice(0);
-      setSuccess('Course price updated successfully!');
-      fetchCourses();
-    } catch (err) {
-      setError('Error updating price: ' + err.message);
-    }
-  };
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -303,20 +280,7 @@ export default function ManageCourses() {
                           <h2 className="text-lg font-medium text-gray-900">{course.title}</h2>
                           <p className="text-sm text-gray-500 line-clamp-2">{course.description}</p>
                           <p className="text-sm text-gray-500 mt-1">
-                            {course.modules?.length || 0} modules | Price: ₹{
-                              editingPriceCourseId === course.id ? (
-                                <>
-                                  <input type="number" value={newPrice} min={0} onChange={handlePriceChange} className="border rounded px-2 py-1 w-20 mr-2" />
-                                  <button onClick={() => handleSavePrice(course.id)} className="bg-green-500 text-white px-2 py-1 rounded mr-1">Save</button>
-                                  <button onClick={() => setEditingPriceCourseId(null)} className="bg-gray-300 px-2 py-1 rounded">Cancel</button>
-                                </>
-                              ) : (
-                                <>
-                                  {course.price}
-                                  <button onClick={() => handleEditPrice(course.id, course.price)} className="ml-2 text-xs text-blue-600 underline">Edit Price</button>
-                                </>
-                              )
-                            }
+                            {course.modules?.length || 0} modules | Price: ₹{course.price}
                           </p>
                         </div>
                       </div>

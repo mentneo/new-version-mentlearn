@@ -3,10 +3,10 @@ import { db } from '../../firebase/firebase.js';
 import { collection, getDocs } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import LearnIQNavbar from '../../components/student/LearnIQNavbar.js';
-import { getAuth } from "firebase/auth";
+import { getAuth } from 'firebase/auth';
 
 // Razorpay key (use env in production)
-const RAZORPAY_KEY = 'rzp_live_RFqLLkkteSLfOY';
+const RAZORPAY_KEY = process.env.REACT_APP_RAZORPAY_KEY || 'rzp_test_placeholder';
 
 const StudentOurCourses = () => {
 	const [courses, setCourses] = useState([]);
@@ -26,6 +26,7 @@ const StudentOurCourses = () => {
 			const courseList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 			setCourses(courseList);
 		} catch (err) {
+			console.error('Failed to load courses', err);
 			setError('Failed to load courses.');
 		} finally {
 			setLoading(false);
@@ -44,88 +45,121 @@ const StudentOurCourses = () => {
 		});
 	};
 
-	// Buy Now handler
-	const handleBuyNow = async (courseId, price) => {
+	const handleBuyNow = async (courseId) => {
 		const scriptLoaded = await loadRazorpayScript();
 		if (!scriptLoaded) {
 			alert('Failed to load payment gateway.');
 			return;
 		}
 
-		// Get Firebase ID token
-		const auth = getAuth();
-		const user = auth.currentUser;
+		// Get Firebase ID token if available
 		let idToken = null;
-		if (user) {
-			idToken = await user.getIdToken();
+		try {
+			const auth = getAuth();
+			const user = auth.currentUser;
+			if (user) idToken = await user.getIdToken();
+		} catch (e) {
+			// ignore if auth not configured
 		}
 
-		// Call backend to create order
-		let order;
 		try {
-			const res = await fetch('http://localhost:5001/api/payment/create-order', {
+			const res = await fetch(`${process.env.REACT_APP_API_BASE || 'http://localhost:5001'}/api/payment/create-order`, {
 				method: 'POST',
+				credentials: 'omit',
 				headers: {
 					'Content-Type': 'application/json',
 					...(idToken ? { Authorization: `Bearer ${idToken}` } : {})
 				},
 				body: JSON.stringify({ courseId })
 			});
+
 			const data = await res.json();
-			order = data.order;
-			if (!order) {
-				alert(data.error || 'Failed to create payment order. Please check if the course exists and try again.');
+			if (!res.ok) {
+				alert(data.error || 'Failed to create payment order');
 				return;
 			}
-		} catch (err) {
-			alert('Failed to create payment order.');
-			return;
-		}
 
-		const options = {
-			key: RAZORPAY_KEY,
-			amount: order.amount,
-			currency: order.currency,
-			name: 'Mentneo Courses',
-			description: 'Course Payment',
-			order_id: order.id,
-			handler: function (response) {
-				// On payment success, redirect to success page
-				navigate(`/student/course-payment-success?courseId=${courseId}&paymentId=${response.razorpay_payment_id}`);
-			},
-			prefill: {},
-			theme: { color: '#4F46E5' }
-		};
-		const rzp = new window.Razorpay(options);
-		rzp.open();
+			const order = data.order;
+			const options = {
+				key: RAZORPAY_KEY,
+				amount: order.amount,
+				currency: order.currency,
+				name: 'Mentneo Courses',
+				description: 'Course Payment',
+				order_id: order.id,
+				handler: function (response) {
+					navigate(`/student/course-payment-success?courseId=${courseId}&paymentId=${response.razorpay_payment_id}`);
+				}
+			};
+
+			const rzp = new window.Razorpay(options);
+			rzp.open();
+		} catch (err) {
+			console.error('Failed to create payment order', err);
+			alert('Failed to create payment order.');
+		}
 	};
 
-	if (loading) return <div>Loading courses...</div>;
-	if (error) return <div>{error}</div>;
+	if (loading) return <div className="p-8">Loading courses...</div>;
+	if (error) return <div className="p-8">{error}</div>;
 
 	return (
-		<div className="min-h-screen bg-gray-50">
-			<LearnIQNavbar />
-			<div className="max-w-7xl mx-auto py-10 px-4">
-				<h1 className="text-3xl font-bold mb-6">All Courses</h1>
-				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-					{courses.map(course => (
-						<div key={course.id} className="bg-white rounded-xl shadow p-6 flex flex-col">
-							<img src={course.thumbnailUrl || 'https://via.placeholder.com/150?text=No+Image'} alt={course.title} className="h-40 w-full object-cover rounded mb-4" />
-							<h2 className="text-xl font-bold mb-2">{course.title}</h2>
-							<p className="text-gray-600 mb-2">{course.description}</p>
-							<p className="text-green-700 font-semibold mb-2">Price: ₹{course.price || 0}</p>
-							<button
-								onClick={() => handleBuyNow(course.id, course.price)}
-								className="mt-auto px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-semibold"
-							>
-								Buy Now
-							</button>
+			<div className="flex h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+				<LearnIQNavbar />
+				<div className="flex-1 overflow-y-auto">
+					<div className="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
+						<h1 className="text-4xl font-bold mb-4 text-gray-900">All Courses</h1>
+						<p className="text-gray-600 mb-6">Browse our catalog and purchase a course to get started.</p>
+
+						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+							{courses.map((course, index) => (
+								<div
+									key={course.id}
+									className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all group flex flex-col"
+								>
+									<div className="relative h-48 overflow-hidden">
+										{course.thumbnailUrl ? (
+											<img
+												src={course.thumbnailUrl}
+												alt={course.title}
+												className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+											/>
+										) : (
+											<div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+												<span className="text-white font-bold">No Image</span>
+											</div>
+										)}
+									</div>
+
+									<div className="p-6 flex-1 flex flex-col">
+										{course.category && (
+											<span className="inline-block px-2 py-1 bg-blue-100 text-blue-600 text-xs font-semibold rounded-full mb-3">
+												{course.category}
+											</span>
+										)}
+
+										<h2 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2">{course.title}</h2>
+										<p className="text-gray-600 text-sm mb-4 line-clamp-3">{course.description}</p>
+										<div className="mt-auto">
+											<div className="flex items-center justify-between mb-4">
+												<div className="text-lg font-semibold text-gray-900">₹{course.price || 0}</div>
+												<div className="text-sm text-gray-500">{course.enrollments || 0} enrolled</div>
+											</div>
+
+											<button
+												onClick={() => handleBuyNow(course.id)}
+												className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all font-semibold shadow-md"
+											>
+												Buy Now
+											</button>
+										</div>
+									</div>
+								</div>
+							))}
 						</div>
-					))}
+					</div>
 				</div>
 			</div>
-		</div>
 	);
 };
 

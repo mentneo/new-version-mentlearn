@@ -52,7 +52,7 @@ const LandingPage = () => {
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-8">
-              <Link to="/courses" className="text-gray-600 hover:text-[#007bff] px-3 py-2 text-sm font-medium">Our Courses</Link>
+              <Link to="/courses" className="text-gray-600 hover:text-[#007bff] px-3 py-2 text-sm font-medium">Courses</Link>
               <Link to="/about" className="text-gray-600 hover:text-[#007bff] px-3 py-2 text-sm font-medium">About</Link>
               {/* Program dropdown */}
               <div className="relative group">
@@ -64,9 +64,6 @@ const LandingPage = () => {
                 </button>
                 {/* Make dropdown visible on hover and focus */}
                 <div className="absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-all duration-200 z-50">
-                  <Link to="/courses" className="block px-4 py-3 text-gray-700 hover:bg-[#f0f4ff] hover:text-[#007bff] text-sm font-semibold border-b border-gray-200">
-                    All Courses
-                  </Link>
                   <Link to="/courses/academy" className="block px-4 py-3 text-gray-700 hover:bg-[#f0f4ff] hover:text-[#007bff] text-sm">
                     Academy
                   </Link>
@@ -144,13 +141,6 @@ const LandingPage = () => {
                   <Link to="/" className="block px-6 py-4 text-base font-medium text-white border-b border-gray-700 hover:bg-blue-900/20">
                     <div className="flex items-center justify-between">
                       <span>Home</span>
-                      <FaArrowRight className="h-4 w-4 opacity-70" />
-                    </div>
-                  </Link>
-                  {/* Our Courses menu item */}
-                  <Link to="/courses" className="block px-6 py-4 text-base font-medium text-white border-b border-gray-700 hover:bg-blue-900/20">
-                    <div className="flex items-center justify-between">
-                      <span>Our Courses</span>
                       <FaArrowRight className="h-4 w-4 opacity-70" />
                     </div>
                   </Link>
@@ -265,6 +255,55 @@ const LandingPage = () => {
               </div>
             </div>
           </motion.div>
+        </div>
+      </section>
+
+      {/* Our Courses - Featured */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-10"
+        >
+          <h2 className="text-3xl font-bold text-gray-900">Our Courses</h2>
+          <p className="mt-3 text-gray-600 max-w-2xl mx-auto">
+            Carefully crafted programs to take you from fundamentals to real-world projects.
+          </p>
+        </motion.div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[{
+            title: 'Full Stack Development',
+            desc: 'End-to-end web development with React, Node and MongoDB',
+            link: '/courses/full-stack'
+          }, {
+            title: 'Frontend Development',
+            desc: 'Modern UI development with React, Tailwind and testing',
+            link: '/courses/frontend'
+          }, {
+            title: 'Backend & APIs',
+            desc: 'Build scalable servers, databases and REST/GraphQL APIs',
+            link: '/courses/backend'
+          }].map((c, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 8 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: i * 0.05 }}
+              className="bg-white p-6 rounded-xl shadow-md border border-gray-100"
+            >
+              <h3 className="text-xl font-semibold text-gray-900">{c.title}</h3>
+              <p className="mt-3 text-gray-600">{c.desc}</p>
+              <div className="mt-6">
+                <Link to={c.link} className="inline-flex items-center text-[#007bff] hover:underline font-medium">
+                  View Course <FaChevronRight className="ml-2" />
+                </Link>
+              </div>
+            </motion.div>
+          ))}
         </div>
       </section>
 
