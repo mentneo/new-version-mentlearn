@@ -133,7 +133,7 @@ const BookDemo = () => {
                   </h1>
                   
                   <p className="text-xl text-gray-600 mb-8">
-                    Book your free demo session now and see how you can become a full stack developer from college.
+                    Book your seat now to secure your place in the upcoming cohort and explore how Mentneo helps you become a full-stack developer.
                   </p>
                   
                   <div className="hidden md:block">
@@ -189,7 +189,7 @@ const BookDemo = () => {
                   {/* Glassmorphism card with glow */}
                   <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl blur-lg opacity-30"></div>
                   <div className="relative bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-gray-200 p-8">
-                    <h2 className="text-2xl font-bold mb-6 text-center">Book Your Free Demo</h2>
+                    <h2 className="text-2xl font-bold mb-6 text-center">Book Your Seat Now</h2>
                     
                     <form onSubmit={handleSubmit}>
                       <div className="space-y-5">
@@ -293,7 +293,7 @@ const BookDemo = () => {
                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                               </svg>
                             ) : (
-                              'Book My Free Demo'
+                              'Reserve My Seat'
                             )}
                           </button>
                           
@@ -310,7 +310,7 @@ const BookDemo = () => {
                       </div>
                       
                       <a 
-                        href="https://wa.me/919182146476?text=Hi%20Mentneo%2C%20I%20have%20a%20question%20about%20the%20demo%20session." 
+                        href="https://wa.me/919182146476?text=Hi%20Mentneo%2C%20I%20have%20a%20question%20about%20booking%20a%20seat." 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm"
@@ -351,30 +351,30 @@ const BookDemo = () => {
               </h2>
               
               <p className="text-xl text-gray-600 mb-8">
-                Our team will contact you soon for your Mentneo demo session.
+                Our team will contact you soon to confirm your seat and share the next steps.
               </p>
               
-              <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100 mb-8">
+                  <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100 mb-8">
                 <h3 className="font-bold text-lg mb-4 text-gray-800">What happens next?</h3>
                 <ol className="space-y-3 text-left">
                   <li className="flex items-start">
                     <span className="bg-blue-100 text-blue-700 rounded-full h-6 w-6 flex items-center justify-center font-bold text-sm mr-3 flex-shrink-0">1</span>
-                    <span className="text-gray-600">Our counselor will call you within 24 hours</span>
+                    <span className="text-gray-600">Our counselor will call you within 24 hours to confirm your booking</span>
                   </li>
                   <li className="flex items-start">
                     <span className="bg-blue-100 text-blue-700 rounded-full h-6 w-6 flex items-center justify-center font-bold text-sm mr-3 flex-shrink-0">2</span>
-                    <span className="text-gray-600">We'll schedule a personalized demo at your convenient time</span>
+                    <span className="text-gray-600">We'll confirm your seat and share the joining instructions</span>
                   </li>
                   <li className="flex items-start">
                     <span className="bg-blue-100 text-blue-700 rounded-full h-6 w-6 flex items-center justify-center font-bold text-sm mr-3 flex-shrink-0">3</span>
-                    <span className="text-gray-600">Join the demo and explore how Mentneo can help your career</span>
+                    <span className="text-gray-600">Start learning with your cohort on the scheduled date</span>
                   </li>
                 </ol>
               </div>
               
               <div className="mb-6 text-center">
                 <a 
-                  href="https://wa.me/919182146476?text=Hi%20Mentneo%2C%20I've%20just%20booked%20a%20demo%20and%20have%20a%20question." 
+                  href="https://wa.me/919182146476?text=Hi%20Mentneo%2C%20I've%20just%20reserved%20a%20seat%20and%20have%20a%20question." 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="inline-flex items-center text-blue-600 hover:text-blue-800"
