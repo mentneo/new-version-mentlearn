@@ -55,12 +55,27 @@ export default function LearnIQDashboard() {
     if (!currentUser) return;
     
     try {
-      const enrollmentsQuery = query(
+      // Query for both userId and studentId to support old and new enrollments
+      const enrollmentsQuery1 = query(
         collection(db, "enrollments"),
         where("studentId", "==", currentUser.uid)
       );
-      const enrollmentsSnapshot = await getDocs(enrollmentsQuery);
-      const enrollments = enrollmentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const enrollmentsQuery2 = query(
+        collection(db, "enrollments"),
+        where("userId", "==", currentUser.uid)
+      );
+      
+      const [snapshot1, snapshot2] = await Promise.all([
+        getDocs(enrollmentsQuery1),
+        getDocs(enrollmentsQuery2)
+      ]);
+      
+      // Combine results and remove duplicates
+      const enrollmentsMap = new Map();
+      [...snapshot1.docs, ...snapshot2.docs].forEach(doc => {
+        enrollmentsMap.set(doc.id, { id: doc.id, ...doc.data() });
+      });
+      const enrollments = Array.from(enrollmentsMap.values());
       
       // For each enrollment, fetch the course details
       const coursesWithProgress = await Promise.all(
@@ -75,7 +90,7 @@ export default function LearnIQDashboard() {
               limit(1)
             );
             const progressSnapshot = await getDocs(progressQuery);
-            let progress = 0;
+            let progress = enrollment.progress || 0;
             
             if (!progressSnapshot.empty) {
               const progressData = progressSnapshot.docs[0].data();
@@ -86,7 +101,7 @@ export default function LearnIQDashboard() {
               id: courseDoc.id,
               ...courseDoc.data(),
               progress,
-              enrolledAt: enrollment.createdAt
+              enrolledAt: enrollment.createdAt || enrollment.enrolledAt
             };
           }
           return null;

@@ -43,6 +43,9 @@ import ChatUs from './pages/ChatUs'; // Import ChatUs page
 import TechCareer from './pages/TechCareer'; // Import TechCareer page
 import CreateTestCreator from './pages/CreateTestCreator'; // Import Create Test Creator page
 import CreateTestCreatorDirect from './pages/CreateTestCreatorDirect'; // Import Direct Test Creator page
+import PublicCoursesPage from './pages/PublicCoursesPage'; // Import Public Courses Page
+import RazorpayCheckout from './pages/RazorpayCheckout'; // Import Razorpay Checkout
+import PaymentSuccess from './pages/PaymentSuccess'; // Import Payment Success
 
 // Admin pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -198,6 +201,9 @@ function App() {
               <Route path="/home-classic" element={<LandingPage />} />
               <Route path="/home-old" element={<Home />} />
               <Route path="/about" element={<AboutUs />} />
+              <Route path="/courses" element={<PublicCoursesPage />} />
+              <Route path="/courses/:courseId/checkout" element={<RazorpayCheckout />} />
+              <Route path="/payment/success" element={<PaymentSuccess />} />
               <Route path="/courses/full-stack-development" element={<FullStackCoursePage />} />
               <Route path="/login" element={<GradientLogin />} />
               <Route path="/signup" element={<GradientSignup />} />

@@ -3,10 +3,6 @@ import { db } from '../../firebase/firebase.js';
 import { collection, getDocs } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import LearnIQNavbar from '../../components/student/LearnIQNavbar.js';
-import { getAuth } from 'firebase/auth';
-
-// Razorpay key (use env in production)
-const RAZORPAY_KEY = process.env.REACT_APP_RAZORPAY_KEY || 'rzp_test_placeholder';
 
 const StudentOurCourses = () => {
 	const [courses, setCourses] = useState([]);
@@ -33,71 +29,9 @@ const StudentOurCourses = () => {
 		}
 	};
 
-	// Load Razorpay script
-	const loadRazorpayScript = () => {
-		return new Promise((resolve) => {
-			if (window.Razorpay) return resolve(true);
-			const script = document.createElement('script');
-			script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-			script.onload = () => resolve(true);
-			script.onerror = () => resolve(false);
-			document.body.appendChild(script);
-		});
-	};
-
 	const handleBuyNow = async (courseId) => {
-		const scriptLoaded = await loadRazorpayScript();
-		if (!scriptLoaded) {
-			alert('Failed to load payment gateway.');
-			return;
-		}
-
-		// Get Firebase ID token if available
-		let idToken = null;
-		try {
-			const auth = getAuth();
-			const user = auth.currentUser;
-			if (user) idToken = await user.getIdToken();
-		} catch (e) {
-			// ignore if auth not configured
-		}
-
-		try {
-			const res = await fetch(`${process.env.REACT_APP_API_BASE || 'http://localhost:5001'}/api/payment/create-order`, {
-				method: 'POST',
-				credentials: 'omit',
-				headers: {
-					'Content-Type': 'application/json',
-					...(idToken ? { Authorization: `Bearer ${idToken}` } : {})
-				},
-				body: JSON.stringify({ courseId })
-			});
-
-			const data = await res.json();
-			if (!res.ok) {
-				alert(data.error || 'Failed to create payment order');
-				return;
-			}
-
-			const order = data.order;
-			const options = {
-				key: RAZORPAY_KEY,
-				amount: order.amount,
-				currency: order.currency,
-				name: 'Mentneo Courses',
-				description: 'Course Payment',
-				order_id: order.id,
-				handler: function (response) {
-					navigate(`/student/course-payment-success?courseId=${courseId}&paymentId=${response.razorpay_payment_id}`);
-				}
-			};
-
-			const rzp = new window.Razorpay(options);
-			rzp.open();
-		} catch (err) {
-			console.error('Failed to create payment order', err);
-			alert('Failed to create payment order.');
-		}
+		// Navigate to the checkout page (same as PublicCoursesPage)
+		navigate(`/courses/${courseId}/checkout`);
 	};
 
 	if (loading) return <div className="p-8">Loading courses...</div>;

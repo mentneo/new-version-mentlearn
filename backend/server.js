@@ -125,7 +125,7 @@ try {
 } catch (e) {
   server = http.createServer(app);
 }
-server.listen(PORT, () => console.log(`Server listening on ${PORT} (maxHeaderSize=${MAX_HEADER_BYTES})`));
+server.listen(PORT, '0.0.0.0', () => console.log(`✅ Server listening on 0.0.0.0:${PORT} (maxHeaderSize=${MAX_HEADER_BYTES})`));
 
 // WebSocket server at /ws
 const wss = new WebSocketServer({ server, path: '/ws' });

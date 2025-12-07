@@ -32,14 +32,29 @@ const StudentCourses = () => {
         ...doc.data()
       }));
 
+      // Query for both userId and studentId to support old and new enrollments
       const enrollmentsRef = collection(db, 'enrollments');
-      const enrollmentsQuery = query(
+      const enrollmentsQuery1 = query(
         enrollmentsRef,
         where('userId', '==', currentUser.uid),
         where('status', '==', 'active')
       );
-      const enrollmentsSnapshot = await getDocs(enrollmentsQuery);
-      const enrolledCourseIds = enrollmentsSnapshot.docs.map(doc => doc.data().courseId);
+      const enrollmentsQuery2 = query(
+        enrollmentsRef,
+        where('studentId', '==', currentUser.uid)
+      );
+      
+      const [snapshot1, snapshot2] = await Promise.all([
+        getDocs(enrollmentsQuery1),
+        getDocs(enrollmentsQuery2)
+      ]);
+      
+      // Combine and deduplicate course IDs
+      const enrolledCourseIdsSet = new Set([
+        ...snapshot1.docs.map(doc => doc.data().courseId),
+        ...snapshot2.docs.map(doc => doc.data().courseId)
+      ]);
+      const enrolledCourseIds = Array.from(enrolledCourseIdsSet);
 
       const enrolled = allCourses.filter(course => enrolledCourseIds.includes(course.id));
       const available = allCourses.filter(course => !enrolledCourseIds.includes(course.id));

@@ -17,3 +17,10 @@ Server listening on 5001 (maxHeaderSize=16384)
   method: 'upi'
 }
 📧 TODO: Send enrollment confirmation email to hemanth@gmail.com
+📦 Creating Razorpay order...
+✅ Razorpay order created: order_RooamjjiWos5ks
+📊 Analytics: order_created {
+  userId: 'E8w4nYYc7hN4GTHByBptrYxTZut2',
+  courseId: '6OcFxX6jk2XWRp6JopGG',
+  amount: 1
+}

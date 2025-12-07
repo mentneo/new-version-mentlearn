@@ -12,6 +12,7 @@
     "@testing-library/user-event": "^13.5.0",
     "ajv": "^8.17.1",
     "bootstrap": "^5.3.6",
+    "canvas-confetti": "^1.9.4",
     "chart.js": "^4.3.0",
     "cloudinary-core": "^2.11.3",
     "cloudinary-react": "^1.7.0",

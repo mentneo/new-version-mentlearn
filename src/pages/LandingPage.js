@@ -138,14 +138,21 @@ const LandingPage = () => {
               {/* Menu items - Exactly like NxtWave's style */}
               <div className="flex-1 overflow-y-auto py-0">
                 <nav className="px-0">
-                  <Link to="/" className="block px-6 py-4 text-base font-medium text-white border-b border-gray-700 hover:bg-blue-900/20">
+                  <Link to="/" className="block px-6 py-4 text-base font-medium text-white border-b border-gray-700 hover:bg-blue-900/20" onClick={toggleMobileMenu}>
                     <div className="flex items-center justify-between">
                       <span>Home</span>
                       <FaArrowRight className="h-4 w-4 opacity-70" />
                     </div>
                   </Link>
+                  {/* Courses menu item */}
+                  <Link to="/courses" className="block px-6 py-4 text-base font-medium text-white border-b border-gray-700 hover:bg-blue-900/20" onClick={toggleMobileMenu}>
+                    <div className="flex items-center justify-between">
+                      <span>Courses</span>
+                      <FaArrowRight className="h-4 w-4 opacity-70" />
+                    </div>
+                  </Link>
                   {/* Academy menu item */}
-                  <Link to="/courses/academy" className="block px-6 py-4 text-base font-medium text-white border-b border-gray-700 hover:bg-blue-900/20">
+                  <Link to="/courses/academy" className="block px-6 py-4 text-base font-medium text-white border-b border-gray-700 hover:bg-blue-900/20" onClick={toggleMobileMenu}>
                     <div className="flex items-center justify-between">
                       <span>Academy</span>
                       <FaArrowRight className="h-4 w-4 opacity-70" />
