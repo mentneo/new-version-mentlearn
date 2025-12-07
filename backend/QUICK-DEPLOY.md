@@ -15,10 +15,12 @@ git push origin main
 2. Click **"New +"** → **"Web Service"**
 3. Connect repo: `yeduruabhiram/mindneox.ai`
 4. Configure:
-   - **Root Directory**: `new-version-mentlearn/backend`
-   - **Build Command**: `npm install`
-   - **Start Command**: `npm start`
+   - **Root Directory**: Leave blank (render.yaml in root handles this)
+   - **Build Command**: `npm install` (in backend folder via render.yaml)
+   - **Start Command**: `npm start` (in backend folder via render.yaml)
    - **Plan**: Free (or Starter for always-on)
+
+**Note**: The `render.yaml` file in the root directory automatically configures the backend deployment.
 
 ### Step 3: Set Environment Variables
 Click **"Environment"** tab and add:
