@@ -1,19 +1,12 @@
-// (Top preamble removed - consolidated below)
-import cors from 'cors';
-
-app.use(cors({
-  origin: ['http://localhost:3000'], // frontend origin
-  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
-  credentials: true,
-}));
 // Middleware
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const fs = require('fs');
 const http = require('http');
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
-const mongoose = require('mongoose');
+// const mongoose = require('mongoose'); // Removed MongoDB
 const admin = require('firebase-admin');
 const Razorpay = require('razorpay');
 const { WebSocketServer } = require('ws');
@@ -29,6 +22,14 @@ let serviceAccount = null;
 if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
   try { serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON); } catch(e) { console.warn('Invalid FIREBASE_SERVICE_ACCOUNT_JSON'); }
 }
+if (!serviceAccount && process.env.FIREBASE_CREDENTIALS_PATH) {
+  const credPath = process.env.FIREBASE_CREDENTIALS_PATH;
+  const resolvedPath = credPath.startsWith('/') ? credPath : __dirname + '/' + credPath;
+  if (fs.existsSync(resolvedPath)) {
+    serviceAccount = JSON.parse(fs.readFileSync(resolvedPath, 'utf8'));
+    console.log('✅ Firebase credentials loaded from:', credPath);
+  }
+}
 if (!serviceAccount) {
   const localPath = __dirname + '/firebase-service-account.json';
   if (fs.existsSync(localPath)) {
@@ -36,34 +37,13 @@ if (!serviceAccount) {
   }
 }
 if (!serviceAccount) {
-  console.error('Missing Firebase service account. Set FIREBASE_SERVICE_ACCOUNT_JSON or add firebase-service-account.json');
+  console.error('❌ Missing Firebase service account. Set FIREBASE_SERVICE_ACCOUNT_JSON or FIREBASE_CREDENTIALS_PATH in .env');
   process.exit(1);
 }
 admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
 
-// === MongoDB (Mongoose) ===
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/mentneo';
-mongoose.connect(MONGO_URI)
-  .then(() => console.log('MongoDB connected'))
-  .catch(err => console.error('MongoDB connection error:', err && err.message));
-
-mongoose.connection.on('error', err => {
-  console.error('MongoDB event error:', err && err.message);
-});
-
-// Minimal models (move to separate files in production)
-const { Schema } = mongoose;
-const CourseSchema = new Schema({ title: String, price: { type: Number, required: true }, thumbnailUrl: String }, { timestamps: true });
-const OrderSchema = new Schema({
-  orderId: { type: String, required: true, unique: true },
-  amount: Number,
-  currency: { type: String, default: 'INR' },
-  courseId: { type: Schema.Types.ObjectId, ref: 'Course' },
-  createdBy: String,
-  status: { type: String, default: 'created' }
-}, { timestamps: true });
-const Course = mongoose.models.Course || mongoose.model('Course', CourseSchema);
-const Order = mongoose.models.Order || mongoose.model('Order', OrderSchema);
+// Firestore Database
+const db = admin.firestore();
 
 // === Razorpay client ===
 if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_SECRET) {
@@ -119,72 +99,15 @@ app.use((req, res, next) => {
   next();
 });
 
+// === Import Routes ===
+const razorpayRoutes = require('./routes/razorpayRoutes');
+
 // Health endpoints
 app.get('/_health', (req, res) => res.json({ ok: true, uptime: process.uptime() }));
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
-// Helper to read Bearer token
-function getBearerToken(req) {
-  const h = req.headers.authorization || '';
-  const parts = String(h).split(' ');
-  if (parts.length === 2 && parts[0] === 'Bearer') return parts[1];
-  return null;
-}
-
-// === Payment route ===
-// POST /api/payment/create-order
-// body: { courseId: "<mongo id>" }
-// Auth: Firebase ID token in Authorization: Bearer <token>
-app.post('/api/payment/create-order', async (req, res) => {
-  console.log('POST /api/payment/create-order from', req.ip || req.headers['x-forwarded-for'] || 'unknown');
-  try {
-    const { courseId } = req.body || {};
-    if (!courseId) return res.status(400).json({ error: 'Missing courseId' });
-
-    // verify token
-    const token = getBearerToken(req);
-    if (!token) return res.status(401).json({ error: 'Missing auth token' });
-
-    let decoded;
-    try {
-      decoded = await admin.auth().verifyIdToken(token);
-    } catch (err) {
-      console.warn('Invalid ID token:', err && err.message);
-      return res.status(401).json({ error: 'Invalid auth token' });
-    }
-
-    // find course
-    const course = await Course.findById(courseId).lean();
-    if (!course) return res.status(404).json({ error: 'Course not found' });
-
-    const price = Number(course.price || 0);
-    if (!Number.isFinite(price) || price <= 0) return res.status(400).json({ error: 'Invalid course price' });
-
-    const amountPaise = Math.round(price * 100);
-    if (amountPaise < 100) return res.status(400).json({ error: 'Amount below minimum allowed' });
-
-    const receipt = `rcpt_${courseId}_${Date.now()}`.slice(0, 40);
-    const orderOptions = { amount: amountPaise, currency: 'INR', receipt, payment_capture: 1 };
-
-    // Create razorpay order (in test mode if using test keys)
-    const order = await razorpay.orders.create(orderOptions);
-
-    // Save order locally
-    await Order.create({
-      orderId: order.id,
-      amount: order.amount,
-      currency: order.currency,
-      courseId: course._id,
-      createdBy: decoded.uid,
-      status: 'created'
-    });
-
-    return res.json({ order });
-  } catch (err) {
-    console.error('create-order error:', err && (err.stack || err.message));
-    return res.status(500).json({ error: 'Internal server error' });
-  }
-});
+// === Mount Routes ===
+app.use('/api/razorpay', razorpayRoutes);
 
 // Fallback 404
 app.use((req, res) => res.status(404).json({ error: 'Not found' }));

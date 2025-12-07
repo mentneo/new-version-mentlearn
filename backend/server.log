@@ -1,0 +1,19 @@
+Server listening on 5001 (maxHeaderSize=16384)
+📦 Creating Razorpay order...
+📦 Creating Razorpay order...
+✅ Razorpay order created: order_Ronzk4rXgc7BUh
+📊 Analytics: order_created {
+  userId: 'E8w4nYYc7hN4GTHByBptrYxTZut2',
+  courseId: '6OcFxX6jk2XWRp6JopGG',
+  amount: 1
+}
+🔐 Verifying payment...
+✅ Payment signature verified
+✅ User enrolled in course: 7VDhO9hHgcaS9iNCpdoX
+📊 Analytics: payment_success {
+  userId: 'E8w4nYYc7hN4GTHByBptrYxTZut2',
+  courseId: '6OcFxX6jk2XWRp6JopGG',
+  amount: 1,
+  method: 'upi'
+}
+📧 TODO: Send enrollment confirmation email to hemanth@gmail.com
