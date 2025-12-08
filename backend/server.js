@@ -53,7 +53,40 @@ const razorpay = new Razorpay({ key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test
 
 // === Express app ===
 const app = express();
-app.use(helmet());
+
+// Configure Helmet to work with Render and proxies
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false,
+}));
+
+// Trust proxy (required for Render)
+app.set('trust proxy', 1);
+
+// Allow Render host headers
+app.use((req, res, next) => {
+  const host = req.get('host');
+  const allowedHosts = [
+    'localhost:5001',
+    'localhost:10000',
+    'new-version-mentlearn-3.onrender.com',
+    /.*\.onrender\.com$/
+  ];
+  
+  const isAllowed = allowedHosts.some(allowed => {
+    if (allowed instanceof RegExp) {
+      return allowed.test(host);
+    }
+    return host === allowed;
+  });
+  
+  if (!isAllowed && host) {
+    console.warn('Invalid host header:', host);
+  }
+  
+  next();
+});
+
 app.use(express.json({ limit: JSON_LIMIT }));
 app.use(express.urlencoded({ extended: true }));
 
