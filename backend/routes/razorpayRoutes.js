@@ -236,9 +236,10 @@ router.post('/verify-payment', verifyFirebaseToken, async (req, res) => {
     let enrollmentId;
 
     if (enrollmentQuery.empty) {
-      // Create enrollment
+      // Create enrollment with both userId and studentId for compatibility
       const enrollmentRef = await admin.firestore().collection('enrollments').add({
         userId: userId,
+        studentId: userId, // Add studentId for frontend compatibility
         userEmail: userEmail,
         courseId: orderData.courseId,
         courseName: orderData.courseName,
