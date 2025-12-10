@@ -70,12 +70,18 @@ export default function LearnIQDashboard() {
         getDocs(enrollmentsQuery2)
       ]);
       
-      // Combine results and remove duplicates
+      // Combine results and remove duplicates, filter by status
       const enrollmentsMap = new Map();
       [...snapshot1.docs, ...snapshot2.docs].forEach(doc => {
-        enrollmentsMap.set(doc.id, { id: doc.id, ...doc.data() });
+        const data = doc.data();
+        // Include if status is 'active', 'completed', or no status field (default to active)
+        if (!data.status || data.status === 'active' || data.status === 'completed') {
+          enrollmentsMap.set(doc.id, { id: doc.id, ...data });
+        }
       });
       const enrollments = Array.from(enrollmentsMap.values());
+      
+      console.log('📚 Dashboard: Found enrollments:', enrollments.length);
       
       // For each enrollment, fetch the course details
       const coursesWithProgress = await Promise.all(

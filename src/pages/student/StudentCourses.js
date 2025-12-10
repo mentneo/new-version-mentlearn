@@ -24,6 +24,8 @@ const StudentCourses = () => {
     try {
       setLoading(true);
       
+      console.log('🔍 Fetching courses for user:', currentUser.uid);
+      
       const coursesRef = collection(db, 'courses');
       const coursesQuery = query(coursesRef, where('published', '==', true));
       const coursesSnapshot = await getDocs(coursesQuery);
@@ -32,32 +34,55 @@ const StudentCourses = () => {
         ...doc.data()
       }));
 
+      console.log('📚 Total published courses:', allCourses.length);
+
       // Query for both userId and studentId to support old and new enrollments
       const enrollmentsRef = collection(db, 'enrollments');
       const enrollmentsQuery1 = query(
         enrollmentsRef,
-        where('userId', '==', currentUser.uid),
-        where('status', '==', 'active')
+        where('userId', '==', currentUser.uid)
       );
       const enrollmentsQuery2 = query(
         enrollmentsRef,
         where('studentId', '==', currentUser.uid)
       );
       
+      console.log('🔍 Querying enrollments for userId:', currentUser.uid);
+      
       const [snapshot1, snapshot2] = await Promise.all([
         getDocs(enrollmentsQuery1),
         getDocs(enrollmentsQuery2)
       ]);
       
-      // Combine and deduplicate course IDs
-      const enrolledCourseIdsSet = new Set([
-        ...snapshot1.docs.map(doc => doc.data().courseId),
-        ...snapshot2.docs.map(doc => doc.data().courseId)
-      ]);
+      console.log('📊 Query 1 (userId) results:', snapshot1.size);
+      console.log('📊 Query 2 (studentId) results:', snapshot2.size);
+      
+      // Log all enrollment documents
+      [...snapshot1.docs, ...snapshot2.docs].forEach(doc => {
+        console.log('📄 Enrollment:', doc.id, doc.data());
+      });
+      
+      // Combine and deduplicate course IDs, filter out inactive enrollments
+      const enrolledCourseIdsSet = new Set();
+      [...snapshot1.docs, ...snapshot2.docs].forEach(doc => {
+        const data = doc.data();
+        console.log('🔍 Checking enrollment:', data.courseId, 'status:', data.status);
+        // Include if status is 'active', 'completed', or no status field (default to active)
+        if (!data.status || data.status === 'active' || data.status === 'completed') {
+          enrolledCourseIdsSet.add(data.courseId);
+          console.log('✅ Added course ID:', data.courseId);
+        }
+      });
       const enrolledCourseIds = Array.from(enrolledCourseIdsSet);
+      
+      console.log('✅ Final enrolled course IDs:', enrolledCourseIds);
 
       const enrolled = allCourses.filter(course => enrolledCourseIds.includes(course.id));
       const available = allCourses.filter(course => !enrolledCourseIds.includes(course.id));
+
+      console.log('📚 All courses:', allCourses.length);
+      console.log('✅ Enrolled courses:', enrolled.length, enrolled.map(c => c.title));
+      console.log('📖 Available courses:', available.length);
 
       setEnrolledCourses(enrolled);
       setAvailableCourses(available);

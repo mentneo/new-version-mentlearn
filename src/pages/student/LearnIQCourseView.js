@@ -18,6 +18,7 @@ export default function LearnIQCourseView() {
   const [instructor, setInstructor] = useState(null);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('content'); // content, discussion, resources
+  const [isEnrolled, setIsEnrolled] = useState(false);
   
   useEffect(() => {
     const fetchCourseData = async () => {
@@ -26,6 +27,36 @@ export default function LearnIQCourseView() {
       try {
         setLoading(true);
         console.log("Fetching course data for courseId:", courseId);
+        
+        // First, verify enrollment - check both studentId and userId fields
+        const enrollmentQuery1 = query(
+          collection(db, "enrollments"),
+          where("studentId", "==", currentUser.uid),
+          where("courseId", "==", courseId)
+        );
+        const enrollmentQuery2 = query(
+          collection(db, "enrollments"),
+          where("userId", "==", currentUser.uid),
+          where("courseId", "==", courseId)
+        );
+        
+        const [enrollmentSnapshot1, enrollmentSnapshot2] = await Promise.all([
+          getDocs(enrollmentQuery1),
+          getDocs(enrollmentQuery2)
+        ]);
+        
+        const enrollmentExists = !enrollmentSnapshot1.empty || !enrollmentSnapshot2.empty;
+        
+        if (!enrollmentExists) {
+          console.error("User not enrolled in this course");
+          setError("You are not enrolled in this course. Please enroll first to access the content.");
+          setIsEnrolled(false);
+          setLoading(false);
+          return;
+        }
+        
+        setIsEnrolled(true);
+        console.log("✅ User is enrolled in this course");
         
         // Fetch course data
         const courseDoc = await getDoc(doc(db, "courses", courseId));
@@ -317,16 +348,37 @@ export default function LearnIQCourseView() {
           <div className="ml-3">
             <h3 className="text-sm font-medium text-red-800">{error}</h3>
             <div className="mt-2 text-sm text-red-700">
-              <p>Please try again later or contact support.</p>
+              {!isEnrolled ? (
+                <p>You need to enroll in this course to access its content.</p>
+              ) : (
+                <p>Please try again later or contact support.</p>
+              )}
             </div>
             <div className="mt-4">
-              <div className="-mx-2 -my-1.5 flex">
-                <Link
-                  to="/student/courses"
-                  className="px-2 py-1.5 rounded-md text-sm font-medium text-red-800 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                >
-                  Back to My Courses
-                </Link>
+              <div className="-mx-2 -my-1.5 flex space-x-2">
+                {!isEnrolled ? (
+                  <>
+                    <Link
+                      to="/student/our-courses"
+                      className="px-3 py-2 rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                      Browse Courses
+                    </Link>
+                    <Link
+                      to="/student/student-dashboard"
+                      className="px-3 py-2 rounded-md text-sm font-medium text-red-800 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                    >
+                      Back to Dashboard
+                    </Link>
+                  </>
+                ) : (
+                  <Link
+                    to="/student/courses"
+                    className="px-2 py-1.5 rounded-md text-sm font-medium text-red-800 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  >
+                    Back to My Courses
+                  </Link>
+                )}
               </div>
             </div>
           </div>
@@ -669,7 +721,11 @@ export default function LearnIQCourseView() {
               <div className="px-6 py-4 flex justify-between items-center">
                 <span className="text-sm text-gray-500">Last Updated</span>
                 <span className="text-sm font-medium text-gray-900">
-                  {course.updatedAt ? new Date(course.updatedAt.toDate()).toLocaleDateString() : "N/A"}
+                  {course.updatedAt ? (
+                    typeof course.updatedAt === 'object' && course.updatedAt.toDate 
+                      ? new Date(course.updatedAt.toDate()).toLocaleDateString()
+                      : new Date(course.updatedAt).toLocaleDateString()
+                  ) : "N/A"}
                 </span>
               </div>
               <div className="px-6 py-4 flex justify-between items-center">

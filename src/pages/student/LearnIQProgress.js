@@ -34,15 +34,34 @@ export default function LearnIQProgress() {
     const fetchStudentProgress = async () => {
       try {
         setLoading(true);
+        console.log('📊 Fetching progress for user:', currentUser.uid);
         
-        // Fetch enrolled courses
-        const coursesQuery = query(
+        // Fetch enrolled courses - check both userId and studentId
+        const coursesQuery1 = query(
           collection(db, 'enrollments'),
           where('studentId', '==', currentUser.uid)
         );
+        const coursesQuery2 = query(
+          collection(db, 'enrollments'),
+          where('userId', '==', currentUser.uid)
+        );
         
-        const coursesSnapshot = await getDocs(coursesQuery);
-        const enrollments = coursesSnapshot.docs.map(doc => doc.data());
+        const [snapshot1, snapshot2] = await Promise.all([
+          getDocs(coursesQuery1),
+          getDocs(coursesQuery2)
+        ]);
+        
+        // Combine and deduplicate enrollments
+        const enrollmentsMap = new Map();
+        [...snapshot1.docs, ...snapshot2.docs].forEach(doc => {
+          const data = doc.data();
+          if (!data.status || data.status === 'active' || data.status === 'completed') {
+            enrollmentsMap.set(doc.id, data);
+          }
+        });
+        const enrollments = Array.from(enrollmentsMap.values());
+        
+        console.log('📚 Found enrollments:', enrollments.length);
         
         // Extract course IDs and create map for quick lookup
         const courseIds = enrollments.map(enrollment => enrollment.courseId);
@@ -55,39 +74,90 @@ export default function LearnIQProgress() {
         const completedCourses = enrollments.filter(e => e.status === 'completed').length;
         const inProgressCourses = enrollments.filter(e => e.status === 'in-progress').length;
         
-        // Fetch progress data (lessons completed)
-        const progressQuery = query(
-          collection(db, 'lessonProgress'),
-          where('studentId', '==', currentUser.uid)
-        );
-        
-        const progressSnapshot = await getDocs(progressQuery);
-        const lessonProgress = progressSnapshot.docs.map(doc => doc.data());
+        // Fetch progress data (lessons completed) - check both userId and studentId
+        let lessonProgress = [];
+        try {
+          const progressQuery1 = query(
+            collection(db, 'completedLessons'),
+            where('studentId', '==', currentUser.uid)
+          );
+          const progressQuery2 = query(
+            collection(db, 'completedLessons'),
+            where('userId', '==', currentUser.uid)
+          );
+          
+          const [progSnapshot1, progSnapshot2] = await Promise.all([
+            getDocs(progressQuery1).catch(() => ({ docs: [] })),
+            getDocs(progressQuery2).catch(() => ({ docs: [] }))
+          ]);
+          
+          const progressMap = new Map();
+          [...progSnapshot1.docs, ...progSnapshot2.docs].forEach(doc => {
+            progressMap.set(doc.id, doc.data());
+          });
+          lessonProgress = Array.from(progressMap.values());
+          console.log('📖 Found lesson progress:', lessonProgress.length);
+        } catch (err) {
+          console.warn('⚠️ No completedLessons collection or error:', err.message);
+        }
         
         // Count total and completed lessons
         const totalLessons = lessonProgress.length;
-        const completedLessons = lessonProgress.filter(p => p.completed).length;
+        const completedLessons = lessonProgress.filter(p => p.completed || p.isCompleted).length;
         
-        // Fetch certificates
-        const certificatesQuery = query(
-          collection(db, 'certificates'),
-          where('studentId', '==', currentUser.uid)
-        );
+        // Fetch certificates - check both userId and studentId
+        let certificatesCount = 0;
+        try {
+          const certificatesQuery1 = query(
+            collection(db, 'certificates'),
+            where('studentId', '==', currentUser.uid)
+          );
+          const certificatesQuery2 = query(
+            collection(db, 'certificates'),
+            where('userId', '==', currentUser.uid)
+          );
+          
+          const [certSnapshot1, certSnapshot2] = await Promise.all([
+            getDocs(certificatesQuery1).catch(() => ({ docs: [] })),
+            getDocs(certificatesQuery2).catch(() => ({ docs: [] }))
+          ]);
+          
+          const certsSet = new Set([...certSnapshot1.docs.map(d => d.id), ...certSnapshot2.docs.map(d => d.id)]);
+          certificatesCount = certsSet.size;
+          console.log('🏆 Found certificates:', certificatesCount);
+        } catch (err) {
+          console.warn('⚠️ No certificates collection or error:', err.message);
+        }
         
-        const certificatesSnapshot = await getDocs(certificatesQuery);
-        const certificatesCount = certificatesSnapshot.docs.length;
+        // Fetch assignments - check multiple field names
+        let assignments = [];
+        try {
+          const assignmentsQuery1 = query(
+            collection(db, 'studentAssignments'),
+            where('studentId', '==', currentUser.uid)
+          );
+          const assignmentsQuery2 = query(
+            collection(db, 'assignments'),
+            where('studentIds', 'array-contains', currentUser.uid)
+          );
+          
+          const [assignSnapshot1, assignSnapshot2] = await Promise.all([
+            getDocs(assignmentsQuery1).catch(() => ({ docs: [] })),
+            getDocs(assignmentsQuery2).catch(() => ({ docs: [] }))
+          ]);
+          
+          const assignmentsMap = new Map();
+          [...assignSnapshot1.docs, ...assignSnapshot2.docs].forEach(doc => {
+            assignmentsMap.set(doc.id, doc.data());
+          });
+          assignments = Array.from(assignmentsMap.values());
+          console.log('📝 Found assignments:', assignments.length);
+        } catch (err) {
+          console.warn('⚠️ No assignments collection or error:', err.message);
+        }
         
-        // Fetch assignments
-        const assignmentsQuery = query(
-          collection(db, 'assignments'),
-          where('assignedToStudentId', '==', currentUser.uid)
-        );
-        
-        const assignmentsSnapshot = await getDocs(assignmentsQuery);
-        const assignments = assignmentsSnapshot.docs.map(doc => doc.data());
-        
-        const completedAssignments = assignments.filter(a => a.status === 'completed').length;
-        const pendingAssignments = assignments.filter(a => a.status === 'pending').length;
+        const completedAssignments = assignments.filter(a => a.status === 'completed' || a.status === 'submitted').length;
+        const pendingAssignments = assignments.filter(a => a.status === 'pending' || a.status === 'assigned' || !a.status).length;
         
         // Fetch study time logs
         const timeframeDate = new Date();
@@ -99,15 +169,36 @@ export default function LearnIQProgress() {
           timeframeDate.setFullYear(timeframeDate.getFullYear() - 1);
         }
         
-        const studyTimeQuery = query(
-          collection(db, 'studyTime'),
-          where('studentId', '==', currentUser.uid),
-          where('timestamp', '>=', timeframeDate),
-          orderBy('timestamp', 'desc')
-        );
-        
-        const studyTimeSnapshot = await getDocs(studyTimeQuery);
-        const studyTimeLogs = studyTimeSnapshot.docs.map(doc => doc.data());
+        // Fetch study time logs - handle gracefully if collection doesn't exist
+        let studyTimeLogs = [];
+        try {
+          const studyTimeQuery1 = query(
+            collection(db, 'studyTime'),
+            where('studentId', '==', currentUser.uid),
+            where('timestamp', '>=', timeframeDate),
+            orderBy('timestamp', 'desc')
+          );
+          const studyTimeQuery2 = query(
+            collection(db, 'studyTime'),
+            where('userId', '==', currentUser.uid),
+            where('timestamp', '>=', timeframeDate),
+            orderBy('timestamp', 'desc')
+          );
+          
+          const [timeSnapshot1, timeSnapshot2] = await Promise.all([
+            getDocs(studyTimeQuery1).catch(() => ({ docs: [] })),
+            getDocs(studyTimeQuery2).catch(() => ({ docs: [] }))
+          ]);
+          
+          const timeMap = new Map();
+          [...timeSnapshot1.docs, ...timeSnapshot2.docs].forEach(doc => {
+            timeMap.set(doc.id, doc.data());
+          });
+          studyTimeLogs = Array.from(timeMap.values());
+          console.log('⏱️ Found study time logs:', studyTimeLogs.length);
+        } catch (err) {
+          console.warn('⚠️ No studyTime collection or error:', err.message);
+        }
         
         // Calculate total study time
         const totalStudyTime = studyTimeLogs.reduce((total, log) => total + (log.duration || 0), 0);
@@ -137,14 +228,32 @@ export default function LearnIQProgress() {
           });
         }
         
-        // Fetch quiz results
-        const quizResultsQuery = query(
-          collection(db, 'quizResults'),
-          where('studentId', '==', currentUser.uid)
-        );
-        
-        const quizResultsSnapshot = await getDocs(quizResultsQuery);
-        const quizResults = quizResultsSnapshot.docs.map(doc => doc.data());
+        // Fetch quiz results - check both userId and studentId
+        let quizResults = [];
+        try {
+          const quizResultsQuery1 = query(
+            collection(db, 'quizResults'),
+            where('studentId', '==', currentUser.uid)
+          );
+          const quizResultsQuery2 = query(
+            collection(db, 'quizResults'),
+            where('userId', '==', currentUser.uid)
+          );
+          
+          const [quizSnapshot1, quizSnapshot2] = await Promise.all([
+            getDocs(quizResultsQuery1).catch(() => ({ docs: [] })),
+            getDocs(quizResultsQuery2).catch(() => ({ docs: [] }))
+          ]);
+          
+          const quizMap = new Map();
+          [...quizSnapshot1.docs, ...quizSnapshot2.docs].forEach(doc => {
+            quizMap.set(doc.id, doc.data());
+          });
+          quizResults = Array.from(quizMap.values());
+          console.log('📝 Found quiz results:', quizResults.length);
+        } catch (err) {
+          console.warn('⚠️ No quizResults collection or error:', err.message);
+        }
         
         // Calculate average score
         const totalScore = quizResults.reduce((total, result) => total + (result.score || 0), 0);
@@ -195,8 +304,9 @@ export default function LearnIQProgress() {
         
         setLoading(false);
       } catch (error) {
-        console.error("Error fetching progress data:", error);
-        setError("Failed to load your progress data. Please try again later.");
+        console.error("❌ Error fetching progress data:", error);
+        console.error("Error details:", error.message, error.code);
+        setError(`Failed to load progress data: ${error.message}`);
         setLoading(false);
       }
     };
