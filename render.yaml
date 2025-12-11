@@ -4,8 +4,8 @@ services:
     env: node
     region: oregon
     plan: free
-    buildCommand: echo "Dependencies will be installed by start script"
-    startCommand: ./start-backend.sh
+    buildCommand: cd backend && npm ci --production
+    startCommand: cd backend && node server.js
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV

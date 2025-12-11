@@ -20,23 +20,18 @@ fi
 echo "✅ In backend directory"
 pwd
 
-# ALWAYS install dependencies (don't rely on build command)
-echo "📦 Installing dependencies with npm install..."
-npm install || exit 1
+# Install dependencies with npm ci (faster and more reliable for CI/CD)
+echo "📦 Installing dependencies with npm ci..."
+if [ -f "package-lock.json" ]; then
+    npm ci --production --silent || npm install --production --silent
+else
+    npm install --production --silent
+fi
 echo "✅ Dependencies installed"
 
 # Verify critical modules exist
 echo "🔍 Verifying installed modules..."
-if [ -d "node_modules/helmet" ]; then
-    echo "  ✅ helmet found"
-else
-    echo "  ❌ helmet MISSING!"
-fi
-if [ -d "node_modules/express" ]; then
-    echo "  ✅ express found"
-else
-    echo "  ❌ express MISSING!"
-fi
+ls -la node_modules/ | head -20
 
 echo "🚀 Starting backend server..."
-node server.js
+exec node server.js
