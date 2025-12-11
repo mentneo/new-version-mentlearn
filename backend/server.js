@@ -18,9 +18,22 @@ const MAX_HEADER_BYTES = parseInt(process.env.MAX_HEADER_BYTES || String(16 * 10
 const JSON_LIMIT = process.env.JSON_LIMIT || '10mb'; // body size limit
 
 // === Firebase Admin init (env fallback to file) ===
+console.log('🔍 Initializing Firebase...');
+console.log('Environment check:', {
+  hasFirebaseJSON: !!process.env.FIREBASE_SERVICE_ACCOUNT_JSON,
+  hasFirebasePath: !!process.env.FIREBASE_CREDENTIALS_PATH,
+  nodeEnv: process.env.NODE_ENV,
+  port: process.env.PORT
+});
+
 let serviceAccount = null;
 if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
-  try { serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON); } catch(e) { console.warn('Invalid FIREBASE_SERVICE_ACCOUNT_JSON'); }
+  try { 
+    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+    console.log('✅ Firebase credentials loaded from environment variable');
+  } catch(e) { 
+    console.error('❌ Failed to parse FIREBASE_SERVICE_ACCOUNT_JSON:', e.message);
+  }
 }
 if (!serviceAccount && process.env.FIREBASE_CREDENTIALS_PATH) {
   const credPath = process.env.FIREBASE_CREDENTIALS_PATH;
@@ -34,13 +47,23 @@ if (!serviceAccount) {
   const localPath = __dirname + '/firebase-service-account.json';
   if (fs.existsSync(localPath)) {
     serviceAccount = JSON.parse(fs.readFileSync(localPath, 'utf8'));
+    console.log('✅ Firebase credentials loaded from local file');
   }
 }
 if (!serviceAccount) {
-  console.error('❌ Missing Firebase service account. Set FIREBASE_SERVICE_ACCOUNT_JSON or FIREBASE_CREDENTIALS_PATH in .env');
+  console.error('❌ CRITICAL: Missing Firebase service account!');
+  console.error('Set FIREBASE_SERVICE_ACCOUNT_JSON environment variable in Render dashboard');
+  console.error('It should be the ENTIRE JSON from backend/.env file');
   process.exit(1);
 }
-admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+
+try {
+  admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+  console.log('✅ Firebase initialized successfully');
+} catch (error) {
+  console.error('❌ Firebase initialization failed:', error.message);
+  process.exit(1);
+}
 
 // Firestore Database
 const db = admin.firestore();
@@ -151,14 +174,31 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500).json({ error: err.message || 'Server error' });
 });
 
+console.log(`🚀 Starting server on port ${PORT}...`);
+
 // Start HTTP server (pass maxHeaderSize when supported)
 let server;
 try {
   server = http.createServer({ maxHeaderSize: MAX_HEADER_BYTES }, app);
 } catch (e) {
+  console.warn('⚠️ Creating server without maxHeaderSize option');
   server = http.createServer(app);
 }
-server.listen(PORT, '0.0.0.0', () => console.log(`✅ Server listening on 0.0.0.0:${PORT} (maxHeaderSize=${MAX_HEADER_BYTES})`));
+
+server.on('error', (error) => {
+  console.error('❌ Server error:', error.message);
+  if (error.code === 'EADDRINUSE') {
+    console.error(`Port ${PORT} is already in use`);
+  }
+  process.exit(1);
+});
+
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`✅ Server listening on 0.0.0.0:${PORT} (maxHeaderSize=${MAX_HEADER_BYTES})`);
+  console.log(`✅ Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`✅ CORS origins: ${FRONTEND_ORIGINS.join(', ')}`);
+  console.log('✅ Server is ready to accept connections');
+});
 
 // WebSocket server at /ws
 const wss = new WebSocketServer({ server, path: '/ws' });
