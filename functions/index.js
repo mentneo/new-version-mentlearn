@@ -1,9 +1,72 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+
+// Initialize Firebase Admin
+admin.initializeApp();
+
+// Import your backend routes
+const razorpayRoutes = require('../backend/routes/razorpayRoutes');
+
+// Create Express app
+const app = express();
+
+// Middleware
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false,
+}));
+
+const FRONTEND_ORIGINS = [
+  'http://localhost:3000',
+  'https://new-version-mentlearn.vercel.app',
+  'https://www.mentlearn.in',
+  'https://mentlearn.in'
+];
+
+app.use(cors({
+  origin: function(origin, cb) {
+    if (!origin || FRONTEND_ORIGINS.includes(origin)) {
+      return cb(null, true);
+    }
+    return cb(null, false);
+  },
+  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+  credentials: true
+}));
+
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
+
+// Health check endpoints
+app.get('/_health', (req, res) => res.json({ ok: true, uptime: process.uptime() }));
+app.get('/api/health', (req, res) => res.json({ 
+  status: 'ok',
+  timestamp: new Date().toISOString(),
+  environment: 'production',
+  firebase: 'connected'
+}));
+
+// Mount routes
+app.use('/api/razorpay', razorpayRoutes);
+
+// 404 handler
+app.use((req, res) => res.status(404).json({ error: 'Not found' }));
+
+// Error handler
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  res.status(err.status || 500).json({ error: err.message || 'Server error' });
+});
+
+// Export Express app as Firebase Function
+exports.api = functions.https.onRequest(app);
+
+// Keep existing Firebase Functions below
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
-
-admin.initializeApp();
 
 // Initialize Razorpay with keys from environment variables
 const razorpay = new Razorpay({
