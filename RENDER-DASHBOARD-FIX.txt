@@ -1,0 +1,58 @@
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  🔧 RENDER DASHBOARD SETTINGS - MANUAL CONFIGURATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️  Go to: https://dashboard.render.com/
+⚠️  Click on your service → Settings
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  BUILD & DEPLOY SECTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Root Directory: 
+(LEAVE THIS EMPTY - we handle it in the script)
+
+Build Command:
+cd backend && npm install
+
+Start Command:
+./start-backend.sh
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  IMPORTANT NOTES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The new start-backend.sh script will:
+✅ Automatically detect which directory it's in
+✅ Navigate to backend/ if needed
+✅ Install dependencies if missing
+✅ Start the Node.js server (NOT React!)
+
+This bypasses all the Root Directory issues!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  AFTER CHANGING SETTINGS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Click "Save Changes"
+2. Go to "Manual Deploy" 
+3. Select "Clear build cache & deploy"
+4. Wait for deployment
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  EXPECTED LOGS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ CORRECT:
+==> Running './start-backend.sh'
+🔍 Checking current directory...
+📁 Not in backend directory, navigating to backend...
+✅ In backend directory
+🚀 Starting backend server...
+Server running on port 10000
+
+❌ WRONG:
+> react-scripts start
+(If you see this, the Start Command is still wrong)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
