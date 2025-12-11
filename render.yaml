@@ -4,8 +4,9 @@ services:
     env: node
     region: oregon
     plan: free
-    buildCommand: cd backend && npm ci --production
-    startCommand: cd backend && node server.js
+    rootDir: backend
+    buildCommand: npm ci --production
+    startCommand: node server.js
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
