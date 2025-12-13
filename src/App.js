@@ -56,6 +56,7 @@ import ManageStudents from './pages/admin/ManageStudents';
 import ManageMentors from './pages/admin/ManageMentors';
 import ManageEnrollments from './pages/admin/ManageEnrollments';
 import VerifyPayments from './pages/admin/VerifyPayments';
+import Payments from './pages/admin/Payments';
 import DataAnalystDashboard from './pages/admin/DataAnalystDashboard';
 
 // Student pages - Modern LearnIQ Templates Only
@@ -245,7 +246,7 @@ function App() {
                 <Route path="mentors" element={<ManageMentors />} />
                 <Route path="creators" element={<ManageCreators />} />
                 <Route path="enrollments" element={<ManageEnrollments />} />
-                <Route path="payments" element={<VerifyPayments />} />
+                <Route path="payments" element={<Payments />} />
                 <Route path="verify-payments" element={<VerifyPayments />} />
                 <Route path="reports" element={<NewDashboard />} />
                 <Route path="settings" element={<NewDashboard />} />
