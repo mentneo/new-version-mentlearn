@@ -56,8 +56,7 @@ export default function SideNav() {
     { path: '/creator/courses', icon: <FaBook />, label: 'My Courses' },
     { path: '/creator/enrollments', icon: <FaUserGraduate />, label: 'Enrollments' },
     { path: '/creator/assignment-submissions', icon: <FaClipboardCheck />, label: 'Assignment Submissions' },
-    { path: '/creator/profile', icon: <FaUser />, label: 'Profile' },
-    { path: '/creator/new-profile', icon: <FaUser />, label: 'New Profile' }
+    { path: '/creator/profile', icon: <FaUser />, label: 'Profile' }
   ];
 
   return (
