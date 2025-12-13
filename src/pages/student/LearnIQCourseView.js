@@ -708,6 +708,31 @@ export default function LearnIQCourseView() {
             </div>
           )}
           
+          {/* Course Curriculum Download */}
+          {course.curriculumUrl && (
+            <div className="bg-white shadow rounded-2xl overflow-hidden mb-6">
+              <div className="px-6 py-4 border-b border-gray-100">
+                <h2 className="text-xl font-bold text-gray-900">Course Curriculum</h2>
+              </div>
+              <div className="p-6">
+                <p className="text-sm text-gray-600 mb-4">
+                  Download the complete course curriculum to understand the course structure and learning path.
+                </p>
+                <a
+                  href={course.curriculumUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  <svg className="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Download Curriculum PDF
+                </a>
+              </div>
+            </div>
+          )}
+
           {/* Course details */}
           <div className="bg-white shadow rounded-2xl overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100">
@@ -756,12 +781,128 @@ export default function LearnIQCourseView() {
       {activeTab === 'resources' && (
         <div className="max-w-4xl mx-auto px-4 py-6">
           <div className="bg-white rounded-xl shadow-sm p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Course Resources</h2>
-            <div className="text-center py-12">
-              <FiDownload size={48} className="mx-auto text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No resources yet</h3>
-              <p className="text-gray-600">Course materials and downloadable resources will appear here.</p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Course Resources</h2>
+            
+            {/* Assignments Section */}
+            <div className="mb-8">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <FiFileText className="mr-2 text-blue-600" size={20} />
+                Assignments
+              </h3>
+              
+              {course?.assignments && course.assignments.length > 0 ? (
+                <div className="space-y-3">
+                  {course.assignments.map((assignment) => (
+                    <motion.div
+                      key={assignment.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 hover:border-blue-300 transition-all"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-900 mb-1">{assignment.title}</h4>
+                          {assignment.description && (
+                            <p className="text-sm text-gray-600 mb-2">{assignment.description}</p>
+                          )}
+                          <div className="flex items-center text-xs text-gray-500">
+                            <FiFileText className="mr-1" size={12} />
+                            {assignment.fileName}
+                            {assignment.createdAt && (
+                              <span className="ml-4">
+                                Added: {new Date(assignment.createdAt).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <a
+                          href={assignment.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ml-4 inline-flex items-center px-3 py-2 border border-blue-600 text-sm font-medium rounded-lg text-blue-600 bg-white hover:bg-blue-50 transition-colors"
+                        >
+                          <FiDownload className="mr-2" size={14} />
+                          Download
+                        </a>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 bg-gray-50 rounded-lg">
+                  <FiFileText size={40} className="mx-auto text-gray-400 mb-3" />
+                  <p className="text-sm text-gray-600">No assignments available yet</p>
+                </div>
+              )}
             </div>
+
+            {/* Resources Section */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <FiBook className="mr-2 text-green-600" size={20} />
+                Study Materials
+              </h3>
+              
+              {course?.resources && course.resources.length > 0 ? (
+                <div className="space-y-3">
+                  {course.resources.map((resource) => (
+                    <motion.div
+                      key={resource.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 hover:border-green-300 transition-all"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-900 mb-1">{resource.title}</h4>
+                          {resource.description && (
+                            <p className="text-sm text-gray-600 mb-2">{resource.description}</p>
+                          )}
+                          <div className="flex items-center text-xs text-gray-500">
+                            <FiBook className="mr-1" size={12} />
+                            {resource.fileName}
+                            {resource.fileType && (
+                              <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-800 rounded">
+                                {resource.fileType.split('/')[1]?.toUpperCase() || 'FILE'}
+                              </span>
+                            )}
+                            {resource.createdAt && (
+                              <span className="ml-4">
+                                Added: {new Date(resource.createdAt).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <a
+                          href={resource.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ml-4 inline-flex items-center px-3 py-2 border border-green-600 text-sm font-medium rounded-lg text-green-600 bg-white hover:bg-green-50 transition-colors"
+                        >
+                          <FiExternalLink className="mr-2" size={14} />
+                          Open
+                        </a>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 bg-gray-50 rounded-lg">
+                  <FiBook size={40} className="mx-auto text-gray-400 mb-3" />
+                  <p className="text-sm text-gray-600">No study materials available yet</p>
+                </div>
+              )}
+            </div>
+
+            {/* Info Message */}
+            {(!course?.assignments || course.assignments.length === 0) && 
+             (!course?.resources || course.resources.length === 0) && (
+              <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-800">
+                  <strong>Note:</strong> Your instructor will add assignments and study materials here as the course progresses. Check back regularly for updates.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}

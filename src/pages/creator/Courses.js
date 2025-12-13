@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { collection, query, where, getDocs, addDoc, doc, updateDoc, deleteDoc, getFirestore } from 'firebase/firestore';
+import { cloudinaryConfig } from '../../firebase/firebase.js';
 import { useAuth } from '../../contexts/AuthContext.js';
 import { Formik, Field, ErrorMessage, FieldArray } from 'formik';
 import * as Yup from 'yup';
-import { FaPlus, FaEdit, FaTrash, FaUpload } from 'react-icons/fa/index.esm.js';
+import { FaPlus, FaEdit, FaTrash, FaUpload, FaFileAlt, FaBook, FaTasks } from 'react-icons/fa/index.esm.js';
 
 const CourseSchema = Yup.object().shape({
   title: Yup.string().required('Title is required'),
@@ -31,6 +32,20 @@ export default function CreatorCourses() {
   const [editingCourse, setEditingCourse] = useState(null);
 
   const [thumbnailPreview, setThumbnailPreview] = useState('');
+  const [curriculumFile, setCurriculumFile] = useState(null);
+  const [curriculumPreview, setCurriculumPreview] = useState('');
+  
+  // Assignments and Resources states
+  const [showResourcesModal, setShowResourcesModal] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [assignmentFile, setAssignmentFile] = useState(null);
+  const [assignmentTitle, setAssignmentTitle] = useState('');
+  const [assignmentDescription, setAssignmentDescription] = useState('');
+  const [resourceFile, setResourceFile] = useState(null);
+  const [resourceTitle, setResourceTitle] = useState('');
+  const [resourceDescription, setResourceDescription] = useState('');
+  const [uploadingAssignment, setUploadingAssignment] = useState(false);
+  const [uploadingResource, setUploadingResource] = useState(false);
 
   const { currentUser } = useAuth();
   const db = getFirestore();
@@ -90,6 +105,238 @@ export default function CreatorCourses() {
     }
   };
 
+  const handleCurriculumChange = (e) => {
+    const file = e.target.files[0];
+    if (file && file.type === 'application/pdf') {
+      setCurriculumFile(file);
+      setCurriculumPreview(file.name);
+    } else if (file) {
+      setError('Please upload a PDF file for curriculum');
+    }
+  };
+
+  const uploadCurriculumToCloudinary = async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', cloudinaryConfig.uploadPreset);
+    formData.append('resource_type', 'raw');
+
+    try {
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/raw/upload`,
+        {
+          method: 'POST',
+          body: formData
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Cloudinary curriculum upload error:', errorData);
+        throw new Error(errorData.error?.message || 'Curriculum upload failed');
+      }
+
+      const data = await response.json();
+      return data.secure_url;
+    } catch (error) {
+      console.error('Error uploading curriculum:', error);
+      throw error;
+    }
+  };
+
+  const uploadFileToCloudinary = async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', cloudinaryConfig.uploadPreset);
+
+    try {
+      // Determine resource type based on file type
+      const resourceType = file.type.startsWith('image/') ? 'image' : 'raw';
+      
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/${resourceType}/upload`,
+        {
+          method: 'POST',
+          body: formData
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Cloudinary error:', errorData);
+        throw new Error(errorData.error?.message || 'File upload failed');
+      }
+
+      const data = await response.json();
+      console.log('File uploaded successfully:', data.secure_url);
+      return data.secure_url;
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      throw error;
+    }
+  };
+
+  const handleAddAssignment = async () => {
+    if (!assignmentFile || !assignmentTitle || !selectedCourse) {
+      setError('Please fill in all assignment fields and select a file');
+      return;
+    }
+
+    try {
+      setUploadingAssignment(true);
+      setError('');
+
+      // Upload assignment file
+      const assignmentUrl = await uploadFileToCloudinary(assignmentFile);
+
+      // Create assignment object
+      const assignment = {
+        id: `assignment_${Date.now()}`,
+        title: assignmentTitle,
+        description: assignmentDescription,
+        fileUrl: assignmentUrl,
+        fileName: assignmentFile.name,
+        createdAt: new Date().toISOString(),
+        createdBy: currentUser.uid
+      };
+
+      // Get current course assignments
+      const courseRef = doc(db, 'courses', selectedCourse.id);
+      const currentAssignments = selectedCourse.assignments || [];
+      
+      // Update course with new assignment
+      await updateDoc(courseRef, {
+        assignments: [...currentAssignments, assignment],
+        updatedAt: new Date().toISOString()
+      });
+
+      // Update local state
+      setCourses(courses.map(c => 
+        c.id === selectedCourse.id 
+          ? { ...c, assignments: [...currentAssignments, assignment] }
+          : c
+      ));
+
+      setSuccess('Assignment added successfully!');
+      setAssignmentFile(null);
+      setAssignmentTitle('');
+      setAssignmentDescription('');
+      
+    } catch (err) {
+      console.error('Error adding assignment:', err);
+      setError('Failed to add assignment: ' + err.message);
+    } finally {
+      setUploadingAssignment(false);
+    }
+  };
+
+  const handleAddResource = async () => {
+    if (!resourceFile || !resourceTitle || !selectedCourse) {
+      setError('Please fill in all resource fields and select a file');
+      return;
+    }
+
+    try {
+      setUploadingResource(true);
+      setError('');
+
+      // Upload resource file
+      const resourceUrl = await uploadFileToCloudinary(resourceFile);
+
+      // Create resource object
+      const resource = {
+        id: `resource_${Date.now()}`,
+        title: resourceTitle,
+        description: resourceDescription,
+        fileUrl: resourceUrl,
+        fileName: resourceFile.name,
+        fileType: resourceFile.type,
+        createdAt: new Date().toISOString(),
+        createdBy: currentUser.uid
+      };
+
+      // Get current course resources
+      const courseRef = doc(db, 'courses', selectedCourse.id);
+      const currentResources = selectedCourse.resources || [];
+      
+      // Update course with new resource
+      await updateDoc(courseRef, {
+        resources: [...currentResources, resource],
+        updatedAt: new Date().toISOString()
+      });
+
+      // Update local state
+      setCourses(courses.map(c => 
+        c.id === selectedCourse.id 
+          ? { ...c, resources: [...currentResources, resource] }
+          : c
+      ));
+
+      setSuccess('Resource added successfully!');
+      setResourceFile(null);
+      setResourceTitle('');
+      setResourceDescription('');
+      
+    } catch (err) {
+      console.error('Error adding resource:', err);
+      setError('Failed to add resource: ' + err.message);
+    } finally {
+      setUploadingResource(false);
+    }
+  };
+
+  const handleDeleteAssignment = async (assignmentId) => {
+    if (!window.confirm('Are you sure you want to delete this assignment?')) return;
+
+    try {
+      const courseRef = doc(db, 'courses', selectedCourse.id);
+      const updatedAssignments = selectedCourse.assignments.filter(a => a.id !== assignmentId);
+      
+      await updateDoc(courseRef, {
+        assignments: updatedAssignments,
+        updatedAt: new Date().toISOString()
+      });
+
+      setCourses(courses.map(c => 
+        c.id === selectedCourse.id 
+          ? { ...c, assignments: updatedAssignments }
+          : c
+      ));
+
+      setSelectedCourse({ ...selectedCourse, assignments: updatedAssignments });
+      setSuccess('Assignment deleted successfully!');
+    } catch (err) {
+      console.error('Error deleting assignment:', err);
+      setError('Failed to delete assignment');
+    }
+  };
+
+  const handleDeleteResource = async (resourceId) => {
+    if (!window.confirm('Are you sure you want to delete this resource?')) return;
+
+    try {
+      const courseRef = doc(db, 'courses', selectedCourse.id);
+      const updatedResources = selectedCourse.resources.filter(r => r.id !== resourceId);
+      
+      await updateDoc(courseRef, {
+        resources: updatedResources,
+        updatedAt: new Date().toISOString()
+      });
+
+      setCourses(courses.map(c => 
+        c.id === selectedCourse.id 
+          ? { ...c, resources: updatedResources }
+          : c
+      ));
+
+      setSelectedCourse({ ...selectedCourse, resources: updatedResources });
+      setSuccess('Resource deleted successfully!');
+    } catch (err) {
+      console.error('Error deleting resource:', err);
+      setError('Failed to delete resource');
+    }
+  };
+
   const handleAddCourse = async (values, { setSubmitting, resetForm }) => {
     console.log('🚀 Course creation started');
     console.log('Current user:', currentUser);
@@ -106,10 +353,24 @@ export default function CreatorCourses() {
 
     try {
       console.log('📝 Preparing course data...');
+      
+      // Upload curriculum if available
+      let curriculumUrl = '';
+      if (curriculumFile) {
+        try {
+          console.log('Uploading curriculum PDF...');
+          curriculumUrl = await uploadCurriculumToCloudinary(curriculumFile);
+          console.log('Curriculum uploaded:', curriculumUrl);
+        } catch (uploadError) {
+          console.error('Curriculum upload failed:', uploadError);
+        }
+      }
+      
       const courseData = {
         ...values,
         creatorId: currentUser.uid,
         thumbnailUrl: thumbnailPreview, // In production, upload to storage and use the URL
+        curriculumUrl: curriculumUrl || '',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         enrollments: 0,
@@ -144,6 +405,8 @@ export default function CreatorCourses() {
       // Reset form and close modal
       resetForm();
       setThumbnailPreview('');
+      setCurriculumFile(null);
+      setCurriculumPreview('');
       setShowAddModal(false);
       setEditingCourse(null);
 
@@ -183,6 +446,9 @@ export default function CreatorCourses() {
   const handleEditCourse = (course) => {
     setEditingCourse(course);
     setThumbnailPreview(course.thumbnailUrl || '');
+    if (course.curriculumUrl) {
+      setCurriculumPreview(course.curriculumUrl.split('/').pop());
+    }
     setShowAddModal(true);
   };
 
@@ -289,6 +555,15 @@ export default function CreatorCourses() {
                     className="inline-flex items-center justify-center w-full sm:w-auto px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 touch-manipulation"
                   >
                     <FaEdit className="mr-1" /> Edit
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSelectedCourse(course);
+                      setShowResourcesModal(true);
+                    }}
+                    className="inline-flex items-center justify-center w-full sm:w-auto px-3 py-2 border border-indigo-300 text-sm font-medium rounded-md text-indigo-700 bg-indigo-50 hover:bg-indigo-100 touch-manipulation"
+                  >
+                    <FaTasks className="mr-1" /> Assignments & Resources
                   </button>
                   <button
                     onClick={() => handleDeleteCourse(course.id)}
@@ -439,6 +714,27 @@ export default function CreatorCourses() {
                           </div>
                         </div>
 
+                        {/* Curriculum Upload */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Course Curriculum (PDF)</label>
+                          <div className="mt-1 flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
+                            {curriculumPreview && (
+                              <div className="flex items-center text-sm text-gray-600 bg-gray-100 px-3 py-2 rounded-md">
+                                <svg className="mr-2 h-5 w-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                {curriculumPreview}
+                              </div>
+                            )}
+                            <label className="cursor-pointer inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none touch-manipulation">
+                              <FaUpload className="mr-2" />
+                              <span>Upload Curriculum</span>
+                              <input type="file" className="sr-only" onChange={handleCurriculumChange} accept="application/pdf" />
+                            </label>
+                          </div>
+                          <p className="mt-1 text-xs text-gray-500">Upload a PDF file that students can download to view course curriculum</p>
+                        </div>
+
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-3">Modules</label>
                           <FieldArray name="modules">
@@ -578,6 +874,8 @@ export default function CreatorCourses() {
                             onClick={() => {
                               setShowAddModal(false);
                               setEditingCourse(null);
+                              setCurriculumFile(null);
+                              setCurriculumPreview('');
                             }}
                             className="inline-flex items-center justify-center w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 touch-manipulation"
                           >
@@ -596,6 +894,243 @@ export default function CreatorCourses() {
                       );
                     }}
                   </Formik>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Assignments & Resources Modal */}
+        {showResourcesModal && selectedCourse && (
+          <div className="fixed inset-0 overflow-y-auto z-50">
+            <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+              <div className="fixed inset-0 transition-opacity" aria-hidden="true">
+                <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
+              </div>
+              <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-6xl sm:w-full">
+                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-2xl font-bold text-gray-900">
+                      Assignments & Resources - {selectedCourse.title}
+                    </h3>
+                    <button
+                      onClick={() => {
+                        setShowResourcesModal(false);
+                        setSelectedCourse(null);
+                        setAssignmentFile(null);
+                        setAssignmentTitle('');
+                        setAssignmentDescription('');
+                        setResourceFile(null);
+                        setResourceTitle('');
+                        setResourceDescription('');
+                      }}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  {error && (
+                    <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+                      <p className="text-sm text-red-600">{error}</p>
+                    </div>
+                  )}
+
+                  {success && (
+                    <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-md">
+                      <p className="text-sm text-green-600">{success}</p>
+                    </div>
+                  )}
+
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {/* Assignments Section */}
+                    <div>
+                      <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <FaTasks className="mr-2 text-indigo-600" />
+                        Assignments
+                      </h4>
+                      
+                      {/* Add Assignment Form */}
+                      <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                        <h5 className="font-medium text-gray-700 mb-3">Add New Assignment</h5>
+                        <div className="space-y-3">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                            <input
+                              type="text"
+                              value={assignmentTitle}
+                              onChange={(e) => setAssignmentTitle(e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                              placeholder="Assignment title"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <textarea
+                              value={assignmentDescription}
+                              onChange={(e) => setAssignmentDescription(e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                              placeholder="Assignment description"
+                              rows="2"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">File</label>
+                            <input
+                              type="file"
+                              onChange={(e) => setAssignmentFile(e.target.files[0])}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                              accept=".pdf,.doc,.docx,.txt"
+                            />
+                            {assignmentFile && (
+                              <p className="text-xs text-gray-500 mt-1">{assignmentFile.name}</p>
+                            )}
+                          </div>
+                          <button
+                            onClick={handleAddAssignment}
+                            disabled={uploadingAssignment}
+                            className="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-gray-400 flex items-center justify-center"
+                          >
+                            <FaUpload className="mr-2" />
+                            {uploadingAssignment ? 'Uploading...' : 'Add Assignment'}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Assignments List */}
+                      <div className="space-y-2">
+                        {selectedCourse.assignments && selectedCourse.assignments.length > 0 ? (
+                          selectedCourse.assignments.map((assignment) => (
+                            <div key={assignment.id} className="border border-gray-200 rounded-lg p-3 hover:bg-gray-50">
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  <h6 className="font-medium text-gray-900">{assignment.title}</h6>
+                                  {assignment.description && (
+                                    <p className="text-sm text-gray-600 mt-1">{assignment.description}</p>
+                                  )}
+                                  <div className="flex items-center mt-2 text-xs text-gray-500">
+                                    <FaFileAlt className="mr-1" />
+                                    {assignment.fileName}
+                                  </div>
+                                  <a
+                                    href={assignment.fileUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-xs text-indigo-600 hover:text-indigo-800 mt-1 inline-block"
+                                  >
+                                    View File →
+                                  </a>
+                                </div>
+                                <button
+                                  onClick={() => handleDeleteAssignment(assignment.id)}
+                                  className="text-red-600 hover:text-red-800 ml-2"
+                                >
+                                  <FaTrash />
+                                </button>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-sm text-gray-500 text-center py-4">No assignments yet</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Resources Section */}
+                    <div>
+                      <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <FaBook className="mr-2 text-green-600" />
+                        Resources
+                      </h4>
+                      
+                      {/* Add Resource Form */}
+                      <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                        <h5 className="font-medium text-gray-700 mb-3">Add New Resource</h5>
+                        <div className="space-y-3">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                            <input
+                              type="text"
+                              value={resourceTitle}
+                              onChange={(e) => setResourceTitle(e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                              placeholder="Resource title"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <textarea
+                              value={resourceDescription}
+                              onChange={(e) => setResourceDescription(e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                              placeholder="Resource description"
+                              rows="2"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">File</label>
+                            <input
+                              type="file"
+                              onChange={(e) => setResourceFile(e.target.files[0])}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                              accept=".pdf,.doc,.docx,.ppt,.pptx,.txt"
+                            />
+                            {resourceFile && (
+                              <p className="text-xs text-gray-500 mt-1">{resourceFile.name}</p>
+                            )}
+                          </div>
+                          <button
+                            onClick={handleAddResource}
+                            disabled={uploadingResource}
+                            className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 flex items-center justify-center"
+                          >
+                            <FaUpload className="mr-2" />
+                            {uploadingResource ? 'Uploading...' : 'Add Resource'}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Resources List */}
+                      <div className="space-y-2">
+                        {selectedCourse.resources && selectedCourse.resources.length > 0 ? (
+                          selectedCourse.resources.map((resource) => (
+                            <div key={resource.id} className="border border-gray-200 rounded-lg p-3 hover:bg-gray-50">
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  <h6 className="font-medium text-gray-900">{resource.title}</h6>
+                                  {resource.description && (
+                                    <p className="text-sm text-gray-600 mt-1">{resource.description}</p>
+                                  )}
+                                  <div className="flex items-center mt-2 text-xs text-gray-500">
+                                    <FaFileAlt className="mr-1" />
+                                    {resource.fileName}
+                                  </div>
+                                  <a
+                                    href={resource.fileUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-xs text-green-600 hover:text-green-800 mt-1 inline-block"
+                                  >
+                                    View File →
+                                  </a>
+                                </div>
+                                <button
+                                  onClick={() => handleDeleteResource(resource.id)}
+                                  className="text-red-600 hover:text-red-800 ml-2"
+                                >
+                                  <FaTrash />
+                                </button>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-sm text-gray-500 text-center py-4">No resources yet</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

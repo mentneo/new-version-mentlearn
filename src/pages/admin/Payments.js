@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, getDocs, orderBy, limit, where } from 'firebase/firestore';
 import { db } from '../../firebase/firebase.js';
 import AdminNavbar from '../../components/admin/AdminNavbar.js';
-import { FaSearch, FaDownload, FaCheckCircle, FaTimesCircle, FaClock, FaFilter } from 'react-icons/fa';
+import { FaSearch, FaDownload, FaCheckCircle, FaTimesCircle, FaClock } from 'react-icons/fa';
 
 const Payments = () => {
   const [payments, setPayments] = useState([]);
