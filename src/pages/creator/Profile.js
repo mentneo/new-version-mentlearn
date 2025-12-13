@@ -335,7 +335,10 @@ export default function CreatorProfile() {
                   profileImage: profile.profileImage || ''
                 }}
                 validationSchema={ProfileSchema}
-                onSubmit={handleUpdateProfile}8">
+                onSubmit={handleUpdateProfile}
+              >
+                {(formikProps) => (
+                  <Form className="space-y-6">
                     <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
                       <h3 className="text-lg font-semibold text-gray-900 mb-6">Basic Information</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -428,7 +431,38 @@ export default function CreatorProfile() {
                         type="button"
                         onClick={() => setIsEditing(false)}
                         className="inline-flex items-center justify-center px-6 py-3 border-2 border-gray-300 rounded-xl text-base font-semibold text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200 transform hover:scale-105"
-                     ersonal Information Section */}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={updateLoading}
+                        className="inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-xl text-base font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                      >
+                        {updateLoading ? (
+                          <>
+                            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Updating...
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            Save Changes
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </Form>
+                )}
+              </Formik>
+            ) : (
+              <div className="space-y-6">
+                {/* Personal Information Section */}
                 <div className="bg-gradient-to-r from-indigo-50 to-blue-50 rounded-xl p-6 border border-indigo-100">
                   <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
                     <svg className="w-6 h-6 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -520,36 +554,7 @@ export default function CreatorProfile() {
                       )}
                     </div>
                   </div>
-                )}lassName="mt-1 text-lg text-gray-900 leading-relaxed">{profile.bio}</p>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {profile.linkedIn && (
-                    <div>
-                      <h3 className="text-base font-semibold text-gray-500">LinkedIn Profile</h3>
-                      <a
-                        href={profile.linkedIn}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-1 text-lg text-indigo-600 hover:text-indigo-500 break-all"
-                      >
-                        {profile.linkedIn}
-                      </a>
-                    </div>
-                  )}
-                  {profile.website && (
-                    <div>
-                      <h3 className="text-base font-semibold text-gray-500">Personal Website</h3>
-                      <a
-                        href={profile.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-1 text-lg text-indigo-600 hover:text-indigo-500 break-all"
-                      >
-                        {profile.website}
-                      </a>
-                    </div>
-                  )}
-                </div>
+                )}
               </div>
             )}
           </div>
